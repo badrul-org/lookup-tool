@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}Lookup Tool - Property Lookup Tool{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-search me-2"></i>
+            Property Lookup Tool
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Lookup Form -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-map-marker-alt me-2"></i>
+                    Property Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="lookup-form">
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address Line 1 *</label>
+                        <input type="text" class="form-control" id="address" name="address_line_1" required>
+                        <div class="form-text">Enter the street address (e.g., "123 Main St")</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="city" class="form-label">City</label>
+                        <input type="text" class="form-control" id="city" name="city">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="zip" class="form-label">ZIP Code</label>
+                        <input type="text" class="form-control" id="zip" name="zip_code">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="county" class="form-label">County *</label>
+                        <select class="form-select" id="county" name="county" required>
+                            <option value="">Select County</option>
+                            <option value="King">King County</option>
+                            <option value="Pierce">Pierce County</option>
+                            <option value="Snohomish">Snohomish County</option>
+                            <option value="Kitsap">Kitsap County</option>
+                            <option value="Thurston">Thurston County</option>
+                        </select>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
+                            <i class="fas fa-search me-2"></i>
+                            Start Lookup
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lookup Status -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Lookup Status
+                </h5>
+            </div>
+            <div class="card-body" id="status-section">
+                <div class="text-center text-muted">
+                    <i class="fas fa-search fa-3x mb-3"></i>
+                    <p>No lookup in progress</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Modal -->
+<div class="modal fade" id="progressModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Lookup in Progress</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p id="progress-text">Starting lookup process...</p>
+                <div class="progress mb-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                        style="width: 0%" id="progress-bar"></div>
+                </div>
+                <p class="text-muted small">This may take several minutes. Please keep this window open.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentSessionId = null;
+    let progressInterval = null;
+
+    document.getElementById('lookup-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        startLookup();
+    });
+
+    function startLookup() {
+        const formData = new FormData(document.getElementById('lookup-form'));
+        const data = Object.fromEntries(formData);
+
+        // Validate required fields
+        if (!data.address_line_1 || !data.county) {
+            alert('Please fill in all required fields.');
+            return;
+        }
+
+        // Disable form
+        document.getElementById('submit-btn').disabled = true;
+        document.getElementById('submit-btn').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Starting...';
+
+        // Show progress modal
+        const modal = new bootstrap.Modal(document.getElementById('progressModal'));
+        modal.show();
+
+        // Start lookup
+        fetch('/api/lookup', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+
+                currentSessionId = result.session_id;
+
+                // Start progress tracking instead of immediate redirect
+                startProgressTracking();
+            })
+            .catch(error => {
+                console.error('Error starting lookup:', error);
+                alert('Error starting lookup: ' + error.message);
+                resetForm();
+            });
+    }
+
+    function startProgressTracking() {
+        let progress = 0;
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+
+        progressInterval = setInterval(() => {
+            // Simulate progress
+            progress += Math.random() * 10;
+            if (progress > 90) progress = 90;
+
+            progressBar.style.width = progress + '%';
+
+            // Update status
+            fetch(`/api/lookup/${currentSessionId}`)
+                .then(response => response.json())
+                .then(session => {
+                    if (session.error) {
+                        throw new Error(session.error);
+                    }
+
+                    updateStatusDisplay(session);
+
+                    if (session.status === 'completed') {
+                        progressBar.style.width = '100%';
+                        progressText.textContent = 'Lookup completed successfully!';
+
+                        // Show results button after a short delay to ensure modal is rendered
+                        setTimeout(() => {
+                            const modalFooter = document.querySelector('#progressModal .modal-footer');
+                            if (modalFooter) {
+                                modalFooter.innerHTML = `
+                                    <button type="button" class="btn btn-success" onclick="showResults()">
+                                        <i class="fas fa-eye me-1"></i>
+                                        Show Results
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="hideProgressModal()">
+                                        Close
+                                    </button>
+                                `;
+                            }
+                        }, 500);
+                    } else if (session.status === 'error') {
+                        throw new Error(session.error || 'Lookup failed');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error tracking progress:', error);
+                    progressText.textContent = 'Error: ' + error.message;
+                    setTimeout(() => {
+                        hideProgressModal();
+                        resetForm();
+                    }, 2000);
+                });
+        }, 2000);
+    }
+
+    function updateStatusDisplay(session) {
+        const statusSection = document.getElementById('status-section');
+        const statusBadge = getStatusBadge(session.status);
+
+        statusSection.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="fw-bold">Status:</span>
+                ${statusBadge}
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="fw-bold">Address:</span>
+                <span>${session.address}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="fw-bold">County:</span>
+                <span>${session.county}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-bold">Started:</span>
+                <span>${new Date(session.start_time).toLocaleString()}</span>
+            </div>
+        `;
+    }
+
+    function getStatusBadge(status) {
+        const badges = {
+            'running': '<span class="badge bg-warning"><i class="fas fa-spinner fa-spin me-1"></i>Running</span>',
+            'completed': '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Completed</span>',
+            'error': '<span class="badge bg-danger"><i class="fas fa-exclamation-triangle me-1"></i>Error</span>',
+            'cancelled': '<span class="badge bg-secondary"><i class="fas fa-times me-1"></i>Cancelled</span>'
+        };
+        return badges[status] || '<span class="badge bg-secondary">Unknown</span>';
+    }
+
+    function hideProgressModal() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('progressModal'));
+        if (modal) {
+            modal.hide();
+        }
+
+        if (progressInterval) {
+            clearInterval(progressInterval);
+            progressInterval = null;
+        }
+
+        // Reset modal footer
+        const modalFooter = document.querySelector('#progressModal .modal-footer');
+        modalFooter.innerHTML = `
+            <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
+        `;
+    }
+
+    function showResults() {
+        // Redirect to results page
+        window.location.href = `/results?session_id=${currentSessionId}`;
+    }
+
+    function resetForm() {
+        document.getElementById('submit-btn').disabled = false;
+        document.getElementById('submit-btn').innerHTML = '<i class="fas fa-search me-2"></i>Start Lookup';
+
+        const statusSection = document.getElementById('status-section');
+        statusSection.innerHTML = `
+            <div class="text-center text-muted">
+                <i class="fas fa-search fa-3x mb-3"></i>
+                <p>No lookup in progress</p>
+            </div>
+        `;
+    }
+
+    // Cancel button functionality
+    document.getElementById('cancel-btn').addEventListener('click', function () {
+        if (currentSessionId) {
+            fetch(`/api/lookup/${currentSessionId}/cancel`, {
+                method: 'POST'
+            })
+                .then(() => {
+                    hideProgressModal();
+                    resetForm();
+                    currentSessionId = null;
+                })
+                .catch(error => {
+                    console.error('Error cancelling lookup:', error);
+                    hideProgressModal();
+                    resetForm();
+                });
+        }
+    });
+</script>
+{% endblock %}
