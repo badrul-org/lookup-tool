@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Lookup Results - Property Lookup Tool{% endblock %}
+{% block title %}Lookup Results - Sterling Septic & Plumbing LLC{% endblock %}
 
 {% block content %}
-<div class="row">
+<div class="results-container">
+    <div class="container-fluid">
+        <!-- <div class="row">
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -18,46 +20,347 @@
                     <i class="fas fa-plus me-1"></i>
                     New Lookup
                 </a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-tachometer-alt me-1"></i>
+                    Dashboard
+                </a>
+                <button id="delete-lookup-btn" class="btn btn-outline-danger" onclick="deleteLookup()">
+                    <i class="fas fa-trash me-1"></i>
+                    Delete Lookup
+                </button>
+            </div>
+        </div>
+    </div>
+</div> -->
+
+        <!-- Session Info -->
+        <div class="row mb-3">
+            <div class="col-12 d-flex justify-content-end gap-2">
+                <a id="add-customer-btn" class="btn btn-success" href="#"
+                    data-url="{{ url_for('customer_create') }}?session_id={{ session_data.session_id if session_data else '' }}&address={{ session_data.address if session_data else '' }}&city={{ session_data.city if session_data else '' }}&zip={{ session_data.zip_code if session_data else '' }}&county={{ session_data.county if session_data else '' }}&location_code={{ session_data.location_code if session_data else '' }}&embed=1">
+                    <i class="fas fa-user-plus me-1"></i>
+                    Add Customer
+                </a>
+                <button id="cancel-lookup-btn" class="btn btn-outline-warning" style="display: none;"
+                    onclick="cancelCurrentLookup()">
+                    <i class="fas fa-times me-1"></i>
+                    Cancel Lookup
+                </button>
+                <a href="{{ url_for('lookup_tool') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>
+                    New Lookup
+                </a>
                 <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
                     <i class="fas fa-tachometer-alt me-1"></i>
                     Dashboard
                 </a>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Session Info -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Lookup Information
-                </h5>
+        <!-- Session Info -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header" style="background-color:#ffffff;color:inherit;">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Lookup Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-nowrap gap-3 overflow-auto w-100">
+                            <div class="flex-fill">
+                                <div class="info-item text-nowrap">
+                                    <strong>Address:</strong><br>
+                                    <span id="result-address" class="text-break">{{ session_data.address if session_data
+                                        else 'N/A' }}</span>
+                                </div>
+                            </div>
+                            <div class="flex-fill">
+                                <div class="info-item text-nowrap">
+                                    <strong>City:</strong><br>
+                                    <span id="result-city">{{ session_data.city if session_data else 'N/A' }}</span>
+                                </div>
+                            </div>
+                            <div class="flex-fill">
+                                <div class="info-item text-nowrap">
+                                    <strong>ZIP Code:</strong><br>
+                                    <span id="result-zip">{{ session_data.zip_code if session_data else 'N/A' }}</span>
+                                </div>
+                            </div>
+                            <div class="flex-fill">
+                                <div class="info-item text-nowrap">
+                                    <strong>County:</strong><br>
+                                    <span id="result-county">{{ session_data.county if session_data else 'N/A' }}</span>
+                                </div>
+                            </div>
+                            <div class="flex-fill">
+                                <div class="info-item text-nowrap">
+                                    <strong>Status:</strong><br>
+                                    <span id="result-status" class="badge bg-warning"><i
+                                            class="fas fa-spinner fa-spin me-1"></i>Processing</span>
+                                </div>
+                            </div>
+                            <div class="flex-fill">
+                                <div class="info-item text-nowrap">
+                                    <strong>Customer Status:</strong><br>
+                                    <span id="result-customer-status" class="badge bg-secondary">N/A</span>
+                                </div>
+                            </div>
+                            <div class="flex-fill">
+                                <div class="info-item text-nowrap">
+                                    <strong>Customer Display Name:</strong><br>
+                                    <span id="result-customer-display">N/A</span>
+                                </div>
+                            </div>
+                            <div class="flex-fill">
+                                <div class="info-item text-nowrap">
+                                    <strong>Upload Status:</strong><br>
+                                    <span id="result-upload-status">N/A</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3">
-                        <strong>Address:</strong><br>
-                        <span id="result-address">{{ session_data.address if session_data else 'N/A' }}</span>
+        </div>
+
+        <!-- Customer Create Modal (loads form page in an iframe) -->
+        <div class="modal fade" id="customerCreateModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-fullscreen-sm-down modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Add Customer</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="col-md-2">
-                        <strong>City:</strong><br>
-                        <span id="result-city">{{ session_data.city if session_data else 'N/A' }}</span>
+                    <div class="modal-body p-0">
+                        <iframe id="customerCreateFrame" style="width:100%; height:100%; border:0; display:block;"
+                            title="Create Customer"></iframe>
                     </div>
-                    <div class="col-md-2">
-                        <strong>ZIP Code:</strong><br>
-                        <span id="result-zip">{{ session_data.zip_code if session_data else 'N/A' }}</span>
+                </div>
+            </div>
+        </div>
+
+
+
+        <!-- Location Code Section -->
+        <div class="row mb-4" id="location-code-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header" style="background-color:#E91E63;color:#ffffff;">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            Location Code
+                        </h5>
                     </div>
-                    <div class="col-md-2">
-                        <strong>County:</strong><br>
-                        <span id="result-county">{{ session_data.county if session_data else 'N/A' }}</span>
+                    <div class="card-body">
+                        <!-- Skeleton loading for location code -->
+                        <div id="location-code-skeleton" class="alert alert-light mb-0">
+                            <div class="skeleton-text skeleton-location-code"></div>
+                        </div>
+                        <!-- Actual location code display -->
+                        <div id="location-code-display-container" class="alert mb-0"
+                            style="display: none; background-color:#FCE4EC; border:1px solid #E91E63; color:#6A1B9A;">
+                            <code id="location-code-display"></code>
+                        </div>
+                        <!-- No result found message -->
+                        <div id="location-code-no-result" class="alert alert-info mb-0" style="display: none;">
+                            <i class="fas fa-info-circle me-2"></i>No location code found for this address.
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <strong>Status:</strong><br>
-                        <span id="result-status" class="badge bg-success">Completed</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload PDFs Action (separate section below Location Code) -->
+        <div class="row mb-3">
+            <div class="col-12 d-flex justify-content-start">
+                <button id="upload-pdfs-btn" class="btn btn-outline-primary"
+                    title="Download and upload all reports to FieldEdge">
+                    <i class="fas fa-file-upload me-1"></i>
+                    Upload PDFs
+                </button>
+            </div>
+        </div>
+
+        <!-- Tacoma Reports Section -->
+        <div class="row mb-4" id="tacoma-reports-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header" style="background-color:#166534;color:#ffffff;">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-city me-2"></i>
+                            TPCHD Reports
+                            <span id="tacoma-count" class="badge bg-info ms-2">0</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="tacoma-container">
+                            <!-- Tacoma reports will be loaded here -->
+                        </div>
+                        <!-- No result found message -->
+                        <div id="tacoma-no-result" class="alert alert-info mb-0" style="display: none;">
+                            <i class="fas fa-info-circle me-2"></i>No TPCHD reports found for this address.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multimatch Results -->
+        <div class="row mb-4" id="multimatch-results-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-table me-2"></i>
+                            Multiple Property Matches
+                            <span id="multimatch-count" class="badge bg-info ms-2">0</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="multimatch-container">
+                            <!-- Multimatch data will be loaded here -->
+                        </div>
+                        <!-- No result found message -->
+                        <div id="multimatch-no-result" class="alert alert-info mb-0" style="display: none;">
+                            <i class="fas fa-info-circle me-2"></i>No multiple property matches found for this address.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PDF Results -->
+        <div class="row" id="pdf-results-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header" style="background-color:#004085;color:#ffffff;">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-file-pdf me-2"></i>
+                            RME Reports
+                            <span id="pdf-count" class="badge bg-primary ms-2">0</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="pdf-container">
+                            <!-- Skeleton loading animation for grouped reports -->
+                            <div id="skeleton-loading" class="row">
+                                <!-- Group 1: Environmental Reports -->
+                                <div class="col-lg-12 mb-4">
+                                    <div class="card pdf-type-group">
+                                        <div class="card-header" style="cursor: pointer;">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="skeleton-text skeleton-title"
+                                                    style="width: 200px; height: 20px;">
+                                                </div>
+                                                <div class="skeleton-text" style="width: 20px; height: 20px;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="card-body collapse show">
+                                            <div class="row">
+                                                <div class="col-lg-12 mb-3">
+                                                    <div class="card pdf-card">
+                                                        <div class="card-header">
+                                                            <div class="skeleton-text skeleton-title"
+                                                                style="width: 150px; height: 18px;"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-12 mb-3">
+                                                    <div class="card pdf-card">
+                                                        <div class="card-header">
+                                                            <div class="skeleton-text skeleton-title"
+                                                                style="width: 150px; height: 18px;"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Group 2: Structural Reports -->
+                                <div class="col-lg-12 mb-4">
+                                    <div class="card pdf-type-group">
+                                        <div class="card-header" style="cursor: pointer;">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="skeleton-text skeleton-title"
+                                                    style="width: 180px; height: 20px;">
+                                                </div>
+                                                <div class="skeleton-text" style="width: 20px; height: 20px;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="card-body collapse show">
+                                            <div class="row">
+                                                <div class="col-lg-12 mb-3">
+                                                    <div class="card pdf-card">
+                                                        <div class="card-header">
+                                                            <div class="skeleton-text skeleton-title"
+                                                                style="width: 150px; height: 18px;"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Group 3: Other Reports -->
+                                <div class="col-lg-12 mb-4">
+                                    <div class="card pdf-type-group">
+                                        <div class="card-header" style="cursor: pointer;">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div class="skeleton-text skeleton-title"
+                                                    style="width: 160px; height: 20px;">
+                                                </div>
+                                                <div class="skeleton-text" style="width: 20px; height: 20px;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="card-body collapse show">
+                                            <div class="row">
+                                                <div class="col-lg-12 mb-3">
+                                                    <div class="card pdf-card">
+                                                        <div class="card-header">
+                                                            <div class="skeleton-text skeleton-title"
+                                                                style="width: 150px; height: 18px;"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- PDFs will be loaded here -->
+                        </div>
+                        <!-- No result found message -->
+                        <div id="pdf-no-result" class="alert alert-info mb-0" style="display: none;">
+                            <i class="fas fa-info-circle me-2"></i>No RME reports found for this address.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Results -->
+        <div class="row mt-4" id="additional-results-section">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header" style="background-color: #6f42c1; color: white;">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-crown me-2"></i>
+                            King County Reports
+                            <span id="king-count" class="badge ms-2"
+                                style="background-color: #ff1493 !important; color: white; border: 2px solid #ff69b4; font-weight: 700; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); box-shadow: 0 4px 12px rgba(255, 20, 147, 0.4);">0</span>
+                        </h5>
+                    </div>
+                    <div class="card-body" id="additional-results-content">
+                        <!-- Additional results will be loaded here -->
+                        <!-- No result found message -->
+                        <div id="king-no-result" class="alert alert-info mb-0" style="display: none;">
+                            <i class="fas fa-info-circle me-2"></i>No King County reports found for this address.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -65,69 +368,162 @@
     </div>
 </div>
 
-<!-- PDF Results -->
-<div class="row" id="pdf-results-section">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-file-pdf me-2"></i>
-                    Property Reports
-                    <span id="pdf-count" class="badge bg-primary ms-2">0</span>
-                </h5>
-            </div>
-            <div class="card-body">
-                <div id="pdf-container">
-                    <!-- PDFs will be loaded here -->
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Additional Results -->
-<div class="row mt-4" id="additional-results-section" style="display: none;">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Additional Information
-                </h5>
-            </div>
-            <div class="card-body" id="additional-results-content">
-                <!-- Additional results will be loaded here -->
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Loading Modal -->
-<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Loading Results...</h5>
-            </div>
-            <div class="modal-body text-center">
-                <div class="spinner-border text-primary mb-3" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p id="loading-text">Fetching lookup results...</p>
-                <div class="progress mb-3">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
-                        style="width: 0%" id="loading-progress"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
     let sessionId = null;
     let loadingInterval = null;
+    let rmeErrorShown = false;
+    const initialSession = {{ session_data| tojson | safe if session_data else 'null' }};
+
+    // Helper: ensure embedded PDFs open at desired zoom level
+    function withPdfZoom(url, zoom) {
+        if (!url) return url;
+        const z = typeof zoom === 'number' ? Math.round(zoom) : 125;
+        if (url.includes('#')) {
+            // Replace existing zoom if present, otherwise append
+            if (/(^|[&#])zoom=/.test(url)) {
+                return url.replace(/(zoom=)[^&]*/i, `$1${z}`);
+            }
+            return url + `&zoom=${z}`;
+        }
+        return url + `#zoom=${z}`;
+    }
+
+    function stripPdfZoom(url) {
+        if (!url) return url;
+        // Remove zoom param from fragment or query
+        // Handle #zoom= and &zoom= forms
+        const [base, hash] = url.split('#');
+        if (!hash) return url.replace(/([?&])zoom=\d+(&|$)/i, '$1').replace(/[?&]$/, '');
+        const newHash = hash.replace(/(^|&)zoom=\d+(&|$)/i, '$1').replace(/^&|&$/g, '');
+        return newHash ? `${base}#${newHash}` : base;
+    }
+
+    function computePdfZoomForWidth(width) {
+        if (width >= 2800) return 200;
+        if (width >= 2200) return 175;
+        if (width >= 1600) return 150;
+        if (width >= 1200) return 125;
+        return 110;
+    }
+
+    function applyResponsiveZoomToIframe(iframe) {
+        if (!iframe) return;
+        // Ensure base src stored
+        if (!iframe.dataset.baseSrc) {
+            iframe.dataset.baseSrc = stripPdfZoom(iframe.getAttribute('src') || '');
+        }
+        const container = iframe.parentElement;
+        const width = container ? container.clientWidth : window.innerWidth;
+        const zoom = computePdfZoomForWidth(width);
+        if (iframe.dataset.currentZoom !== String(zoom)) {
+            const newSrc = withPdfZoom(iframe.dataset.baseSrc, zoom);
+            iframe.setAttribute('src', newSrc);
+            iframe.dataset.currentZoom = String(zoom);
+        }
+    }
+
+    function applyResponsiveZoomToAll() {
+        const iframes = document.querySelectorAll('.pdf-iframe, .king-report-iframe, .tpchd-report-iframe');
+        iframes.forEach(applyResponsiveZoomToIframe);
+    }
+
+    function debounce(fn, delay) {
+        let t;
+        return function () {
+            clearTimeout(t);
+            const args = arguments;
+            const ctx = this;
+            t = setTimeout(() => fn.apply(ctx, args), delay);
+        };
+    }
+
+    window.addEventListener('resize', debounce(applyResponsiveZoomToAll, 150));
+
+    // Open customer create modal and load form
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('#add-customer-btn');
+        if (!btn) return;
+        e.preventDefault();
+        try {
+            const base = btn.getAttribute('data-url') || '/customer/create';
+            const u = new URL(base, window.location.origin);
+            // Build params from latest DOM so values are fresh
+            const sessionId = getSessionIdFromUrl();
+            const getText = (id) => (document.getElementById(id)?.textContent || '').trim();
+            const address = getText('result-address');
+            const city = getText('result-city');
+            const zip = getText('result-zip');
+            const county = getText('result-county');
+            const locCode = (document.getElementById('location-code-display')?.textContent || '').trim();
+
+            if (sessionId) u.searchParams.set('session_id', sessionId);
+            if (address) u.searchParams.set('address', address);
+            if (city) u.searchParams.set('city', city);
+            if (zip) u.searchParams.set('zip', zip);
+            if (county) u.searchParams.set('county', county);
+            if (locCode) u.searchParams.set('location_code', locCode);
+            u.searchParams.set('embed', '1');
+
+            const iframe = document.getElementById('customerCreateFrame');
+            if (iframe) iframe.src = u.toString();
+            const modal = new bootstrap.Modal(document.getElementById('customerCreateModal'));
+            modal.show();
+        } catch (_) { }
+    });
+
+    // Listen for customer creation status events from the iframe
+    window.addEventListener('message', function (event) {
+        const data = event.data || {};
+        if (data.type !== 'customer-create-status') return;
+        const modalEl = document.getElementById('customerCreateModal');
+        const statusEl = document.getElementById('result-customer-status');
+        const displayEl = document.getElementById('result-customer-display');
+        if (data.phase === 'start') {
+            try { const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl); modal.hide(); } catch (_) { }
+            if (statusEl) { statusEl.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Creating...'; statusEl.className = 'badge bg-warning'; }
+        } else if (data.phase === 'done') {
+            if (statusEl) { statusEl.textContent = data.text || 'Customer created successfully'; statusEl.className = 'badge bg-success'; }
+            if (displayEl && data.displayName) { displayEl.textContent = data.displayName; }
+        } else if (data.phase === 'error') {
+            if (statusEl) { statusEl.textContent = 'Error: ' + (data.error || 'Creation failed'); statusEl.className = 'badge bg-danger'; }
+        }
+    });
+
+    // Upload PDFs button handler
+    document.addEventListener('click', async function (e) {
+        const btn = e.target.closest('#upload-pdfs-btn');
+        if (!btn) return;
+        e.preventDefault();
+        const sid = getSessionIdFromUrl();
+        if (!sid) { alert('Missing session id'); return; }
+        const old = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Uploading...';
+        try {
+            const res = await fetch('/api/upload-pdfs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_id: sid })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data && data.error || 'Upload failed');
+            // Success: reflect in UI
+            const upEl = document.getElementById('result-upload-status');
+            if (upEl) upEl.textContent = `Uploaded ${data.uploaded || 0} file(s)`;
+        } catch (err) {
+            alert('Upload error: ' + (err.message || err));
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = old;
+        }
+    });
+
+
+
+
 
     // Get session ID from URL parameters
     function getSessionIdFromUrl() {
@@ -139,10 +535,55 @@
     async function loadSessionData() {
         sessionId = getSessionIdFromUrl();
 
-        if (!sessionId) {
-            showError('No session ID provided. Please start a new lookup.');
-            document.getElementById('address-subtitle').textContent = 'Invalid session';
-            return;
+        // if (!sessionId) {
+        //     showError('No session ID provided. Please start a new lookup.');
+        //     document.getElementById('address-subtitle').textContent = 'Invalid session';
+        //     return;
+        // }
+
+        // Use server-rendered data when available to avoid an extra API call
+        if (typeof initialSession === 'object' && initialSession) {
+            try {
+                const session = initialSession;
+                updateSessionInfo(session);
+
+                // Removed automatic existing-customer check on page load
+
+                // Check location code requirements on initial load
+                if (!session.city || !session.zip_code) {
+                    showLocationCodeRequirement();
+                }
+
+                if (session.status === 'completed') {
+                    // Show skeleton briefly then render results from initial data
+                    showRmeReportsSkeleton();
+                    const results = {
+                        pdf_urls: session.pdf_urls || [],
+                        multimatch_data: session.multimatch_data || [],
+                        is_multimatch: session.is_multimatch || false,
+                        location_code: session.location_code,
+                        tacoma_reports: session.tacoma_reports || [],
+                        king_reports: session.king_reports || [],
+                        county: session.county || '',
+                        city: session.city || '',
+                        zip_code: session.zip_code || '',
+                        error_message: session.error_message || '',
+                        king_error_message: session.king_error_message || ''
+                    };
+                    setTimeout(() => {
+                        displayResults(results);
+                    }, 300);
+                    return; // Avoid initial API fetch
+                } else if (session.status === 'running' || session.status === 'waiting') {
+                    startPolling();
+                    return; // Avoid initial API fetch; polling will fetch
+                } else if (session.status === 'error') {
+                    showError(session.error_message || 'Lookup failed');
+                    return;
+                }
+            } catch (err) {
+                // fall through to fetch as a safety
+            }
         }
 
         try {
@@ -155,17 +596,41 @@
 
             updateSessionInfo(session);
 
+            // Removed automatic existing-customer check on page load
+
+            // Check location code requirements on initial load
+            if (!session.city || !session.zip_code) {
+                showLocationCodeRequirement();
+            }
+
             if (session.status === 'completed') {
+                // Show skeleton loading initially for RME reports
+                showRmeReportsSkeleton();
+
                 // Create results object from session data
                 const results = {
                     pdf_urls: session.pdf_urls || [],
+                    multimatch_data: session.multimatch_data || [],
+                    is_multimatch: session.is_multimatch || false,
                     location_code: session.location_code,
-                    tacoma_reports: session.tacoma_reports || []
+                    tacoma_reports: session.tacoma_reports || [],
+                    king_reports: session.king_reports || [],
+                    county: session.county || '',
+                    city: session.city || '',
+                    zip_code: session.zip_code || '',
+                    error_message: session.error_message || '',
+                    king_error_message: session.king_error_message || ''
                 };
 
-                displayResults(results);
-                hideLoadingModal();
+                console.log('Loading completed session data:', results);
+
+                // Add a small delay to show skeleton briefly
+                setTimeout(() => {
+                    displayResults(results);
+                }, 500);
             } else if (session.status === 'running') {
+                startPolling();
+            } else if (session.status === 'waiting') {
                 startPolling();
             } else if (session.status === 'error') {
                 throw new Error(session.error_message || 'Lookup failed');
@@ -176,7 +641,6 @@
         } catch (error) {
             console.error('Error loading session:', error);
             showError('Error loading results: ' + error.message);
-            hideLoadingModal();
         }
     }
 
@@ -186,23 +650,59 @@
         document.getElementById('result-city').textContent = session.city || 'N/A';
         document.getElementById('result-zip').textContent = session.zip_code || 'N/A';
         document.getElementById('result-county').textContent = session.county || 'N/A';
-
-        // Update subtitle with address
-        const addressSubtitle = document.getElementById('address-subtitle');
-        if (session.address) {
-            addressSubtitle.textContent = `Results for: ${session.address}${session.city ? ', ' + session.city : ''}${session.zip_code ? ' ' + session.zip_code : ''}${session.county ? ', ' + session.county : ''}`;
-        } else {
-            addressSubtitle.textContent = 'Loading address information...';
+        const customerStatusEl = document.getElementById('result-customer-status');
+        if (customerStatusEl) {
+            const txt = (session.Customer_status || session.customer_status || '').trim();
+            if (txt) {
+                const lc = txt.toLowerCase();
+                const displayTxt = (lc === 'not exists') ? 'NO CUSTOMER EXISTS' : txt;
+                let badge = 'bg-secondary';
+                if (lc === 'no customer exists' || lc === 'not exists') {
+                    badge = 'bg-danger';
+                } else if (lc.includes('success')) {
+                    badge = 'bg-success';
+                } else if (lc.includes('already')) {
+                    badge = 'bg-info';
+                }
+                customerStatusEl.textContent = displayTxt;
+                customerStatusEl.className = 'badge ' + badge;
+            } else {
+                customerStatusEl.textContent = 'N/A';
+                customerStatusEl.className = 'badge bg-secondary';
+            }
+        }
+        const customerDisplayEl = document.getElementById('result-customer-display');
+        if (customerDisplayEl) {
+            const disp = (session.Customer_display_name || session.customer_display || session.Customer_display || '').trim();
+            customerDisplayEl.textContent = disp || 'N/A';
         }
 
+        const uploadStatusEl = document.getElementById('result-upload-status');
+        if (uploadStatusEl) {
+            const us = (session.upload_status || '').trim();
+            uploadStatusEl.textContent = us || 'N/A';
+        }
+
+        // Update subtitle with address
+        // const addressSubtitle = document.getElementById('address-subtitle');
+        // if (session.address) {
+        //     addressSubtitle.textContent = `Results for: ${session.address}${session.city ? ', ' + session.city : ''}${session.zip_code ? ' ' + session.zip_code : ''}${session.county ? ', ' + session.county : ''}`;
+        // } else {
+        //     addressSubtitle.textContent = 'Loading address information...';
+        // }
+
         const statusElement = document.getElementById('result-status');
-        statusElement.textContent = session.status.charAt(0).toUpperCase() + session.status.slice(1);
+        statusElement.innerHTML = `${getStatusIcon(session.status)}${getStatusDisplayText(session.status)}`;
         statusElement.className = `badge ${getStatusBadgeClass(session.status)}`;
+
+        // Show/hide cancel button based on status
+        updateCancelButton(session.status);
     }
 
     // Get status badge class
     function getStatusBadgeClass(status) {
         const classes = {
+            'waiting': 'bg-info',
             'running': 'bg-warning',
             'completed': 'bg-success',
             'error': 'bg-danger',
@@ -211,38 +711,1177 @@
         return classes[status] || 'bg-secondary';
     }
 
+    // Get status display text
+    function getStatusDisplayText(status) {
+        const statusTexts = {
+            'waiting': 'Waiting',
+            'running': 'Processing',
+            'completed': 'Completed',
+            'error': 'Error',
+            'cancelled': 'Cancelled'
+        };
+        return statusTexts[status] || 'Unknown';
+    }
+
+    // Toggle cancel button visibility
+    function updateCancelButton(status) {
+        const btn = document.getElementById('cancel-lookup-btn');
+        if (!btn) return;
+        if (status === 'running') {
+            btn.style.display = 'inline-flex';
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-times me-1"></i>Cancel Lookup';
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    // Cancel current lookup
+    async function cancelCurrentLookup() {
+        try {
+            const btn = document.getElementById('cancel-lookup-btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Cancelling...';
+            }
+            if (!sessionId) {
+                throw new Error('No session ID to cancel');
+            }
+            const res = await fetch(`/api/lookup/${sessionId}/cancel`, { method: 'POST' });
+            const data = await res.json();
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            // Reflect cancelled status immediately; polling will pick up next
+            updateCancelButton('cancelled');
+            const statusElement = document.getElementById('result-status');
+            statusElement.innerHTML = `${getStatusIcon('cancelled')}${getStatusDisplayText('cancelled')}`;
+            statusElement.className = `badge ${getStatusBadgeClass('cancelled')}`;
+        } catch (e) {
+            console.error('Cancel failed:', e);
+            const btn = document.getElementById('cancel-lookup-btn');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-times me-1"></i>Cancel Lookup';
+            }
+            alert('Failed to cancel lookup: ' + e.message);
+        }
+    }
+
+    // Get status icon
+    function getStatusIcon(status) {
+        const icons = {
+            'waiting': '<i class="fas fa-hourglass-half me-1"></i>',
+            'running': '<i class="fas fa-spinner fa-spin me-1"></i>',
+            'completed': '<i class="fas fa-check me-1"></i>',
+            'error': '<i class="fas fa-exclamation-triangle me-1"></i>',
+            'cancelled': '<i class="fas fa-times me-1"></i>'
+        };
+        return icons[status] || '';
+    }
+
     // Display results
     function displayResults(results) {
         const pdfContainer = document.getElementById('pdf-container');
         const pdfCountElement = document.getElementById('pdf-count');
+        const skeletonLoading = document.getElementById('skeleton-loading');
 
-        if (results.pdf_urls && results.pdf_urls.length > 0) {
-            pdfCountElement.textContent = results.pdf_urls.length;
+        // Handle multimatch data
+        if (results.is_multimatch && results.multimatch_data && results.multimatch_data.length > 0) {
+            // Hide skeleton loading only when we have multimatch data to display
+            if (skeletonLoading) {
+                skeletonLoading.style.display = 'none';
+            }
 
-            results.pdf_urls.forEach((url, index) => {
-                const pdfCard = createPdfCard(url, index + 1);
-                pdfContainer.appendChild(pdfCard);
-            });
+            displayMultimatchResults(results.multimatch_data);
+
+            // Hide the main PDF section for multimatch cases since PDFs are shown within each property group
+            const pdfResultsSection = document.getElementById('pdf-results-section');
+            if (pdfResultsSection) {
+                pdfResultsSection.style.display = 'none';
+            }
+
+            // Also clear any existing PDF content to prevent showing old data
+            const pdfContainer = document.getElementById('pdf-container');
+            if (pdfContainer) {
+                pdfContainer.innerHTML = '';
+            }
         } else {
-            pdfContainer.innerHTML = '<div class="alert alert-info"><i class="fas fa-info-circle me-2"></i>No PDF reports found for this address.</div>';
-            pdfCountElement.textContent = '0';
+            // Single match - show PDF section and display PDFs grouped by type
+            const pdfResultsSection = document.getElementById('pdf-results-section');
+            if (pdfResultsSection) {
+                pdfResultsSection.style.display = 'block';
+            }
+
+            if (results.pdf_urls && results.pdf_urls.length > 0) {
+                // Hide skeleton loading only when we have PDF data to display
+                if (skeletonLoading) {
+                    skeletonLoading.style.display = 'none';
+                }
+
+                // Hide no-result message
+                const pdfNoResult = document.getElementById('pdf-no-result');
+                if (pdfNoResult) {
+                    pdfNoResult.style.display = 'none';
+                }
+
+                // Build flat list of PDFs and sort by date descending
+                const pdfItems = results.pdf_urls.map((pdfData, pdfIndex) => {
+                    let pdfUrl, pdfType, pdfDate;
+                    if (pdfData.includes(',')) {
+                        const parts = pdfData.split(',');
+                        pdfUrl = parts[0];
+                        pdfType = (parts[1] || '').trim() || 'Unknown Type';
+                        pdfDate = (parts[2] || '').trim();
+                    } else {
+                        pdfUrl = pdfData;
+                        pdfType = 'General Report';
+                        pdfDate = '';
+                    }
+                    return {
+                        url: pdfUrl,
+                        type: pdfType,
+                        date: pdfDate,
+                        index: pdfIndex + 1
+                    };
+                }).sort((a, b) => {
+                    const da = parseReportDate(a.date);
+                    const db = parseReportDate(b.date);
+                    return db - da; // latest first
+                });
+
+                // Display flat, date-sorted PDFs
+                displayFlatPdfs(pdfItems, pdfContainer, pdfCountElement);
+            } else {
+                // Hide skeleton loading even if no PDFs found
+                if (skeletonLoading) {
+                    skeletonLoading.style.display = 'none';
+                }
+
+                // Show no result message
+                const pdfNoResult = document.getElementById('pdf-no-result');
+                if (pdfNoResult) {
+                    // If backend supplied an error message, show it prominently
+                    if (results.error_message) {
+                        pdfNoResult.classList.remove('alert-info');
+                        pdfNoResult.classList.add('alert-danger');
+                        pdfNoResult.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${results.error_message}`;
+                    } else {
+                        // fallback to default info text
+                        pdfNoResult.classList.remove('alert-danger');
+                        pdfNoResult.classList.add('alert-info');
+                        pdfNoResult.innerHTML = '<i class="fas fa-info-circle me-2"></i>No RME reports found for this address.';
+                    }
+                    pdfNoResult.style.display = 'block';
+                }
+                pdfCountElement.textContent = '0';
+            }
         }
 
         // Display additional results
         displayAdditionalResults(results);
     }
 
+    // Display grouped PDFs for single match
+    function displayGroupedPdfs(groupedPdfs, container, countElement) {
+        let totalPdfs = 0;
+        let content = '';
+
+        // Calculate total PDF count
+        Object.keys(groupedPdfs).forEach(type => {
+            totalPdfs += groupedPdfs[type].length;
+        });
+
+        countElement.textContent = totalPdfs;
+
+        // Build sorted groups by first occurrence index to preserve original order
+        const groupEntries = Object.keys(groupedPdfs).map(type => {
+            const pdfs = groupedPdfs[type];
+            const firstIndex = Math.min.apply(null, pdfs.map(p => p.index));
+            return { type, pdfs, firstIndex };
+        }).sort((a, b) => a.firstIndex - b.firstIndex);
+
+        // Display each PDF type group in sorted order
+        groupEntries.forEach(({ type, pdfs }) => {
+
+            content += `
+                <div class="col-12 mb-4">
+                    <div class="card pdf-type-group">
+                        <div class="card-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#single-pdf-group-${type.replace(/[^a-zA-Z0-9]/g, '')}" aria-expanded="false" aria-controls="single-pdf-group-${type.replace(/[^a-zA-Z0-9]/g, '')}">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-folder me-2"></i>
+                                ${type}
+                                <span class="badge bg-secondary ms-2">${pdfs.length}</span>
+                                <i class="fas fa-chevron-right ms-2 pdf-toggle-icon" id="single-pdf-icon-${type.replace(/[^a-zA-Z0-9]/g, '')}"></i>
+                            </h6>
+                        </div>
+                        <div class="card-body collapse" id="single-pdf-group-${type.replace(/[^a-zA-Z0-9]/g, '')}" data-bs-parent="#pdf-container">
+                            <div class="row">
+            `;
+
+            // Display PDFs within this type group
+            pdfs.forEach((pdf, groupIndex) => {
+                const pdfId = `pdf-${type.replace(/[^a-zA-Z0-9]/g, '')}-${groupIndex + 1}`;
+                const pdfIconId = `pdf-icon-${type.replace(/[^a-zA-Z0-9]/g, '')}-${groupIndex + 1}`;
+
+                content += `
+                    <div class="col-lg-12 mb-3">
+                        <div class="card pdf-card">
+                            <div class="card-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#${pdfId}" aria-expanded="false" aria-controls="${pdfId}">
+                                <h6 class="card-title mb-0 d-flex justify-content-between align-items-center">
+                                    <span>
+                                        <i class="fas fa-file-pdf me-2"></i>
+                                        ${pdf.type} Report ${groupIndex + 1}${pdf.date ? ` — <span class="text-white small">${pdf.date}</span>` : ''}
+                                    </span>
+                                    <div>
+                                        <a href="${pdf.url}" target="_blank" class="btn btn-sm btn-outline-primary me-2" onclick="event.stopPropagation();">
+                                            <i class="fas fa-external-link-alt me-1"></i>
+                                            Open
+                                        </a>
+                                        <a href="${pdf.url}" download class="btn btn-sm btn-outline-success me-2" onclick="event.stopPropagation();">
+                                            <i class="fas fa-download me-1"></i>
+                                            Download
+                                        </a>
+                                        <i class="fas fa-chevron-right pdf-toggle-icon" id="${pdfIconId}"></i>
+                                    </div>
+                                </h6>
+                            </div>
+                            <div class="collapse" id="${pdfId}">
+                                <div class="card-body p-0">
+                                    <div class="pdf-iframe-container">
+                                        <iframe 
+                                            data-base-src="${pdf.url}"
+                                            src="${withPdfZoom(pdf.url, 125)}" 
+                                            class="pdf-iframe"
+                                            title="${pdf.type} Report ${groupIndex + 1}"
+                                            onload="resizeIframe(this)"
+                                            onerror="handleIframeError(this)">
+                                        </iframe>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            content += `
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = content;
+        // Apply responsive zoom to newly inserted iframes
+        applyResponsiveZoomToAll();
+
+        // Add Bootstrap collapse event listeners for PDF type groups (sorted order)
+        groupEntries.forEach(({ type, pdfs }) => {
+            const pdfGroupId = `single-pdf-group-${type.replace(/[^a-zA-Z0-9]/g, '')}`;
+            const pdfIconId = `single-pdf-icon-${type.replace(/[^a-zA-Z0-9]/g, '')}`;
+
+            const pdfCollapseElement = document.getElementById(pdfGroupId);
+            const pdfToggleIcon = document.getElementById(pdfIconId);
+
+            if (pdfCollapseElement && pdfToggleIcon) {
+                // Set initial icon state (collapsed by default)
+                pdfToggleIcon.classList.remove('fa-chevron-down');
+                pdfToggleIcon.classList.add('fa-chevron-right');
+
+                pdfCollapseElement.addEventListener('show.bs.collapse', function () {
+                    pdfToggleIcon.classList.remove('fa-chevron-right');
+                    pdfToggleIcon.classList.add('fa-chevron-down');
+                    // Expand all individual reports within this type
+                    const childCollapses = pdfCollapseElement.querySelectorAll('.collapse');
+                    childCollapses.forEach(child => child.classList.add('show'));
+                    // Update child icons to expanded
+                    const pdfsInGroup = groupedPdfs[type] || [];
+                    pdfsInGroup.forEach((_, groupIndex) => {
+                        const childIconId = `pdf-icon-${type.replace(/[^a-zA-Z0-9]/g, '')}-${groupIndex + 1}`;
+                        const childIcon = document.getElementById(childIconId);
+                        if (childIcon) {
+                            childIcon.classList.remove('fa-chevron-right');
+                            childIcon.classList.add('fa-chevron-down');
+                        }
+                    });
+                });
+
+                pdfCollapseElement.addEventListener('hide.bs.collapse', function () {
+                    pdfToggleIcon.classList.remove('fa-chevron-down');
+                    pdfToggleIcon.classList.add('fa-chevron-right');
+                    // Collapse all individual reports within this type
+                    const childCollapses = pdfCollapseElement.querySelectorAll('.collapse');
+                    childCollapses.forEach(child => child.classList.remove('show'));
+                    // Update child icons to collapsed
+                    const pdfsInGroup = groupedPdfs[type] || [];
+                    pdfsInGroup.forEach((_, groupIndex) => {
+                        const childIconId = `pdf-icon-${type.replace(/[^a-zA-Z0-9]/g, '')}-${groupIndex + 1}`;
+                        const childIcon = document.getElementById(childIconId);
+                        if (childIcon) {
+                            childIcon.classList.remove('fa-chevron-down');
+                            childIcon.classList.add('fa-chevron-right');
+                        }
+                    });
+                });
+            }
+
+            // Add event listeners for individual PDF reports within this type group
+            pdfs.forEach((pdf, groupIndex) => {
+                const pdfId = `pdf-${type.replace(/[^a-zA-Z0-9]/g, '')}-${groupIndex + 1}`;
+                const pdfIconId = `pdf-icon-${type.replace(/[^a-zA-Z0-9]/g, '')}-${groupIndex + 1}`;
+
+                const pdfCollapseElement = document.getElementById(pdfId);
+                const pdfToggleIcon = document.getElementById(pdfIconId);
+
+                if (pdfCollapseElement && pdfToggleIcon) {
+                    // Set initial icon state (collapsed by default)
+                    pdfToggleIcon.classList.remove('fa-chevron-down');
+                    pdfToggleIcon.classList.add('fa-chevron-right');
+
+                    pdfCollapseElement.addEventListener('show.bs.collapse', function () {
+                        pdfToggleIcon.classList.remove('fa-chevron-right');
+                        pdfToggleIcon.classList.add('fa-chevron-down');
+                    });
+
+                    pdfCollapseElement.addEventListener('hide.bs.collapse', function () {
+                        pdfToggleIcon.classList.remove('fa-chevron-down');
+                        pdfToggleIcon.classList.add('fa-chevron-right');
+                    });
+                }
+            });
+        });
+    }
+
+    // Parse date string into epoch milliseconds; fall back to 0 when unknown
+    function parseReportDate(dateStr) {
+        if (!dateStr) return 0;
+        const ts = Date.parse(dateStr);
+        if (!isNaN(ts)) return ts;
+        // Try MM/DD/YYYY or MM-DD-YYYY
+        const m = dateStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+        if (m) {
+            const month = parseInt(m[1], 10) - 1;
+            const day = parseInt(m[2], 10);
+            const year = parseInt(m[3].length === 2 ? '20' + m[3] : m[3], 10);
+            return new Date(year, month, day).getTime();
+        }
+        return 0;
+    }
+
+    // Render a flat list of PDF cards, date-sorted descending (latest first)
+    function displayFlatPdfs(pdfItems, container, countElement) {
+        countElement.textContent = pdfItems.length;
+        let content = '';
+        pdfItems.forEach((pdf, i) => {
+            const pdfId = `pdf-flat-${i + 1}`;
+            const pdfIconId = `pdf-flat-icon-${i + 1}`;
+            content += `
+                <div class="col-lg-12 mb-3">
+                    <div class="card pdf-card">
+                        <div class="card-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#${pdfId}" aria-expanded="false" aria-controls="${pdfId}">
+                            <h6 class="card-title mb-0 d-flex justify-content-between align-items-center">
+                                <span>
+                                    <i class="fas fa-file-pdf me-2"></i>
+                                    ${pdf.type}${pdf.date ? ` — <span class="text-white small">${pdf.date}</span>` : ''}
+                                </span>
+                                <div>
+                                    <a href="${pdf.url}" target="_blank" class="btn btn-sm btn-outline-primary me-2" onclick="event.stopPropagation();">
+                                        <i class="fas fa-external-link-alt me-1"></i>
+                                        Open
+                                    </a>
+                                    <a href="${pdf.url}" download class="btn btn-sm btn-outline-success me-2" onclick="event.stopPropagation();">
+                                        <i class="fas fa-download me-1"></i>
+                                        Download
+                                    </a>
+                                    <i class="fas fa-chevron-right pdf-toggle-icon" id="${pdfIconId}"></i>
+                                </div>
+                            </h6>
+                        </div>
+                        <div class="collapse" id="${pdfId}">
+                            <div class="card-body p-0">
+                                <div class="pdf-iframe-container">
+                                    <iframe 
+                                        data-base-src="${pdf.url}"
+                                        src="${withPdfZoom(pdf.url, 125)}" 
+                                        class="pdf-iframe"
+                                        title="${pdf.type}"
+                                        onload="resizeIframe(this)"
+                                        onerror="handleIframeError(this)">
+                                    </iframe>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = content;
+        // Apply responsive zoom to newly inserted iframes
+        applyResponsiveZoomToAll();
+
+        // Add collapse icon toggles
+        pdfItems.forEach((_, i) => {
+            const pdfId = `pdf-flat-${i + 1}`;
+            const pdfIconId = `pdf-flat-icon-${i + 1}`;
+            const pdfCollapseElement = document.getElementById(pdfId);
+            const pdfToggleIcon = document.getElementById(pdfIconId);
+            if (pdfCollapseElement && pdfToggleIcon) {
+                pdfToggleIcon.classList.remove('fa-chevron-down');
+                pdfToggleIcon.classList.add('fa-chevron-right');
+                pdfCollapseElement.addEventListener('show.bs.collapse', function () {
+                    pdfToggleIcon.classList.remove('fa-chevron-right');
+                    pdfToggleIcon.classList.add('fa-chevron-down');
+                });
+                pdfCollapseElement.addEventListener('hide.bs.collapse', function () {
+                    pdfToggleIcon.classList.remove('fa-chevron-down');
+                    pdfToggleIcon.classList.add('fa-chevron-right');
+                });
+            }
+        });
+    }
+
+    // Display multimatch results
+    function displayMultimatchResults(multimatchData) {
+        const multimatchSection = document.getElementById('multimatch-results-section');
+        const multimatchContainer = document.getElementById('multimatch-container');
+        const multimatchCountElement = document.getElementById('multimatch-count');
+        const multimatchNoResult = document.getElementById('multimatch-no-result');
+
+        // Always show the multimatch section when this function is called
+        multimatchSection.style.display = 'block';
+
+        if (multimatchData && multimatchData.length > 0) {
+            // Check if multimatch data is already displayed to prevent duplicates
+            const existingMultimatchEntries = multimatchContainer.querySelectorAll('.multimatch-entry-card');
+            if (existingMultimatchEntries.length > 0) {
+                return; // Multimatch data already displayed, don't add duplicates
+            }
+
+            // Hide no-result message and show actual data
+            if (multimatchNoResult) {
+                multimatchNoResult.style.display = 'none';
+            }
+            multimatchCountElement.textContent = multimatchData.length;
+
+            let content = '';
+
+            multimatchData.forEach((entry, index) => {
+                const pdfCount = entry.pdf_urls ? entry.pdf_urls.length : 0;
+
+                content += `
+                    <div class="col-12 mb-4">
+                        <div class="card multimatch-entry-card">
+                            <!-- Property Header -->
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="fas fa-building me-2"></i>
+                                    Property ${index + 1}: ${entry.site_name || 'Unknown Site'}
+                                </h5>
+                            </div>
+                            
+                            <!-- Property Details Table (Always Visible) -->
+                            <div class="card-body">
+                                <h6 class="text-muted mb-2">Property Details</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered">
+                                        <tbody>
+                                            <tr>
+                                                <td><strong>Tax ID:</strong></td>
+                                                <td>${entry.tax_id || 'N/A'}</td>
+                                                <td><strong>Site Name:</strong></td>
+                                                <td>${entry.site_name || 'N/A'}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Address:</strong></td>
+                                                <td>${entry.site_address || 'N/A'}</td>
+                                                <td><strong>City:</strong></td>
+                                                <td>${entry.city || 'N/A'}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Owner:</strong></td>
+                                                <td>${entry.first_name || ''} ${entry.last_name || ''}</td>
+                                                <td><strong>Company:</strong></td>
+                                                <td>${entry.company_name || 'N/A'}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Jurisdiction:</strong></td>
+                                                <td>${entry.jurisdiction || 'N/A'}</td>
+                                                <td><strong>County:</strong></td>
+                                                <td>${entry.county || 'N/A'}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- PDF Reports Header (Collapsible) -->
+                            <div class="card-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#multimatch-group-${index}" aria-expanded="false" aria-controls="multimatch-group-${index}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="card-title mb-0">
+                                        <i class="fas fa-file-pdf me-2"></i>
+                                        PDF Reports (${pdfCount})
+                                    </h6>
+                                    <i class="fas fa-chevron-right multimatch-toggle-icon" id="multimatch-icon-${index}"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- PDF Reports Content (Collapsible) -->
+                            <div class="card-body collapse" id="multimatch-group-${index}" data-bs-parent="#multimatch-container">
+                                <div class="row">
+                                    <div class="col-12">
+                `;
+
+                if (entry.pdf_urls && entry.pdf_urls.length > 0) {
+                    // Build a flat list of PDFs and sort by date descending
+                    const pdfItems = entry.pdf_urls.map((pdfData, pdfIndex) => {
+                        let pdfUrl, pdfType, pdfDate;
+                        if (pdfData.includes(',')) {
+                            const parts = pdfData.split(',');
+                            pdfUrl = parts[0];
+                            pdfType = (parts[1] || '').trim() || 'Unknown Type';
+                            pdfDate = (parts[2] || '').trim();
+                        } else {
+                            pdfUrl = pdfData;
+                            pdfType = 'General Report';
+                            pdfDate = '';
+                        }
+                        return { url: pdfUrl, type: pdfType, date: pdfDate, index: pdfIndex + 1 };
+                    }).sort((a, b) => {
+                        const da = parseReportDate(a.date);
+                        const db = parseReportDate(b.date);
+                        return db - da; // latest first
+                    });
+
+                    // Render flat list
+                    pdfItems.forEach((pdf, flatIndex) => {
+                        const pdfId = `multimatch-pdf-flat-${index}-${flatIndex + 1}`;
+                        const pdfIconId = `multimatch-pdf-flat-icon-${index}-${flatIndex + 1}`;
+                        content += `
+                                <div class="col-lg-12 mb-3">
+                                    <div class="card pdf-card">
+                                        <div class="card-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#${pdfId}" aria-expanded="false" aria-controls="${pdfId}">
+                                            <h6 class="card-title mb-0 d-flex justify-content-between align-items-center">
+                                                <span>
+                                                    <i class="fas fa-file-pdf me-2"></i>
+                                                ${pdf.type}${pdf.date ? ` — <span class=\"text-white small\">${pdf.date}</span>` : ''}
+                                                </span>
+                                                <div>
+                                                    <a href="${pdf.url}" target="_blank" class="btn btn-sm btn-outline-primary me-2" onclick="event.stopPropagation();">
+                                                        <i class="fas fa-external-link-alt me-1"></i>
+                                                        Open
+                                                    </a>
+                                                    <a href="${pdf.url}" download class="btn btn-sm btn-outline-success me-2" onclick="event.stopPropagation();">
+                                                        <i class="fas fa-download me-1"></i>
+                                                        Download
+                                                    </a>
+                                                    <i class="fas fa-chevron-right pdf-toggle-icon" id="${pdfIconId}"></i>
+                                                </div>
+                                            </h6>
+                                        </div>
+                                        <div class="collapse" id="${pdfId}">
+                                            <div class="card-body p-0">
+                                                <div class="pdf-iframe-container">
+                                                    <iframe 
+                                                    data-base-src="${pdf.url}"
+                                                    src="${withPdfZoom(pdf.url, 125)}" 
+                                                        class="pdf-iframe"
+                                                    title="${pdf.type}"
+                                                        onload="resizeIframe(this)"
+                                                        onerror="handleIframeError(this)">
+                                                    </iframe>
+                                                </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    content += `
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            No PDF reports available for this property.
+                        </div>
+                    `;
+                }
+
+                content += `
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            multimatchContainer.innerHTML = content;
+
+            // Add Bootstrap collapse event listeners for main PDF section
+            multimatchData.forEach((entry, index) => {
+                const collapseElement = document.getElementById(`multimatch-group-${index}`);
+                const toggleIcon = document.getElementById(`multimatch-icon-${index}`);
+
+                if (collapseElement && toggleIcon) {
+                    // Set initial icon state (collapsed by default)
+                    toggleIcon.classList.remove('fa-chevron-down');
+                    toggleIcon.classList.add('fa-chevron-right');
+
+                    collapseElement.addEventListener('show.bs.collapse', function () {
+                        toggleIcon.classList.remove('fa-chevron-right');
+                        toggleIcon.classList.add('fa-chevron-down');
+                    });
+
+                    collapseElement.addEventListener('hide.bs.collapse', function () {
+                        toggleIcon.classList.remove('fa-chevron-down');
+                        toggleIcon.classList.add('fa-chevron-right');
+                    });
+                }
+
+                // Add event listeners for flat PDF list within each property
+                if (entry.pdf_urls && entry.pdf_urls.length > 0) {
+                    const pdfItems = entry.pdf_urls.map((pdfData) => {
+                        let pdfUrl, pdfType, pdfDate;
+                        if (pdfData.includes(',')) {
+                            const parts = pdfData.split(',');
+                            pdfUrl = parts[0];
+                            pdfType = (parts[1] || '').trim() || 'Unknown Type';
+                            pdfDate = (parts[2] || '').trim();
+                        } else {
+                            pdfUrl = pdfData;
+                            pdfType = 'General Report';
+                            pdfDate = '';
+                        }
+                        return { url: pdfUrl, type: pdfType, date: pdfDate };
+                    }).sort((a, b) => parseReportDate(b.date) - parseReportDate(a.date));
+
+                    pdfItems.forEach((_, flatIndex) => {
+                        const pdfId = `multimatch-pdf-flat-${index}-${flatIndex + 1}`;
+                        const pdfIconId = `multimatch-pdf-flat-icon-${index}-${flatIndex + 1}`;
+
+                        const pdfCollapseElement = document.getElementById(pdfId);
+                        const pdfToggleIcon = document.getElementById(pdfIconId);
+
+                        if (pdfCollapseElement && pdfToggleIcon) {
+                            // Set initial icon state (collapsed by default)
+                            pdfToggleIcon.classList.remove('fa-chevron-down');
+                            pdfToggleIcon.classList.add('fa-chevron-right');
+
+                            pdfCollapseElement.addEventListener('show.bs.collapse', function () {
+                                pdfToggleIcon.classList.remove('fa-chevron-right');
+                                pdfToggleIcon.classList.add('fa-chevron-down');
+                            });
+
+                            pdfCollapseElement.addEventListener('hide.bs.collapse', function () {
+                                pdfToggleIcon.classList.remove('fa-chevron-down');
+                                pdfToggleIcon.classList.add('fa-chevron-right');
+                            });
+                        }
+                    });
+                }
+            });
+
+            // Add animation effect
+            multimatchSection.style.opacity = '0';
+            multimatchSection.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                multimatchSection.style.transition = 'all 0.5s ease-in-out';
+                multimatchSection.style.opacity = '1';
+                multimatchSection.style.transform = 'translateY(0)';
+            }, 100);
+        } else {
+            // Show no result message
+            if (multimatchNoResult) {
+                multimatchNoResult.style.display = 'block';
+            }
+            multimatchCountElement.textContent = '0';
+        }
+    }
+
+
+    // Display location code progressively
+    function displayLocationCode(locationCode) {
+        const locationCodeSection = document.getElementById('location-code-section');
+        const locationCodeDisplay = document.getElementById('location-code-display');
+        const locationCodeSkeleton = document.getElementById('location-code-skeleton');
+        const locationCodeContainer = document.getElementById('location-code-display-container');
+
+        if (locationCode) {
+            // Show the section if not already visible
+            if (locationCodeSection.style.display === 'none') {
+                locationCodeSection.style.display = 'block';
+            }
+
+            // Hide skeleton and show actual data
+            if (locationCodeSkeleton) {
+                locationCodeSkeleton.style.display = 'none';
+            }
+            if (locationCodeContainer) {
+                locationCodeContainer.style.display = 'block';
+            }
+
+            locationCodeDisplay.textContent = locationCode;
+
+            // Add animation effect
+            locationCodeContainer.style.opacity = '0';
+            locationCodeContainer.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                locationCodeContainer.style.transition = 'all 0.5s ease-in-out';
+                locationCodeContainer.style.opacity = '1';
+                locationCodeContainer.style.transform = 'translateY(0)';
+            }, 100);
+        }
+    }
+
+    // Show location code skeleton loading
+    function showLocationCodeSkeleton() {
+        const locationCodeSection = document.getElementById('location-code-section');
+        const locationCodeSkeleton = document.getElementById('location-code-skeleton');
+        const locationCodeContainer = document.getElementById('location-code-display-container');
+
+        // Show the section with skeleton
+        locationCodeSection.style.display = 'block';
+        if (locationCodeSkeleton) {
+            locationCodeSkeleton.style.display = 'block';
+        }
+        if (locationCodeContainer) {
+            locationCodeContainer.style.display = 'none';
+        }
+    }
+
+    // Show location code requirement message
+    function showLocationCodeRequirement() {
+        const locationCodeSection = document.getElementById('location-code-section');
+        const locationCodeSkeleton = document.getElementById('location-code-skeleton');
+        const locationCodeContainer = document.getElementById('location-code-display-container');
+
+        // Show the section
+        locationCodeSection.style.display = 'block';
+
+        // Hide skeleton and show requirement message
+        if (locationCodeSkeleton) {
+            locationCodeSkeleton.style.display = 'none';
+        }
+        if (locationCodeContainer) {
+            locationCodeContainer.style.display = 'block';
+            locationCodeContainer.innerHTML = `
+                <div class="alert alert-warning mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    City and ZIP code are required to retrieve location code information.
+                </div>
+            `;
+        }
+    }
+
+    // Show RME reports skeleton loading
+    function showRmeReportsSkeleton() {
+        const pdfResultsSection = document.getElementById('pdf-results-section');
+        const skeletonLoading = document.getElementById('skeleton-loading');
+
+        if (pdfResultsSection) {
+            pdfResultsSection.style.display = 'block';
+        }
+
+        if (skeletonLoading) {
+            skeletonLoading.style.display = 'block';
+        }
+
+        // Clear any existing PDF content
+        const pdfContainer = document.getElementById('pdf-container');
+        if (pdfContainer) {
+            // Hide skeleton first, then clear content, then show skeleton again
+            const existingPdfs = pdfContainer.querySelectorAll('.pdf-card');
+            existingPdfs.forEach(pdf => pdf.remove());
+        }
+    }
+
+    // Hide location code skeleton when no location code is found
+    function hideLocationCodeSkeleton() {
+        const locationCodeSection = document.getElementById('location-code-section');
+        const locationCodeSkeleton = document.getElementById('location-code-skeleton');
+
+        // Hide the entire location code section if no location code was found
+        if (locationCodeSection) {
+            locationCodeSection.style.display = 'none';
+        }
+
+        // Also hide skeleton if it exists
+        if (locationCodeSkeleton) {
+            locationCodeSkeleton.style.display = 'none';
+        }
+    }
+
+    // Display individual PDF report as it becomes available
+    function displayIndividualPdfReport(pdfUrl, reportIndex) {
+        const pdfContainer = document.getElementById('pdf-container');
+        const pdfCountElement = document.getElementById('pdf-count');
+        const skeletonLoading = document.getElementById('skeleton-loading');
+
+        // Hide skeleton loading for this specific report
+        const skeletonCard = skeletonLoading.querySelector(`[data-report-index="${reportIndex}"]`);
+        if (skeletonCard) {
+            skeletonCard.style.display = 'none';
+        }
+
+        // Create and add the PDF card
+        const pdfCard = createPdfCard(pdfUrl, reportIndex);
+        pdfCard.classList.add('pdf-card');
+        pdfCard.style.opacity = '0';
+        pdfCard.style.transform = 'translateY(20px)';
+
+        // Insert the PDF card in the correct position
+        if (reportIndex === 1) {
+            pdfContainer.insertBefore(pdfCard, skeletonLoading);
+        } else {
+            // Find the previous PDF card and insert after it
+            const previousCard = pdfContainer.querySelector(`.pdf-card:nth-child(${reportIndex - 1})`);
+            if (previousCard) {
+                pdfContainer.insertBefore(pdfCard, previousCard.nextSibling);
+            } else {
+                pdfContainer.insertBefore(pdfCard, skeletonLoading);
+            }
+        }
+
+        // Update count
+        const currentCount = pdfContainer.querySelectorAll('.pdf-card').length;
+        pdfCountElement.textContent = currentCount;
+
+        // Add animation effect
+        setTimeout(() => {
+            pdfCard.style.transition = 'all 0.5s ease-in-out';
+            pdfCard.style.opacity = '1';
+            pdfCard.style.transform = 'translateY(0)';
+        }, 100);
+    }
+
+    // Display PDF reports progressively (legacy function for completed lookups)
+    function displayPdfReports(pdfUrls) {
+        const pdfContainer = document.getElementById('pdf-container');
+        const pdfCountElement = document.getElementById('pdf-count');
+        const skeletonLoading = document.getElementById('skeleton-loading');
+
+        // Hide skeleton loading
+        if (skeletonLoading) {
+            skeletonLoading.style.display = 'none';
+        }
+
+        if (pdfUrls && pdfUrls.length > 0) {
+            // Check if PDFs are already displayed to prevent duplicates
+            const existingPdfs = pdfContainer.querySelectorAll('.pdf-card');
+            if (existingPdfs.length > 0) {
+                return; // PDFs already displayed, don't add duplicates
+            }
+
+            pdfCountElement.textContent = pdfUrls.length;
+
+            pdfUrls.forEach((url, index) => {
+                const pdfCard = createPdfCard(url, index + 1);
+                pdfCard.classList.add('pdf-card'); // Add class for identification
+                pdfContainer.appendChild(pdfCard);
+
+                // Add animation effect
+                pdfCard.style.opacity = '0';
+                pdfCard.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    pdfCard.style.transition = 'all 0.5s ease-in-out';
+                    pdfCard.style.opacity = '1';
+                    pdfCard.style.transform = 'translateY(0)';
+                }, index * 200); // Stagger animations
+            });
+        } else {
+            // Only show "no reports" message if no PDFs exist and none are displayed
+            const existingPdfs = pdfContainer.querySelectorAll('.pdf-card');
+            if (existingPdfs.length === 0) {
+                pdfContainer.innerHTML = '<div class="alert alert-info"><i class="fas fa-info-circle me-2"></i>No PDF reports found for this address.</div>';
+                pdfCountElement.textContent = '0';
+            }
+        }
+    }
+
+    // Display Tacoma reports progressively
+    function displayTacomaReports(tacomaReports) {
+        const tacomaSection = document.getElementById('tacoma-reports-section');
+        const tacomaContainer = document.getElementById('tacoma-container');
+        const tacomaCountElement = document.getElementById('tacoma-count');
+        const tacomaNoResult = document.getElementById('tacoma-no-result');
+
+        if (tacomaReports && tacomaReports.length > 0) {
+            // Check if Tacoma reports are already displayed to prevent duplicates
+            const existingTacomaReports = tacomaContainer.querySelectorAll('.tacoma-report-card');
+            if (existingTacomaReports.length > 0) {
+                return; // Tacoma reports already displayed, don't add duplicates
+            }
+
+            // Show the section and hide no-result message
+            tacomaSection.style.display = 'block';
+            if (tacomaNoResult) {
+                tacomaNoResult.style.display = 'none';
+            }
+            tacomaCountElement.textContent = tacomaReports.length;
+
+            // Group reports by type
+            const groupedReports = {};
+            tacomaReports.forEach((report, index) => {
+                const [reportUrl, reportType] = report.split(',');
+                const displayType = reportType ? reportType.trim() : 'Unknown Type';
+
+                if (!groupedReports[displayType]) {
+                    groupedReports[displayType] = [];
+                }
+                groupedReports[displayType].push({
+                    url: reportUrl,
+                    type: displayType,
+                    index: index + 1
+                });
+            });
+
+            let content = '';
+
+            // Display each group
+            Object.keys(groupedReports).forEach(type => {
+                const reports = groupedReports[type];
+
+                content += `
+                    <div class="col-12 mb-4">
+                        <div class="card tacoma-type-group">
+                            <div class="card-header" style="cursor: pointer;" onclick="toggleGroup('${type.replace(/[^a-zA-Z0-9]/g, '')}')">
+                                <h6 class="card-title mb-0">
+                                    <i class="fas fa-folder me-2"></i>
+                                    ${type}
+                                    <span class="badge bg-secondary ms-2">${reports.length}</span>
+                                    <i class="fas fa-chevron-right ms-2 group-toggle-icon" id="icon-${type.replace(/[^a-zA-Z0-9]/g, '')}"></i>
+                                </h6>
+                            </div>
+                            <div class="card-body collapse" id="group-${type.replace(/[^a-zA-Z0-9]/g, '')}">
+                                <div class="row">
+                `;
+
+                // Display reports within this group
+                reports.forEach((report, groupIndex) => {
+                    const typeClean = `${type.replace(/[^a-zA-Z0-9]/g, '')}`;
+                    const reportId = `tpchd-${typeClean}-${groupIndex + 1}`;
+                    const iconId = `tpchd-icon-${typeClean}-${groupIndex + 1}`;
+                    content += `
+                        <div class="col-lg-12 mb-3">
+                            <div class="card tacoma-report-card">
+                                <div class="card-header d-flex justify-content-between align-items-center" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#${reportId}" aria-expanded="false" aria-controls="${reportId}">
+                                    <div>
+                                        <h6 class="card-title mb-0">
+                                            <i class="fas fa-file-alt me-2"></i>
+                                            ${report.type} Report ${groupIndex + 1}
+                                        </h6>
+                                    </div>
+                                    <div>
+                                        <a href="${report.url}" target="_blank" class="btn btn-sm btn-outline-info me-2" onclick="event.stopPropagation();">
+                                            <i class="fas fa-external-link-alt me-1"></i>
+                                            Open
+                                        </a>
+                                        <i class="fas fa-chevron-right group-toggle-icon" id="${iconId}"></i>
+                                    </div>
+                                </div>
+                                <div class="collapse" id="${reportId}">
+                                    <div class="card-body p-0">
+                                        <div class="tpchd-report-iframe-container">
+                                        <iframe 
+                                            data-base-src="${report.url}"
+                                            src="${withPdfZoom(report.url, 125)}" 
+                                                class="tpchd-report-iframe"
+                                                title="${report.type} Report ${groupIndex + 1}"
+                                                onload="resizeTpchdIframe(this)"
+                                                onerror="handleTpchdIframeError(this)">
+                                            </iframe>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                content += `
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            tacomaContainer.innerHTML = content;
+            // Apply responsive zoom to TPCHD iframes
+            applyResponsiveZoomToAll();
+
+            // Add animation effect
+            tacomaSection.style.opacity = '0';
+            tacomaSection.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                tacomaSection.style.transition = 'all 0.5s ease-in-out';
+                tacomaSection.style.opacity = '1';
+                tacomaSection.style.transform = 'translateY(0)';
+            }, 100);
+        }
+    }
+
+    // Toggle group collapse/expand
+    function toggleGroup(groupId) {
+        const groupContent = document.getElementById(`group-${groupId}`);
+        const toggleIcon = document.getElementById(`icon-${groupId}`);
+
+        if (groupContent.classList.contains('show')) {
+            // Collapse the group
+            groupContent.classList.remove('show');
+            toggleIcon.classList.remove('fa-chevron-down');
+            toggleIcon.classList.add('fa-chevron-right');
+
+            // Collapse all individual reports within this type
+            const childCollapses = groupContent.querySelectorAll('.collapse');
+            childCollapses.forEach(child => child.classList.remove('show'));
+            // Update child icons to collapsed
+            const childIcons = groupContent.querySelectorAll('.group-toggle-icon');
+            childIcons.forEach(icon => {
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-right');
+            });
+        } else {
+            // Expand the group
+            groupContent.classList.add('show');
+            toggleIcon.classList.remove('fa-chevron-right');
+            toggleIcon.classList.add('fa-chevron-down');
+
+            // Expand all individual reports within this type
+            const childCollapses = groupContent.querySelectorAll('.collapse');
+            childCollapses.forEach(child => child.classList.add('show'));
+            // Update child icons to expanded
+            const childIcons = groupContent.querySelectorAll('.group-toggle-icon');
+            childIcons.forEach(icon => {
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-chevron-down');
+            });
+        }
+    }
+
+    // Display King County reports progressively
+    function displayKingReports(kingReports) {
+        const additionalSection = document.getElementById('additional-results-section');
+        const additionalContent = document.getElementById('additional-results-content');
+        const kingNoResult = document.getElementById('king-no-result');
+        const kingCountElement = document.getElementById('king-count');
+
+        if (kingReports && kingReports.length > 0) {
+            // Check if King County reports are already displayed to prevent duplicates
+            const existingKingReports = additionalContent.querySelectorAll('.king-report-card');
+            if (existingKingReports.length > 0) {
+                return; // King County reports already displayed, don't add duplicates
+            }
+
+            // Hide no-result message and update count
+            if (kingNoResult) {
+                kingNoResult.style.display = 'none';
+            }
+            if (kingCountElement) {
+                kingCountElement.textContent = kingReports.length;
+            }
+
+            let content = `
+                <div class="mb-3 king-reports-section">
+                    <div class="row">
+            `;
+
+            kingReports.forEach((report, index) => {
+                const reportId = `king-report-${index + 1}`;
+                const iconId = `king-icon-${index + 1}`;
+
+                content += `
+                    <div class="col-lg-12 mb-3">
+                        <div class="card king-report-card">
+                            <div class="card-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#${reportId}" aria-expanded="false" aria-controls="${reportId}">
+                                <h6 class="card-title mb-0 d-flex justify-content-between align-items-center">
+                                    <span>
+                                        <i class="fas fa-file-alt me-2"></i>
+                                        King County Report ${index + 1}
+                                    </span>
+                                    <div>
+                                        <a href="${report}" target="_blank" class="btn btn-sm btn-outline-warning me-2" onclick="event.stopPropagation();">
+                                            <i class="fas fa-external-link-alt me-1"></i>
+                                            Open
+                                        </a>
+                                        <i class="fas fa-chevron-right king-toggle-icon" id="${iconId}"></i>
+                                    </div>
+                                </h6>
+                            </div>
+                            <div class="collapse" id="${reportId}">
+                                <div class="card-body p-0">
+                                    <div class="king-report-iframe-container">
+                                        <iframe 
+                                            data-base-src="${report}"
+                                            src="${withPdfZoom(report, 125)}" 
+                                            class="king-report-iframe"
+                                            title="King County Report ${index + 1}"
+                                            onload="resizeKingIframe(this)"
+                                            onerror="handleKingIframeError(this)">
+                                        </iframe>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            content += '</div></div>';
+
+            // Append to existing content or create new section
+            if (additionalSection.style.display === 'none') {
+                additionalContent.innerHTML = content;
+                additionalSection.style.display = 'block';
+                applyResponsiveZoomToAll();
+            } else {
+                additionalContent.innerHTML += content;
+                applyResponsiveZoomToAll();
+            }
+
+            // Add animation effect
+            additionalSection.style.opacity = '0';
+            additionalSection.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                additionalSection.style.transition = 'all 0.5s ease-in-out';
+                additionalSection.style.opacity = '1';
+                additionalSection.style.transform = 'translateY(0)';
+
+                // Add event listeners for King County report collapse toggles
+                kingReports.forEach((report, index) => {
+                    const reportId = `king-report-${index + 1}`;
+                    const iconId = `king-icon-${index + 1}`;
+                    const collapseElement = document.getElementById(reportId);
+                    const iconElement = document.getElementById(iconId);
+
+                    if (collapseElement && iconElement) {
+                        collapseElement.addEventListener('show.bs.collapse', function () {
+                            iconElement.classList.remove('fa-chevron-right');
+                            iconElement.classList.add('fa-chevron-down');
+                        });
+
+                        collapseElement.addEventListener('hide.bs.collapse', function () {
+                            iconElement.classList.remove('fa-chevron-down');
+                            iconElement.classList.add('fa-chevron-right');
+                        });
+                    }
+                });
+            }, 100);
+        }
+    }
+
     // Create PDF card with iframe
     function createPdfCard(url, index) {
         const col = document.createElement('div');
-        col.className = 'col-lg-6 mb-4';
+        col.className = 'col-lg-12 mb-4';
 
         col.innerHTML = `
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h6 class="card-title mb-0">
                         <i class="fas fa-file-pdf me-2"></i>
-                        Report ${index}
+                        RME Report ${index}
                     </h6>
                     <div>
                         <a href="${url}" target="_blank" class="btn btn-sm btn-outline-primary me-2">
@@ -260,7 +1899,7 @@
                         <iframe 
                             src="${url}" 
                             class="pdf-iframe"
-                            title="Property Report ${index}"
+                            title="RME Report ${index}"
                             onload="resizeIframe(this)"
                             onerror="handleIframeError(this)">
                         </iframe>
@@ -276,66 +1915,151 @@
     function displayAdditionalResults(results) {
         const additionalSection = document.getElementById('additional-results-section');
         const additionalContent = document.getElementById('additional-results-content');
+        const locationCodeSection = document.getElementById('location-code-section');
+        const locationCodeDisplay = document.getElementById('location-code-display');
+        const locationCodeSkeleton = document.getElementById('location-code-skeleton');
+        const locationCodeContainer = document.getElementById('location-code-display-container');
+        const locationCodeNoResult = document.getElementById('location-code-no-result');
 
-        let hasAdditionalResults = false;
-        let content = '';
+        // Always show location code section
+        locationCodeSection.style.display = 'block';
 
-        if (results.location_code) {
-            hasAdditionalResults = true;
-            content += `
-                <div class="mb-3">
-                    <h6 class="text-success"><i class="fas fa-map-marker-alt me-2"></i>Location Code</h6>
-                    <div class="alert alert-success">
-                        <code>${results.location_code}</code>
+        // Display location code and messages
+        if (!results.city || !results.zip_code) {
+            // City or ZIP missing: show requirement message only
+            if (locationCodeSkeleton) {
+                locationCodeSkeleton.style.display = 'none';
+            }
+            if (locationCodeNoResult) {
+                locationCodeNoResult.style.display = 'none';
+            }
+            if (locationCodeContainer) {
+                locationCodeContainer.style.display = 'block';
+                locationCodeContainer.innerHTML = `
+                    <div class="alert alert-warning mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        City and ZIP code are required to retrieve location code information.
                     </div>
-                </div>
-            `;
-        }
-
-        if (results.tacoma_reports && results.tacoma_reports.length > 0) {
-            hasAdditionalResults = true;
-            content += `
-                <div class="mb-3">
-                    <h6 class="text-info"><i class="fas fa-city me-2"></i>Tacoma Reports (${results.tacoma_reports.length})</h6>
-                    <ul class="list-group">
-            `;
-
-            results.tacoma_reports.forEach((report, index) => {
-                content += `
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>Report ${index + 1}</span>
-                        <a href="${report}" target="_blank" class="btn btn-sm btn-outline-info">
-                            <i class="fas fa-external-link-alt me-1"></i>View
-                        </a>
-                    </li>
                 `;
-            });
-
-            content += '</ul></div>';
+            }
+        } else if (results.location_code) {
+            // Hide skeleton and no-result, show actual content
+            if (locationCodeSkeleton) {
+                locationCodeSkeleton.style.display = 'none';
+            }
+            if (locationCodeNoResult) {
+                locationCodeNoResult.style.display = 'none';
+            }
+            if (locationCodeContainer) {
+                locationCodeContainer.style.display = 'block';
+            }
+            locationCodeDisplay.textContent = results.location_code;
+        } else {
+            // Hide skeleton and actual content, show no-result
+            if (locationCodeSkeleton) {
+                locationCodeSkeleton.style.display = 'none';
+            }
+            if (locationCodeContainer) {
+                locationCodeContainer.style.display = 'none';
+            }
+            if (locationCodeNoResult) {
+                locationCodeNoResult.style.display = 'block';
+            }
         }
 
-        if (hasAdditionalResults) {
-            additionalContent.innerHTML = content;
-            additionalSection.style.display = 'block';
+        // Display multimatch results only if there's actual multimatch data
+        if (results.is_multimatch && results.multimatch_data && results.multimatch_data.length > 0) {
+            displayMultimatchResults(results.multimatch_data);
+        } else {
+            // Hide multimatch section if no multimatch data
+            const multimatchSection = document.getElementById('multimatch-results-section');
+            if (multimatchSection) {
+                multimatchSection.style.display = 'none';
+            }
+        }
+
+        // Display Tacoma reports in their dedicated section (only for Pierce County)
+        console.log('Checking Tacoma reports - County:', results.county, 'Tacoma reports:', results.tacoma_reports);
+        if (results.county && results.county.toLowerCase() === 'pierce') {
+            console.log('Pierce County detected, showing Tacoma section');
+            // Show the Tacoma section for Pierce County
+            const tacomaSection = document.getElementById('tacoma-reports-section');
+            if (tacomaSection) {
+                tacomaSection.style.display = 'block';
+                console.log('Tacoma section made visible');
+            }
+
+            if (results.tacoma_reports && results.tacoma_reports.length > 0) {
+                console.log('Calling displayTacomaReports with', results.tacoma_reports.length, 'reports');
+                displayTacomaReports(results.tacoma_reports);
+            } else {
+                console.log('No Tacoma reports found, showing no result message');
+                // Show no result message for Tacoma
+                const tacomaNoResult = document.getElementById('tacoma-no-result');
+                if (tacomaNoResult) {
+                    tacomaNoResult.style.display = 'block';
+                }
+            }
+        } else {
+            console.log('Not Pierce County, hiding Tacoma section');
+            // Hide Tacoma section for non-Pierce counties
+            const tacomaSection = document.getElementById('tacoma-reports-section');
+            if (tacomaSection) {
+                tacomaSection.style.display = 'none';
+            }
+        }
+
+        // Display King County reports (only for King County)
+        if (results.county && results.county.toLowerCase() === 'king') {
+            // Show the King County section for King County
+            const additionalSection = document.getElementById('additional-results-section');
+            if (additionalSection) {
+                additionalSection.style.display = 'block';
+            }
+
+            if (results.king_reports && results.king_reports.length > 0) {
+                displayKingReports(results.king_reports);
+            } else {
+                // Prefer King-specific error if present on initial render
+                const kingNoResult = document.getElementById('king-no-result');
+                if (kingNoResult) {
+                    if (results.king_error_message) {
+                        kingNoResult.classList.remove('alert-info');
+                        kingNoResult.classList.add('alert-danger');
+                        kingNoResult.innerHTML = `<i class=\"fas fa-exclamation-triangle me-2\"></i>${results.king_error_message}`;
+                    } else {
+                        kingNoResult.classList.remove('alert-danger');
+                        kingNoResult.classList.add('alert-info');
+                        kingNoResult.innerHTML = '<i class=\"fas fa-info-circle me-2\"></i>No King County reports found for this address.';
+                    }
+                    kingNoResult.style.display = 'block';
+                }
+            }
+        } else {
+            // Hide King County section for non-King counties
+            const additionalSection = document.getElementById('additional-results-section');
+            if (additionalSection) {
+                additionalSection.style.display = 'none';
+            }
         }
     }
 
     // Start polling for updates
     function startPolling() {
-        const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
-        loadingModal.show();
+        // Show skeleton loading instead of modal
+        const skeletonLoading = document.getElementById('skeleton-loading');
+        if (skeletonLoading) {
+            skeletonLoading.style.display = 'block';
+        }
 
-        let progress = 0;
-        const progressBar = document.getElementById('loading-progress');
-        const loadingText = document.getElementById('loading-text');
+        // Show RME reports skeleton initially
+        showRmeReportsSkeleton();
+
+        // Show location code skeleton if city and zip are provided
+        // We'll check this in the first polling call
 
         loadingInterval = setInterval(async () => {
             try {
-                progress += Math.random() * 5;
-                if (progress > 90) progress = 90;
-
-                progressBar.style.width = progress + '%';
-
                 const response = await fetch(`/api/lookup/${sessionId}`);
                 const session = await response.json();
 
@@ -345,20 +2069,199 @@
 
                 updateSessionInfo(session);
 
-                if (session.status === 'completed') {
-                    progressBar.style.width = '100%';
-                    loadingText.textContent = 'Results loaded successfully!';
+                // Early-surface RME error while still running
+                if (!session.is_multimatch && (!session.pdf_urls || session.pdf_urls.length === 0) && session.error_message && !rmeErrorShown) {
+                    const skeletonLoading = document.getElementById('skeleton-loading');
+                    if (skeletonLoading) {
+                        skeletonLoading.style.display = 'none';
+                    }
+                    const pdfNoResult = document.getElementById('pdf-no-result');
+                    if (pdfNoResult) {
+                        pdfNoResult.classList.remove('alert-info');
+                        pdfNoResult.classList.add('alert-danger');
+                        pdfNoResult.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${session.error_message}`;
+                        pdfNoResult.style.display = 'block';
+                    }
+                    rmeErrorShown = true;
+                }
 
-                    setTimeout(() => {
-                        hideLoadingModal();
-                        // Create results object from session data
-                        const results = {
-                            pdf_urls: session.pdf_urls || [],
-                            location_code: session.location_code,
-                            tacoma_reports: session.tacoma_reports || []
-                        };
-                        displayResults(results);
-                    }, 1000);
+                // Show location code skeleton if city and zip are provided but no location code yet
+                if (session.city && session.zip_code && !session.location_code) {
+                    showLocationCodeSkeleton();
+                } else if (!session.city || !session.zip_code) {
+                    // Show requirement message if city or zip are missing
+                    showLocationCodeRequirement();
+                }
+
+                // Display data progressively as it becomes available
+                if (session.location_code) {
+                    displayLocationCode(session.location_code);
+                }
+
+                // Handle multimatch data only if there's actual multimatch data
+                if (session.is_multimatch && session.multimatch_data && session.multimatch_data.length > 0) {
+                    displayMultimatchResults(session.multimatch_data);
+                    // Hide PDF section for multimatch cases
+                    const pdfResultsSection = document.getElementById('pdf-results-section');
+                    if (pdfResultsSection) {
+                        pdfResultsSection.style.display = 'none';
+                    }
+                } else {
+                    // Hide multimatch section if no multimatch data
+                    const multimatchSection = document.getElementById('multimatch-results-section');
+                    if (multimatchSection) {
+                        multimatchSection.style.display = 'none';
+                    }
+                }
+
+                // Handle PDF reports - simulate individual loading (for single match)
+                if (!session.is_multimatch && session.pdf_urls && session.pdf_urls.length > 0) {
+                    // Check if PDFs are already displayed to prevent duplicates
+                    const existingPdfs = document.querySelectorAll('.pdf-card');
+                    if (existingPdfs.length === 0) {
+                        // Hide skeleton loading when we have PDF data to display
+                        const skeletonLoading = document.getElementById('skeleton-loading');
+                        if (skeletonLoading) {
+                            skeletonLoading.style.display = 'none';
+                        }
+
+                        // Build flat list of PDFs and sort by date descending
+                        const pdfItems = session.pdf_urls.map((pdfData, pdfIndex) => {
+                            let pdfUrl, pdfType, pdfDate;
+                            if (pdfData.includes(',')) {
+                                const parts = pdfData.split(',');
+                                pdfUrl = parts[0];
+                                pdfType = (parts[1] || '').trim() || 'Unknown Type';
+                                pdfDate = (parts[2] || '').trim();
+                            } else {
+                                pdfUrl = pdfData;
+                                pdfType = 'General Report';
+                                pdfDate = '';
+                            }
+                            return {
+                                url: pdfUrl,
+                                type: pdfType,
+                                date: pdfDate,
+                                index: pdfIndex + 1
+                            };
+                        }).sort((a, b) => parseReportDate(b.date) - parseReportDate(a.date));
+
+                        // Display flat, date-sorted PDFs
+                        const pdfContainer = document.getElementById('pdf-container');
+                        const pdfCountElement = document.getElementById('pdf-count');
+                        displayFlatPdfs(pdfItems, pdfContainer, pdfCountElement);
+                    }
+                }
+
+                // Display Tacoma reports only for Pierce County
+                if (session.county && session.county.toLowerCase() === 'pierce') {
+                    // Show the Tacoma section for Pierce County
+                    const tacomaSection = document.getElementById('tacoma-reports-section');
+                    const tacomaNoResult = document.getElementById('tacoma-no-result');
+                    if (tacomaSection) {
+                        tacomaSection.style.display = 'block';
+                    }
+
+                    if (Array.isArray(session.tacoma_reports) && session.tacoma_reports.length > 0) {
+                        // Hide no-result and render reports
+                        if (tacomaNoResult) {
+                            tacomaNoResult.style.display = 'none';
+                        }
+                        displayTacomaReports(session.tacoma_reports);
+                    } else if (Array.isArray(session.tacoma_reports) && session.tacoma_reports.length === 0) {
+                        // Show no-result immediately when the lookup has finished with no reports
+                        if (tacomaNoResult) {
+                            tacomaNoResult.style.display = 'block';
+                        }
+                    } else {
+                        // Undefined (likely still running) -> keep no-result hidden
+                        if (tacomaNoResult) {
+                            tacomaNoResult.style.display = 'none';
+                        }
+                    }
+                } else if (session.county && session.county.toLowerCase() !== 'pierce') {
+                    // Hide Tacoma section for non-Pierce counties
+                    const tacomaSection = document.getElementById('tacoma-reports-section');
+                    if (tacomaSection) {
+                        tacomaSection.style.display = 'none';
+                    }
+                }
+
+                // Display King County reports only for King County
+                if (session.county && session.county.toLowerCase() === 'king') {
+                    // Show the King County section for King County
+                    const additionalSection = document.getElementById('additional-results-section');
+                    const kingNoResult = document.getElementById('king-no-result');
+                    if (additionalSection) {
+                        additionalSection.style.display = 'block';
+                    }
+
+                    // Show King error immediately if present (and no reports yet)
+                    if ((!session.king_reports || session.king_reports.length === 0) && session.king_error_message) {
+                        if (kingNoResult) {
+                            kingNoResult.classList.remove('alert-info');
+                            kingNoResult.classList.add('alert-danger');
+                            kingNoResult.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${session.king_error_message}`;
+                            kingNoResult.style.display = 'block';
+                        }
+                    }
+
+                    if (Array.isArray(session.king_reports) && session.king_reports.length > 0) {
+                        // Hide no-result and render reports
+                        if (kingNoResult) {
+                            kingNoResult.style.display = 'none';
+                            kingNoResult.classList.remove('alert-danger');
+                            kingNoResult.classList.add('alert-info');
+                            kingNoResult.innerHTML = '<i class="fas fa-info-circle me-2"></i>No King County reports found for this address.';
+                        }
+                        displayKingReports(session.king_reports);
+                    } else if (session.status === 'completed') {
+                        // After completion with no reports: prefer King-specific error if present
+                        if (kingNoResult) {
+                            if (session.king_error_message) {
+                                kingNoResult.classList.remove('alert-info');
+                                kingNoResult.classList.add('alert-danger');
+                                kingNoResult.innerHTML = `<i class=\"fas fa-exclamation-triangle me-2\"></i>${session.king_error_message}`;
+                            } else {
+                                kingNoResult.classList.remove('alert-danger');
+                                kingNoResult.classList.add('alert-info');
+                                kingNoResult.innerHTML = '<i class=\"fas fa-info-circle me-2\"></i>No King County reports found for this address.';
+                            }
+                            kingNoResult.style.display = 'block';
+                        }
+                    } else {
+                        // While running: show skeleton only (keep no-result hidden)
+                        if (kingNoResult) {
+                            kingNoResult.style.display = 'none';
+                        }
+                    }
+                } else if (session.county && session.county.toLowerCase() !== 'king') {
+                    // Hide King County section for non-King counties
+                    const additionalSection = document.getElementById('additional-results-section');
+                    if (additionalSection) {
+                        additionalSection.style.display = 'none';
+                    }
+                }
+
+                if (session.status === 'completed') {
+                    clearInterval(loadingInterval);
+                    loadingInterval = null;
+
+                    // Final check: ensure PDF section is hidden for multimatch cases
+                    if (session.is_multimatch && session.multimatch_data && session.multimatch_data.length > 0) {
+                        const pdfResultsSection = document.getElementById('pdf-results-section');
+                        if (pdfResultsSection) {
+                            pdfResultsSection.style.display = 'none';
+                        }
+                    }
+
+                    // Hide location code skeleton if no location code was found
+                    if (session.city && session.zip_code && !session.location_code) {
+                        hideLocationCodeSkeleton();
+                    } else if (!session.city || !session.zip_code) {
+                        // Show requirement message if city or zip are missing
+                        showLocationCodeRequirement();
+                    }
 
                 } else if (session.status === 'error') {
                     throw new Error(session.error_message || 'Lookup failed');
@@ -366,28 +2269,20 @@
 
             } catch (error) {
                 console.error('Error polling session:', error);
-                loadingText.textContent = 'Error: ' + error.message;
+                clearInterval(loadingInterval);
+                loadingInterval = null;
 
-                setTimeout(() => {
-                    hideLoadingModal();
-                    showError('Error loading results: ' + error.message);
-                }, 2000);
+                // Hide skeleton loading
+                const skeletonLoading = document.getElementById('skeleton-loading');
+                if (skeletonLoading) {
+                    skeletonLoading.style.display = 'none';
+                }
+
+                showError('Error loading results: ' + error.message);
             }
-        }, 2000);
+        }, 1000);
     }
 
-    // Hide loading modal
-    function hideLoadingModal() {
-        const modal = bootstrap.Modal.getInstance(document.getElementById('loadingModal'));
-        if (modal) {
-            modal.hide();
-        }
-
-        if (loadingInterval) {
-            clearInterval(loadingInterval);
-            loadingInterval = null;
-        }
-    }
 
     // Show error message
     function showError(message) {
@@ -400,10 +2295,25 @@
         `;
     }
 
+    // Show success message
+    function showSuccess(message) {
+        const pdfContainer = document.getElementById('pdf-container');
+        pdfContainer.innerHTML = `
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                ${message}
+            </div>
+        `;
+    }
+
     // Resize iframe to fit content
     function resizeIframe(iframe) {
         try {
-            iframe.style.height = '600px';
+            // Use viewport height for responsive sizing
+            const container = iframe.parentElement;
+            const viewportHeight = window.innerHeight;
+            const responsiveHeight = Math.min(viewportHeight * 0.8, 900);
+            container.style.height = Math.max(responsiveHeight, 600) + 'px';
         } catch (error) {
             console.log('Could not resize iframe:', error);
         }
@@ -424,17 +2334,140 @@
         `;
     }
 
+    // Resize King County iframe to fit content
+    function resizeKingIframe(iframe) {
+        try {
+            // Use viewport height for responsive sizing
+            const container = iframe.parentElement;
+            const viewportHeight = window.innerHeight;
+            const responsiveHeight = Math.min(viewportHeight * 0.7, 800);
+            container.style.height = Math.max(responsiveHeight, 500) + 'px';
+        } catch (error) {
+            console.log('Could not resize King County iframe:', error);
+        }
+    }
+
+    // Handle King County iframe error
+    function handleKingIframeError(iframe) {
+        const container = iframe.parentElement;
+        container.innerHTML = `
+            <div class="alert alert-warning text-center">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Could not load King County report preview. 
+                <a href="${iframe.src}" target="_blank" class="btn btn-sm btn-outline-warning ms-2">
+                    <i class="fas fa-external-link-alt me-1"></i>
+                    Open Report
+                </a>
+            </div>
+        `;
+    }
+
+    // Resize TPCHD iframe to fit content
+    function resizeTpchdIframe(iframe) {
+        try {
+            // Use viewport height for responsive sizing
+            const container = iframe.parentElement;
+            const viewportHeight = window.innerHeight;
+            const responsiveHeight = Math.min(viewportHeight * 0.7, 800);
+            container.style.height = Math.max(responsiveHeight, 500) + 'px';
+        } catch (error) {
+            console.log('Could not resize TPCHD iframe:', error);
+        }
+    }
+
+    // Handle TPCHD iframe error
+    function handleTpchdIframeError(iframe) {
+        const container = iframe.parentElement;
+        container.innerHTML = `
+            <div class="alert alert-warning text-center">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Could not load TPCHD report preview. 
+                <a href="${iframe.src}" target="_blank" class="btn btn-sm btn-outline-info ms-2">
+                    <i class="fas fa-external-link-alt me-1"></i>
+                    Open Report
+                </a>
+            </div>
+        `;
+    }
+
+    // Handle window resize for responsive iframes
+    window.addEventListener('resize', function () {
+        // Re-resize all iframes when window is resized
+        const pdfIframes = document.querySelectorAll('.pdf-iframe');
+        pdfIframes.forEach(iframe => resizeIframe(iframe));
+
+        const kingIframes = document.querySelectorAll('.king-report-iframe');
+        kingIframes.forEach(iframe => resizeKingIframe(iframe));
+
+        const tpchdIframes = document.querySelectorAll('.tpchd-report-iframe');
+        tpchdIframes.forEach(iframe => resizeTpchdIframe(iframe));
+    });
+
     // Initialize page
     document.addEventListener('DOMContentLoaded', function () {
         loadSessionData();
     });
+
+    // Delete lookup function
+    async function deleteLookup() {
+        if (!sessionId) {
+            showError('No session ID available for deletion.');
+            return;
+        }
+
+        // Show confirmation dialog
+        const confirmed = confirm('Are you sure you want to delete this lookup? This action cannot be undone.');
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            // Show loading state
+            const deleteBtn = document.getElementById('delete-lookup-btn');
+            const originalText = deleteBtn.innerHTML;
+            deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Deleting...';
+            deleteBtn.disabled = true;
+
+            const response = await fetch(`/api/lookup/${sessionId}/delete`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.error) {
+                throw new Error(result.error);
+            }
+
+            // Show success message
+            showSuccess('Lookup deleted successfully! Redirecting to dashboard...');
+
+            // Redirect to dashboard after a short delay
+            setTimeout(() => {
+                window.location.href = '/dashboard';
+            }, 1500);
+
+        } catch (error) {
+            console.error('Delete error:', error);
+            showError('Failed to delete lookup: ' + error.message);
+
+            // Reset button state
+            const deleteBtn = document.getElementById('delete-lookup-btn');
+            deleteBtn.innerHTML = '<i class="fas fa-trash me-1"></i>Delete Lookup';
+            deleteBtn.disabled = false;
+        }
+    }
 </script>
 
 <style>
     .pdf-iframe-container {
         position: relative;
         width: 100%;
-        height: 600px;
+        height: 80vh;
+        min-height: 600px;
+        max-height: 900px;
         border: 1px solid #dee2e6;
         border-radius: 0.375rem;
         overflow: hidden;
@@ -449,6 +2482,398 @@
 
     .card-body.p-0 {
         padding: 0 !important;
+    }
+
+    /* Make iframe cards full width and better spaced */
+    .col-lg-12 .card {
+        width: 100%;
+        margin: 0 auto;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Ensure iframe containers take full width of their cards */
+    .pdf-iframe-container,
+    .king-report-iframe-container,
+    .tpchd-report-iframe-container {
+        width: 100%;
+        margin: 0;
+        border-radius: 0.375rem;
+    }
+
+    /* Enhanced iframe styling for full width */
+    .pdf-iframe-container {
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .king-report-iframe-container,
+    .tpchd-report-iframe-container {
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .king-report-iframe-container {
+        position: relative;
+        width: 100%;
+        height: 70vh;
+        min-height: 500px;
+        max-height: 800px;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        overflow: hidden;
+    }
+
+    .king-report-iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background-color: #f8f9fa;
+    }
+
+    .tpchd-report-iframe-container {
+        position: relative;
+        width: 100%;
+        height: 70vh;
+        min-height: 500px;
+        max-height: 800px;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        overflow: hidden;
+    }
+
+    .tpchd-report-iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background-color: #f8f9fa;
+    }
+
+    /* Responsive adjustments for smaller screens */
+    @media (max-width: 768px) {
+        .pdf-iframe-container {
+            height: 60vh;
+            min-height: 400px;
+        }
+
+        .king-report-iframe-container,
+        .tpchd-report-iframe-container {
+            height: 55vh;
+            min-height: 350px;
+        }
+    }
+
+    /* Skeleton Loading Animation */
+    .skeleton-text {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s infinite;
+        border-radius: 4px;
+        height: 20px;
+        margin: 8px 0;
+    }
+
+    .skeleton-title {
+        width: 60%;
+        height: 16px;
+    }
+
+    .skeleton-location-code {
+        width: 40%;
+        height: 24px;
+        margin: 0;
+    }
+
+    .skeleton-pdf {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s infinite;
+        height: 600px;
+        border-radius: 0.375rem;
+    }
+
+    @keyframes skeleton-loading {
+        0% {
+            background-position: -200% 0;
+        }
+
+        100% {
+            background-position: 200% 0;
+        }
+    }
+
+    /* Processing status animation */
+    .badge.bg-warning {
+        animation: pulse-warning 2s infinite;
+    }
+
+    @keyframes pulse-warning {
+        0% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.7;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+
+    /* Progressive display animations */
+    .fade-in-up {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.5s ease-in-out;
+    }
+
+    .fade-in-up.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* Smooth transitions for progressive loading */
+    #location-code-section,
+    #tacoma-reports-section,
+    #multimatch-results-section,
+    #pdf-results-section,
+    #additional-results-section {
+        transition: all 0.5s ease-in-out;
+    }
+
+    /* Multimatch specific styling */
+    .multimatch-entry-card {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+    }
+
+    .multimatch-entry-card .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        padding: 1rem;
+    }
+
+    .multimatch-entry-card .card-header:first-child {
+        background-color: #e3f2fd;
+        border-bottom: 2px solid #2196f3;
+        color: #1565c0;
+    }
+
+    .multimatch-entry-card .card-header:not(:first-child) {
+        background-color: #d4edda;
+        border-bottom: 2px solid #28a745;
+        transition: background-color 0.2s ease;
+        cursor: pointer;
+        color: #155724;
+    }
+
+    .multimatch-entry-card .card-header:not(:first-child):hover {
+        background-color: #c3e6cb;
+        color: #0d4a1a;
+    }
+
+    .multimatch-entry-card .card-header .card-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: inherit;
+    }
+
+    .multimatch-entry-card .card-header:first-child .card-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1976d2;
+    }
+
+    .multimatch-toggle-icon {
+        transition: transform 0.2s ease;
+    }
+
+    .multimatch-entry-card .table {
+        margin-bottom: 0;
+    }
+
+    .multimatch-entry-card .table td {
+        padding: 0.5rem;
+        vertical-align: middle;
+    }
+
+    .multimatch-entry-card .table td:first-child {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        width: 20%;
+    }
+
+    /* Collapse animation */
+    .collapse {
+        transition: height 0.35s ease;
+    }
+
+    .collapse.show {
+        height: auto;
+    }
+
+    /* Ensure proper collapse behavior */
+    .card-body.collapse {
+        display: none !important;
+        overflow: hidden;
+    }
+
+    .card-body.collapse.show {
+        display: block !important;
+    }
+
+    /* Ensure multimatch content is properly contained */
+    .multimatch-entry-card .card-body {
+        padding: 1rem;
+    }
+
+    .multimatch-entry-card .card-body.collapse {
+        padding: 0;
+    }
+
+    .multimatch-entry-card .card-body.collapse.show {
+        padding: 1rem;
+    }
+
+    /* Property details table styling */
+    .multimatch-entry-card .table {
+        margin-bottom: 0;
+    }
+
+    .multimatch-entry-card .table td {
+        padding: 0.5rem;
+        vertical-align: middle;
+    }
+
+    .multimatch-entry-card .table td:first-child {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        width: 20%;
+    }
+
+    /* PDF type group styling (RME) */
+    .pdf-type-group {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1rem;
+    }
+
+    .pdf-type-group .card-header {
+        background-color: #E6F2FF;
+        /* RME subheader: icy blue */
+        border-bottom: none;
+        border: 1px solid #BBD7FF;
+        /* light icy border */
+        transition: background-color 0.2s ease;
+        cursor: pointer;
+        color: #0F2A46;
+        /* deep navy text */
+    }
+
+    .pdf-type-group .card-header:hover {
+        background-color: #DDECFF;
+        /* slightly deeper icy blue */
+        color: #0F2A46;
+    }
+
+    .pdf-type-group .card-header .card-title {
+        color: #ffffff;
+        font-weight: 600;
+    }
+
+    .pdf-toggle-icon {
+        transition: transform 0.2s ease;
+    }
+
+    /* RME individual header styles are defined in static/css/style.css */
+
+    .pdf-card .card-header .card-title {
+        color: inherit;
+        font-weight: 700;
+    }
+
+    .pdf-card .card-header:hover .card-title {
+        color: inherit;
+    }
+
+    /* Ensure icons and other elements in PDF headers are visible */
+    .pdf-card .card-header i {
+        color: inherit;
+    }
+
+    .pdf-card .card-header:hover i {
+        color: inherit;
+    }
+
+    .pdf-card .card-header span {
+        color: inherit;
+    }
+
+    .pdf-card .card-header:hover span {
+        color: inherit;
+    }
+
+    /* TPCHD group header styles are defined in static/css/style.css */
+
+    /* TPCHD individual header styles are defined in static/css/style.css */
+
+    /* King County styling */
+    .king-reports-section h6 {
+        background-color: #6f42c1;
+        /* purple */
+        color: #ffffff;
+        padding: 6px 10px;
+        border-radius: 4px;
+        display: inline-block;
+    }
+
+    .king-report-card .card-header {
+        background-color: #e2d9f3;
+        /* light purple */
+        border-bottom: 2px solid #c5b3e6;
+        color: #46307a;
+        transition: background-color 0.2s ease;
+    }
+
+    .king-report-card .card-header:hover {
+        background-color: #c5b3e6;
+        color: #342257;
+    }
+
+    /* Skeleton loading styles */
+    .skeleton-text {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s infinite;
+        border-radius: 4px;
+        display: inline-block;
+    }
+
+    .skeleton-title {
+        height: 20px;
+        margin-bottom: 8px;
+    }
+
+    @keyframes skeleton-loading {
+        0% {
+            background-position: 200% 0;
+        }
+
+        100% {
+            background-position: -200% 0;
+        }
+    }
+
+    /* Skeleton group styling */
+    .pdf-type-group .skeleton-text {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+    }
+
+    .pdf-card .skeleton-text {
+        background-color: #fff3e0;
+        border: 1px solid #ffcc02;
     }
 </style>
 {% endblock %}

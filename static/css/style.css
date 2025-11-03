@@ -1,4 +1,4 @@
-/* Custom CSS for Property Lookup Tool */
+/* Custom CSS for Customer Lookup Tool */
 
 :root {
     --primary-color: #0d6efd;
@@ -15,6 +15,24 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f8f9fa;
     line-height: 1.6;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Prevent horizontal scrolling globally */
+* {
+    box-sizing: border-box;
+}
+
+.container-fluid,
+.row,
+.col-12,
+.col-md-6,
+.col-lg-8,
+.col-xl-6 {
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 /* Sidebar Customization */
@@ -38,12 +56,21 @@ body {
     z-index: 1;
 }
 
+.logo-img {
+    height: 60px;
+    width: auto;
+    max-width: 200px;
+    object-fit: contain;
+    margin-left: 10px;
+}
+
 .sidebar .navbar-brand {
     font-weight: 600;
     font-size: 1.1rem;
     color: white !important;
     text-decoration: none;
-    display: block;
+    display: flex;
+    align-items: center;
     padding: 0;
     margin: 0;
     line-height: 1.2;
@@ -106,6 +133,224 @@ body {
 
 .main-content .container-fluid {
     padding: 2rem;
+    margin-left: 2rem;
+    /* Increased spacing from sidebar */
+}
+
+/* Dashboard specific spacing */
+.dashboard .row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.dashboard .col-md-3 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+/* Ensure first card has proper spacing from sidebar */
+.dashboard .row:first-of-type .col-md-3:first-child {
+    margin-left: 0.01rem;
+}
+
+/* All Lookups page specific spacing */
+.all-lookups-container {
+    margin-left: 0.01rem;
+    /* Add spacing from sidebar */
+}
+
+.all-lookups-container .row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.all-lookups-container .col-md-3 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+/* Ensure first card has proper spacing from sidebar */
+.all-lookups-container .row:first-of-type .col-md-3:first-child {
+    margin-left: 0.01rem;
+}
+
+/* Lookup Form Styling */
+.lookup-container {
+    padding: 2rem 0;
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-left: 0.01rem;
+    /* Add spacing from sidebar */
+    width: calc(100% - 0.01rem);
+    box-sizing: border-box;
+}
+
+.lookup-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.lookup-subtitle {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin-bottom: 0;
+    font-weight: 400;
+}
+
+.lookup-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: none;
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+.lookup-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #007bff, #28a745, #ffc107, #dc3545);
+}
+
+.lookup-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+.lookup-card-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 1.5rem 2rem;
+    border: none;
+}
+
+.lookup-card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.lookup-card-body {
+    padding: 2rem;
+}
+
+.lookup-form {
+    margin: 0;
+}
+
+.lookup-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    display: block;
+    font-size: 0.95rem;
+}
+
+.lookup-input,
+.lookup-select {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+}
+
+.lookup-input:focus,
+.lookup-select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    transform: translateY(-1px);
+}
+
+.lookup-input::placeholder {
+    color: #adb5bd;
+    font-style: italic;
+}
+
+/* Ensure placeholders are visible in the create-customer form */
+.container-fluid #customer-create-form .form-control::placeholder,
+.container #customer-create-form .form-control::placeholder {
+    color: #9aa3ab;
+    opacity: 1;
+}
+
+/* Narrower embedded create-customer layout */
+.cc-embed .card {
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.cc-embed .card-body {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.lookup-submit-container {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.lookup-submit-btn {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border: none;
+    color: white;
+    padding: 1rem 3rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.lookup-submit-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.lookup-submit-btn:hover::before {
+    left: 100%;
+}
+
+.lookup-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+}
+
+.lookup-submit-btn:active {
+    transform: translateY(0);
+}
+
+.lookup-submit-btn:disabled {
+    opacity: 0.7;
+    transform: none;
+    cursor: not-allowed;
 }
 
 /* Card Customization */
@@ -231,6 +476,26 @@ body {
     box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
 }
 
+/* Ensure popup bottom corners are rounded and contents are clipped */
+#customerCreateModal .modal-content {
+    border-radius: 1rem !important;
+    overflow: hidden;
+}
+
+/* Make modal body fill remaining height so iframe can be 100% */
+#customerCreateModal .modal-dialog {
+    height: 90vh;
+}
+
+#customerCreateModal .modal-content {
+    height: 100%;
+}
+
+#customerCreateModal .modal-body {
+    height: calc(100% - 56px);
+    /* subtract header height */
+}
+
 .modal-header {
     border-bottom: 1px solid #e9ecef;
     border-radius: 1rem 1rem 0 0;
@@ -254,11 +519,118 @@ footer {
 }
 
 /* Responsive Design */
+
+/* Mobile Menu Toggle Button */
+.mobile-menu-toggle {
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1001;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    display: none;
+}
+
+.mobile-menu-toggle:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+.mobile-menu-toggle i {
+    font-size: 1.2rem;
+}
+
+/* Mobile Overlay */
+.mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.mobile-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Large screens (desktop) */
+@media (min-width: 1200px) {
+    .main-content .container-fluid {
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* Medium screens (tablets) */
+@media (max-width: 991.98px) {
+    .main-content .container-fluid {
+        padding: 1.5rem;
+        margin-left: 0.01rem;
+    }
+
+    .lookup-container {
+        margin-left: 0.01rem;
+    }
+
+    .all-lookups-container {
+        margin-left: 0.01rem;
+    }
+
+    /* Results page tablet adjustments */
+    .results-container .row:first-of-type .col-12:first-child {
+        margin-left: 0.001rem;
+    }
+
+    /* Results page tablet card spacing */
+    .results-page .row {
+        margin-bottom: 1.75rem;
+    }
+
+    .results-page #location-code-section,
+    .results-page #tacoma-reports-section,
+    .results-page #multimatch-results-section,
+    .results-page #pdf-results-section,
+    .results-page #additional-results-section {
+        margin-bottom: 2.25rem;
+    }
+
+    /* Dashboard cards - 2 per row on tablets */
+    .dashboard .col-md-3 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+
+    /* Quick actions - stack vertically on tablets */
+    .dashboard .col-md-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin-bottom: 1rem;
+    }
+}
+
+/* Small screens (mobile) */
 @media (max-width: 768px) {
+    .mobile-menu-toggle {
+        display: block;
+    }
+
     .sidebar {
         width: 100%;
         transform: translateX(-100%);
         transition: transform 0.3s ease;
+        z-index: 1000;
     }
 
     .sidebar.show {
@@ -267,13 +639,84 @@ footer {
 
     .main-content {
         margin-left: 0;
+        width: 100%;
     }
 
     .main-content .container-fluid {
         padding: 1rem;
+        margin-left: 0;
     }
 
+    /* Lookup form mobile adjustments */
+    .lookup-container {
+        margin-left: 0;
+        padding: 1rem 0;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .lookup-title {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .lookup-subtitle {
+        font-size: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .lookup-card {
+        margin: 0;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .lookup-card-body {
+        padding: 1.5rem;
+    }
+
+    .lookup-submit-btn {
+        padding: 0.875rem 2rem;
+        font-size: 1rem;
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    /* Lookup form mobile improvements */
+    .lookup-form .row .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .lookup-form .mb-4 {
+        margin-bottom: 1.5rem !important;
+    }
+
+    /* All lookups mobile adjustments */
+    .all-lookups-container {
+        margin-left: 0;
+    }
+
+    /* Dashboard mobile adjustments */
+    .dashboard .col-md-3 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    .dashboard .col-md-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    /* Card adjustments */
     .card-body {
+        padding: 1rem;
+    }
+
+    .card-header {
         padding: 1rem;
     }
 
@@ -282,22 +725,282 @@ footer {
         font-size: 1rem;
     }
 
+    /* Table responsive */
     .table-responsive {
         font-size: 0.875rem;
     }
 
-    /* Mobile menu toggle button */
-    .mobile-menu-toggle {
-        position: fixed;
-        top: 1rem;
-        left: 1rem;
-        z-index: 1001;
-        background-color: var(--primary-color);
-        color: white;
-        border: none;
-        border-radius: 0.5rem;
+    .table th,
+    .table td {
         padding: 0.5rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        vertical-align: middle;
+    }
+
+    /* Results page mobile adjustments */
+    .results-container .row:first-of-type .col-12:first-child {
+        margin-left: 0;
+    }
+
+    /* Results page mobile card spacing */
+    .results-page .row {
+        margin-bottom: 1.5rem;
+    }
+
+    .results-page #location-code-section,
+    .results-page #tacoma-reports-section,
+    .results-page #multimatch-results-section,
+    .results-page #pdf-results-section,
+    .results-page #additional-results-section {
+        margin-bottom: 2rem;
+    }
+
+    .results-page .card-body {
+        padding: 1rem;
+    }
+
+    .results-page .card-header {
+        padding: 1rem;
+    }
+
+    .results-page .col-md-3,
+    .results-page .col-md-2 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    .results-page .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    /* PDF iframe mobile adjustments */
+    .pdf-iframe-container {
+        height: 400px;
+    }
+
+    /* Badge adjustments */
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.5rem;
+    }
+
+    /* Form adjustments */
+    .form-control,
+    .form-select,
+    .lookup-input,
+    .lookup-select {
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+        min-height: 44px;
+        /* Better touch targets */
+        padding: 0.75rem 1rem;
+    }
+
+    /* Better touch targets for buttons */
+    .btn,
+    .lookup-submit-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Button adjustments */
+    .btn {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+
+    /* Spacing adjustments */
+    .mb-4 {
+        margin-bottom: 1.5rem !important;
+    }
+
+    .mt-4 {
+        margin-top: 1.5rem !important;
+    }
+
+    .py-3 {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 576px) {
+    .main-content .container-fluid {
+        padding: 0.75rem;
+    }
+
+    .lookup-container {
+        padding: 0.5rem 0;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .lookup-title {
+        font-size: 1.75rem;
+    }
+
+    .lookup-card {
+        margin: 0;
+        width: 100%;
+        max-width: 100%;
+        border-radius: 1rem;
+    }
+
+    .lookup-card-body {
+        padding: 1rem;
+    }
+
+    .lookup-submit-btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .card-body {
+        padding: 0.75rem;
+    }
+
+    .card-header {
+        padding: 0.75rem;
+    }
+
+    .btn-lg {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.9rem;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.375rem;
+        font-size: 0.8rem;
+    }
+
+    .pdf-iframe-container {
+        height: 300px;
+    }
+
+    .mobile-menu-toggle {
+        top: 0.75rem;
+        left: 0.75rem;
+        padding: 0.5rem;
+    }
+
+    .mobile-menu-toggle i {
+        font-size: 1rem;
+    }
+
+    /* Results page extra small adjustments */
+    .results-page .card-body {
+        padding: 0.75rem;
+    }
+
+    .results-page .card-header {
+        padding: 0.75rem;
+    }
+
+    /* King County Reports header adjustments */
+    .results-page #king-reports-section .card-header,
+    .results-page .king-report-card .card-header {
+        padding: 0.75rem;
+    }
+
+    .results-page #king-reports-section .card-title,
+    .results-page .king-report-card .card-title {
+        font-size: 1rem;
+    }
+}
+
+/* Landscape orientation adjustments for mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .lookup-container {
+        padding: 0.5rem 0;
+    }
+
+    .lookup-title {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .lookup-subtitle {
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .lookup-card-body {
+        padding: 1rem;
+    }
+
+    .pdf-iframe-container {
+        height: 250px;
+    }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2),
+(min-resolution: 192dpi) {
+    .mobile-menu-toggle {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .card {
+        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .sidebar {
+        transition: none;
+    }
+
+    .mobile-overlay {
+        transition: none;
+    }
+}
+
+/* Print styles */
+@media print {
+
+    .sidebar,
+    .mobile-menu-toggle,
+    .mobile-overlay {
+        display: none !important;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+
+    .card {
+        break-inside: avoid;
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+
+    .btn {
+        display: none !important;
+    }
+
+    .pdf-iframe-container {
+        height: 500px !important;
+    }
+
+    .info-item {
+        background-color: transparent !important;
+        border: 1px solid #ddd !important;
     }
 }
 
@@ -363,7 +1066,23 @@ footer {
 .pdf-iframe-container {
     position: relative;
     width: 100%;
-    height: 600px;
+    height: 80vh;
+    min-height: 500px;
+    max-height: 900px;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    overflow: hidden;
+    background-color: #f8f9fa;
+}
+
+/* Ensure King and TPCHD iframes are also responsive and full-width */
+.king-report-iframe-container,
+.tpchd-report-iframe-container {
+    position: relative;
+    width: 100%;
+    height: 80vh;
+    min-height: 500px;
+    max-height: 900px;
     border: 1px solid #dee2e6;
     border-radius: 0.375rem;
     overflow: hidden;
@@ -390,8 +1109,164 @@ footer {
 }
 
 /* Results Page Specific */
+.results-page .sidebar {
+    display: none;
+    /* hide sidebar by default on results page */
+}
+
+/* Embedded pages (e.g., forms inside modals) should hide layout chrome */
+body.embed .sidebar {
+    display: none !important;
+}
+
+body.embed .main-content {
+    margin-left: 0 !important;
+    width: 100vw !important;
+}
+
+body.embed .main-content .container-fluid {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+body.embed footer {
+    display: none !important;
+}
+
 .results-page .card-body.p-0 {
     padding: 0 !important;
+}
+
+/* Reduce gap between navbar/sidebar and first card on results page */
+.results-page .main-content {
+    margin-left: 0;
+    /* collapse sidebar by default on results */
+    width: 100vw;
+    /* take full viewport width on results */
+}
+
+.results-page .main-content .container-fluid {
+    padding-top: 0.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    margin-left: 0;
+    /* remove global left margin on results */
+    margin-right: 0;
+    max-width: 100vw;
+    /* ensure full-bleed on ultra-wide screens */
+}
+
+/* Results page specific spacing - same pattern as dashboard */
+.results-container .row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.results-container .col-12 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+/* Ensure first card has proper spacing from sidebar */
+.results-container .row:first-of-type .col-12:first-child {
+    margin-left: 0.001rem;
+}
+
+/* Results page card spacing - add gaps between cards */
+.results-page .row {
+    margin-bottom: 2rem;
+    margin-left: 0;
+    /* full-bleed rows */
+    margin-right: 0;
+}
+
+.results-page .row:last-child {
+    margin-bottom: 0;
+}
+
+/* Ensure columns expand fully on results */
+.results-page .col-12,
+.results-page .col-lg-12,
+.results-page .col-md-12,
+.results-page .col-sm-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+}
+
+/* Ultra-wide screens: give a bit more breathing room while staying full width */
+@media (min-width: 1600px) {
+    .results-page .main-content .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .pdf-iframe-container,
+    .king-report-iframe-container,
+    .tpchd-report-iframe-container {
+        height: 82vh;
+        /* slightly taller on very wide displays */
+        max-height: 92vh;
+    }
+}
+
+/* Additional spacing for specific sections */
+.results-page #location-code-section,
+.results-page #tacoma-reports-section,
+.results-page #multimatch-results-section,
+.results-page #pdf-results-section,
+.results-page #additional-results-section {
+    margin-bottom: 2.5rem;
+}
+
+/* Info item styling for results page */
+.info-item {
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.02);
+    transition: all 0.3s ease;
+}
+
+.info-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+}
+
+.info-item strong {
+    color: #495057;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.info-item span {
+    color: #212529;
+    font-size: 0.95rem;
+}
+
+.results-page #cancel-lookup-btn {
+    border-width: 2px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.results-page #cancel-lookup-btn i {
+    font-size: 0.95rem;
+}
+
+.results-page #cancel-lookup-btn:hover,
+.results-page #cancel-lookup-btn:focus {
+    background-color: #ffc107;
+    color: #212529;
+    box-shadow: 0 4px 10px rgba(255, 193, 7, 0.35);
+}
+
+.results-page #cancel-lookup-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.75;
 }
 
 .results-page .pdf-card {
@@ -401,6 +1276,221 @@ footer {
 .results-page .pdf-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Report Header Highlighting - Different colors for each report type */
+
+/* RME Reports - Section header (deep indigo) */
+.results-page #pdf-results-section>.col-12>.card>.card-header {
+    background-color: #004085 !important;
+    /* RME header */
+    color: #ffffff !important;
+    border-bottom: none;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(0, 64, 133, 0.28);
+}
+
+/* RME Reports - Individual report headers (soft indigo) */
+.results-page .pdf-card .card-header {
+    background-color: #0056e1 !important;
+    /* RME individual */
+    color: #ffffff !important;
+    border-bottom: none;
+    border: 1px solid #000101 !important;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 1px 6px rgba(63, 100, 142, 0.25);
+}
+
+/* Keep same colors on hover for individual RME report headers */
+.results-page .pdf-card .card-header:hover {
+    background-color: #6157f3 !important;
+    color: #ffffff !important;
+}
+
+/* TPCHD Reports - Green gradient */
+/* TPCHD Reports - Section header (deep emerald) */
+.results-page #tacoma-reports-section>.col-12>.card>.card-header {
+    background-color: #06a81c !important;
+    /* Emerald 800 */
+    color: #ffffff !important;
+    border-bottom: none;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(22, 101, 52, 0.28);
+}
+
+/* TPCHD Reports - Individual report headers (soft mint) */
+.results-page .tacoma-report-card .card-header {
+    background-color: #00aa17 !important;
+    /* Requested TPCHD individual */
+    color: #0f5132 !important;
+    /* Dark green text */
+    border-bottom: none;
+    border: 1px solid #4cc143 !important;
+    /* slightly darker */
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 1px 6px rgba(15, 81, 50, 0.12);
+}
+
+/* Location Code color scheme */
+.results-page #location-code-section .card-header {
+    background-color: #E91E63 !important;
+    /* Pink */
+    color: #ffffff !important;
+}
+
+.results-page #location-code-section #location-code-display-container {
+    background-color: #FCE4EC !important;
+    /* Light pink */
+    border: 1px solid #E91E63 !important;
+    color: #6A1B9A !important;
+}
+
+.results-page #location-code-section #location-code-display {
+    color: #212529 !important;
+}
+
+/* King County Reports - Purple gradient */
+.results-page #king-reports-section .card-header,
+.results-page .king-report-card .card-header {
+    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 50%, #4c2a85 100%);
+    color: white;
+    border-bottom: none;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
+}
+
+/* Shimmer effects removed - static headers only */
+
+.results-page #pdf-results-section .card-title,
+.results-page #tacoma-reports-section .card-title,
+.results-page #king-reports-section .card-title,
+.results-page .pdf-card .card-title,
+.results-page .tacoma-report-card .card-title,
+.results-page .king-report-card .card-title {
+    color: white;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    font-size: 1.1rem;
+}
+
+.results-page #pdf-results-section .card-title i,
+.results-page #tacoma-reports-section .card-title i,
+.results-page #king-reports-section .card-title i,
+.results-page .pdf-card .card-title i,
+.results-page .tacoma-report-card .card-title i,
+.results-page .king-report-card .card-title i {
+    color: rgba(255, 255, 255, 0.95);
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+/* Badge styling for each report type - Vibrant colors for count badges */
+.results-page #pdf-results-section .badge,
+.results-page .pdf-card .badge {
+    background-color: #ff6b35 !important;
+    color: white;
+    border: 2px solid #ff4500;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+}
+
+.results-page #tacoma-reports-section .badge,
+.results-page .tacoma-report-card .badge {
+    background-color: #ffd700 !important;
+    color: #333;
+    border: 2px solid #ffb347;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.results-page #king-reports-section .badge,
+.results-page .king-report-card .badge {
+    background-color: #ff1493 !important;
+    color: white;
+    border: 2px solid #ff69b4;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(255, 20, 147, 0.4);
+}
+
+/* TPCHD Report Group Styling */
+.results-page .tacoma-type-group {
+    border: 2px solid #e9ecef;
+    border-radius: 1rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.results-page .tacoma-type-group:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.results-page .tacoma-type-group .card-header {
+    background-color: #0ae179 !important;
+    /* Light green */
+    color: #0f5132 !important;
+    /* Dark green text */
+    border: 1px solid #badbcc !important;
+    border-radius: 1rem 1rem 0 0;
+    padding: 1rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.results-page .tacoma-type-group .card-header:hover {
+    background-color: #0ae179 !important;
+}
+
+.results-page .tacoma-type-group .card-title {
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.results-page .tacoma-type-group .card-title i {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.results-page .tacoma-type-group .badge {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-weight: 600;
+}
+
+/* Collapsible Group Styling */
+.results-page .tacoma-type-group .group-toggle-icon {
+    transition: transform 0.3s ease;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.results-page .tacoma-type-group .card-body {
+    transition: all 0.3s ease;
+}
+
+.results-page .tacoma-type-group .card-body.collapse {
+    display: none;
+}
+
+.results-page .tacoma-type-group .card-body.collapse.show {
+    display: block;
+}
+
+/* TPCHD Report Type Styling */
+.results-page .tacoma-report-card .card-header small {
+    font-size: 0.8rem;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.results-page .tacoma-report-card .card-header small i {
+    color: rgba(255, 255, 255, 0.8);
 }
 
 /* Custom Scrollbar */

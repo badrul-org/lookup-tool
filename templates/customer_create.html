@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+
+{% block title %}Create Customer - Sterling Septic & Plumbing LLC{% endblock %}
+
+{% block content %}
+<div class="{% if request.args.get('embed') %}container-fluid px-0 py-3 cc-embed{% else %}container py-4{% endif %}">
+    {% if not request.args.get('embed') %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h4 mb-0"><i class="fas fa-user-plus me-2"></i>Create Customer</h1>
+        <div class="d-flex gap-2">
+            {% if request.args.get('session_id') %}
+            <a href="{{ url_for('results') }}?session_id={{ request.args.get('session_id') }}"
+                class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Results
+            </a>
+            {% else %}
+            <a href="{{ url_for('lookup_tool') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-search me-1"></i> Back to Lookup
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-body">
+            <form id="customer-create-form" class="row g-3" onsubmit="return false;">
+                <input type="hidden" id="cc-session-id" value="{{ request.args.get('session_id', '') }}" />
+
+                <div class="col-md-4">
+                    <label class="form-label">First Name</label>
+                    <input type="text" class="form-control" id="cc-first-name" placeholder="Type here" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" class="form-control" id="cc-last-name" placeholder="Type here" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Company Name</label>
+                    <input type="text" class="form-control" id="cc-company-name" placeholder="Type here" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Display Name *</label>
+                    <input type="text" class="form-control" id="cc-display-name" placeholder="Type here" />
+                    <div class="invalid-feedback">Display Name is required.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Parent</label>
+                    <input type="text" class="form-control" id="cc-parent" placeholder="Type here" />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Customer Type</label>
+                    <select class="form-select" id="cc-customer-type">
+                        <option value="Residential">Residential</option>
+                        <option value="Commercial">Commercial</option>
+                        <option value="Existing Customer">Existing Customer</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Customer Since</label>
+                    <input type="text" class="form-control" id="cc-customer-since" placeholder="Type here" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Lead Source</label>
+                    <select class="form-select" id="cc-lead-source">
+                        <option value="">Select</option>
+                        <option>Existing Customer</option>
+                        <option>Google</option>
+                        <option>Sterling Septic -FE</option>
+                        <option>Thryv</option>
+                        <option>Yelp</option>
+                        <option>Referral</option>
+                    </select>
+                </div>
+
+
+                <div class="col-12">
+                    <label class="form-label">Pinned Note</label>
+                    <textarea class="form-control" id="cc-note" rows="2" placeholder="Type here"></textarea>
+                </div>
+
+                <hr />
+                <div class="col-12"><strong>Physical Location Details</strong></div>
+
+                <div class="col-md-8">
+                    <label class="form-label">Address 1</label>
+                    <input type="text" class="form-control" id="cc-addr1" placeholder="Type here"
+                        value="{{ session_data.address if session_data else '' }}" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Address 2</label>
+                    <input type="text" class="form-control" id="cc-addr2" placeholder="Type here" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">City</label>
+                    <input type="text" class="form-control" id="cc-city" placeholder="Type here"
+                        value="{{ session_data.city if session_data else '' }}" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">State</label>
+                    <input type="text" class="form-control" id="cc-state" value="WA" placeholder="Type here" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">ZIP</label>
+                    <input type="text" class="form-control" id="cc-zip" placeholder="Type here"
+                        value="{{ session_data.zip_code if session_data else '' }}" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">County</label>
+                    <input type="text" class="form-control" id="cc-county" placeholder="Type here"
+                        value="{{ session_data.county if session_data else '' }}" />
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="cc-billing-same" checked />
+                        <label class="form-check-label" for="cc-billing-same">Billing same as physical</label>
+                    </div>
+                </div>
+
+                <div id="cc-billing-fields" class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label">Billing Address 1</label>
+                        <input type="text" class="form-control" id="cc-bill-addr1" placeholder="Type here" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Billing Address 2</label>
+                        <input type="text" class="form-control" id="cc-bill-addr2" placeholder="Type here" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Billing City</label>
+                        <input type="text" class="form-control" id="cc-bill-city" placeholder="Type here" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Billing State</label>
+                        <input type="text" class="form-control" id="cc-bill-state" value="WA" placeholder="Type here" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Billing ZIP</label>
+                        <input type="text" class="form-control" id="cc-bill-zip" placeholder="Type here" />
+                    </div>
+                </div>
+
+                <hr />
+                <div class="col-12"><strong>Contacts</strong></div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Contact Name</label>
+                    <input type="text" class="form-control" id="cc-contact-name" placeholder="Type here" />
+                </div>
+                <div class="col-12">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="cc-contact-email" />
+                        <label class="form-check-label" for="cc-contact-email">Email</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="cc-contact-sms" checked />
+                        <label class="form-check-label" for="cc-contact-sms">SMS</label>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Phone Label</label>
+                    <input type="text" class="form-control" id="cc-phone-label" value="Phone" placeholder="Type here" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Phone Number</label>
+                    <input type="text" class="form-control" id="cc-phone-number" placeholder="Type here" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Email Label</label>
+                    <input type="text" class="form-control" id="cc-email-label" value="Email" placeholder="Type here" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" id="cc-email" placeholder="Type here" />
+                </div>
+
+                <hr />
+                <div class="col-12"><strong>Business Profile</strong></div>
+                <div class="col-md-4">
+                    <label class="form-label">Terms *</label>
+                    <select class="form-select" id="cc-terms">
+                        <option>Due On Reciept</option>
+                        <option>Escrow Billing</option>
+                        <option>Net 10</option>
+                        <option>Net 10th</option>
+                        <option>Net 15</option>
+                        <option>Net 30</option>
+                        <option>Net 60</option>
+                        <option>Payment Plan</option>
+                    </select>
+                    <div class="invalid-feedback">Terms is required.</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Tax Code *</label>
+                    <input type="text" class="form-control" id="cc-tax-code" placeholder="Type here"
+                        value="{{ session_data.location_code if session_data else '' }}" />
+                    <div class="invalid-feedback">Tax Code is required.</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Sales Rep</label>
+                    <select class="form-select" id="cc-sales-rep-bottom">
+                        <option value="">Select</option>
+                        <option>01- Mackie</option>
+                        <option>02 - Huss</option>
+                        <option>03- Russell</option>
+                        <option>04 - Ahkeem</option>
+                        <option>05 - Danny</option>
+                        <option>06 - Cris</option>
+                        <option>07 - Gene</option>
+                        <option>08 - Cameron</option>
+                        <option>09- Eric</option>
+                        <option>10 - Damon</option>
+                        <option>11 - Andrea</option>
+                        <option>Ahmed T.</option>
+                        <option>Cameron P.</option>
+                        <option>Mary- TAX/ACT</option>
+                        <option>Z- F.E ADMIN.</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Require PO</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="cc-require-po" />
+                        <label class="form-check-label" for="cc-require-po">Yes</label>
+                    </div>
+                </div>
+
+                <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+                    <button type="button" class="btn btn-secondary" onclick="window.history.back()"><i
+                            class="fas fa-times me-1"></i>Cancel</button>
+                    <button type="button" class="btn btn-success" id="cc-submit-btn"><i
+                            class="fas fa-check me-1"></i>Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    (() => {
+        function getSessionId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('session_id') || document.getElementById('cc-session-id')?.value || '';
+        }
+
+        function prefillFromQuery() {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const setVal = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+                setVal('cc-addr1', params.get('address'));
+                setVal('cc-city', params.get('city'));
+                setVal('cc-zip', params.get('zip'));
+                setVal('cc-county', params.get('county'));
+                setVal('cc-tax-code', params.get('location_code'));
+            } catch (_) { }
+            try {
+                const today = new Date();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                const yyyy = today.getFullYear();
+                const since = document.getElementById('cc-customer-since');
+                if (since && !since.value) since.value = `${mm}/${dd}/${yyyy}`;
+            } catch (_) { }
+        }
+
+        async function createCustomer() {
+            const val = (id) => (document.getElementById(id)?.value || '').trim();
+            const bool = (id) => !!document.getElementById(id)?.checked;
+            const payload = {
+                firstName: val('cc-first-name'),
+                lastName: val('cc-last-name'),
+                companyName: val('cc-company-name'),
+                displayName: val('cc-display-name'),
+                parent: val('cc-parent'),
+                customerType: val('cc-customer-type'),
+                customerSince: val('cc-customer-since'),
+                leadSource: val('cc-lead-source'),
+                note: val('cc-note'),
+                address1: val('cc-addr1'),
+                address2: val('cc-addr2'),
+                city: val('cc-city'),
+                state: val('cc-state'),
+                zip: val('cc-zip'),
+                county: val('cc-county'),
+                billingSame: bool('cc-billing-same'),
+                billFromOffice: false,
+                billAddress1: val('cc-bill-addr1'),
+                billAddress2: val('cc-bill-addr2'),
+                billCity: val('cc-bill-city'),
+                billState: val('cc-bill-state'),
+                billZip: val('cc-bill-zip'),
+                contactName: val('cc-contact-name'),
+                phone_checkbox: bool('cc-contact-phone'),
+                email_checkbox: bool('cc-contact-email'),
+                sms_checkbox: bool('cc-contact-sms'),
+                phoneLabel: val('cc-phone-label'),
+                phoneNumber: val('cc-phone-number'),
+                emailLabel: val('cc-email-label'),
+                email: val('cc-email'),
+                terms: val('cc-terms'),
+                taxCode: val('cc-tax-code'),
+                salesRep: val('cc-sales-rep') || val('cc-sales-rep-bottom'),
+                requirePO: bool('cc-require-po'),
+                session_id: getSessionId()
+            };
+
+            // validation: require Terms, Tax Code, and Display Name (show inline errors)
+            const missing = [];
+            const termsEl = document.getElementById('cc-terms');
+            const taxEl = document.getElementById('cc-tax-code');
+            const dispEl = document.getElementById('cc-display-name');
+            const setInvalid = (el, invalid) => {
+                if (!el) return;
+                if (invalid) el.classList.add('is-invalid'); else el.classList.remove('is-invalid');
+            };
+            if (!payload.terms) { missing.push('Terms'); setInvalid(termsEl, true); } else setInvalid(termsEl, false);
+            if (!payload.taxCode) { missing.push('Tax Code'); setInvalid(taxEl, true); } else setInvalid(taxEl, false);
+            if (!payload.displayName) { missing.push('Display Name'); setInvalid(dispEl, true); } else setInvalid(dispEl, false);
+            // Contact channel validation
+            if (payload.phone_checkbox || payload.sms_checkbox) {
+                const phoneEl = document.getElementById('cc-phone-number');
+                if (!payload.phoneNumber) {
+                    missing.push('Phone Number');
+                    if (phoneEl) phoneEl.classList.add('is-invalid');
+                } else if (phoneEl) phoneEl.classList.remove('is-invalid');
+            }
+            if (payload.email_checkbox) {
+                const emailEl = document.getElementById('cc-email');
+                if (!payload.email) {
+                    missing.push('Email');
+                    if (emailEl) emailEl.classList.add('is-invalid');
+                } else if (emailEl) emailEl.classList.remove('is-invalid');
+            }
+
+            if (missing.length) {
+                alert('Please provide: ' + Array.from(new Set(missing)).join(', '));
+                return;
+            }
+
+            const btn = document.getElementById('cc-submit-btn');
+            const oldHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
+            // Notify parent (results page) we're starting creation so it can close modal and show status
+            try { window.parent && window.parent.postMessage({ type: 'customer-create-status', phase: 'start' }, '*'); } catch (_) { }
+            try {
+                const res = await fetch('/api/create-customer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error((data && data.text) || 'Failed to create customer');
+                // Inform parent to update status and display name
+                try { window.parent && window.parent.postMessage({ type: 'customer-create-status', phase: 'done', text: (data.text || 'Customer created successfully'), displayName: (data.display_name || payload.displayName) }, '*'); } catch (_) { }
+            } catch (e) {
+                try { window.parent && window.parent.postMessage({ type: 'customer-create-status', phase: 'error', error: e.message }, '*'); } catch (_) { }
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = oldHtml;
+            }
+        }
+
+        function toggleBilling() {
+            const same = document.getElementById('cc-billing-same').checked;
+            document.getElementById('cc-billing-fields').style.display = same ? 'none' : '';
+        }
+
+        function initCreateCustomerPage() {
+            try {
+                prefillFromQuery();
+                const billingSame = document.getElementById('cc-billing-same');
+                if (billingSame) billingSame.addEventListener('change', toggleBilling);
+                toggleBilling();
+                const first = document.getElementById('cc-first-name');
+                const last = document.getElementById('cc-last-name');
+                const disp = document.getElementById('cc-display-name');
+                let edited = false;
+                if (disp) disp.addEventListener('input', () => { edited = (disp.value || '').trim().length > 0; });
+                function sync() {
+                    if (edited || !disp) return;
+                    const v = [first?.value?.trim() || '', last?.value?.trim() || ''].filter(Boolean).join(' ');
+                    disp.value = v;
+                }
+                if (first) first.addEventListener('input', sync);
+                if (last) last.addEventListener('input', sync);
+
+                // Wire up create button safely (avoid inline handler issues)
+                const btn = document.getElementById('cc-submit-btn');
+                if (btn && !btn.dataset.wired) {
+                    btn.addEventListener('click', createCustomer);
+                    btn.dataset.wired = '1';
+                }
+            } catch (e) { /* no-op */ }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initCreateCustomerPage);
+        } else {
+            initCreateCustomerPage();
+        }
+
+        window.CustomerCreatePage = { createCustomer };
+    })();
+</script>
+{% endblock %}

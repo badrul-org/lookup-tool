@@ -1,4 +1,4 @@
-// Main JavaScript functionality for Property Lookup Tool
+// Main JavaScript functionality for Customer Lookup Tool
 
 // Global variables
 let currentSessionId = null;
@@ -191,6 +191,7 @@ function updateStatusDisplay(session) {
 
 function getStatusBadge(status) {
     const badges = {
+        'waiting': '<span class="badge bg-info"><i class="fas fa-hourglass-half me-1"></i>Waiting</span>',
         'running': '<span class="badge bg-warning"><i class="fas fa-spinner fa-spin me-1"></i>Running</span>',
         'completed': '<span class="badge bg-success"><i class="fas fa-check me-1"></i>Completed</span>',
         'error': '<span class="badge bg-danger"><i class="fas fa-exclamation-triangle me-1"></i>Error</span>',
@@ -251,7 +252,7 @@ function showResults(session) {
         if (session.results.tacoma_reports && session.results.tacoma_reports.length > 0) {
             resultsHtml += `
                 <div class="mb-4">
-                    <h6 class="text-info"><i class="fas fa-city me-2"></i>Tacoma Reports (${session.results.tacoma_reports.length})</h6>
+                    <h6 class="text-info"><i class="fas fa-city me-2"></i>TPCHD REPORTS (${session.results.tacoma_reports.length})</h6>
                     <ul class="list-group">
             `;
 
@@ -340,36 +341,57 @@ function hideProgressModal() {
 // Mobile sidebar toggle
 function toggleSidebar() {
     const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.mobile-overlay');
+
     sidebar.classList.toggle('show');
+    overlay.classList.toggle('show');
+}
+
+function closeSidebar() {
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.mobile-overlay');
+
+    sidebar.classList.remove('show');
+    overlay.classList.remove('show');
 }
 
 // Close sidebar when clicking outside on mobile
 document.addEventListener('click', function (event) {
     const sidebar = document.querySelector('.sidebar');
     const mobileToggle = document.querySelector('.mobile-menu-toggle');
+    const overlay = document.querySelector('.mobile-overlay');
 
     if (window.innerWidth <= 768 &&
         !sidebar.contains(event.target) &&
         !mobileToggle.contains(event.target) &&
         sidebar.classList.contains('show')) {
-        sidebar.classList.remove('show');
+        closeSidebar();
     }
+});
+
+// Close sidebar when window is resized to desktop size
+window.addEventListener('resize', function () {
+    if (window.innerWidth > 768) {
+        closeSidebar();
+    }
+});
+
+// Close sidebar when navigation link is clicked on mobile
+document.addEventListener('DOMContentLoaded', function () {
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+    navLinks.forEach(link => {
+        link.addEventListener('click', function () {
+            if (window.innerWidth <= 768) {
+                closeSidebar();
+            }
+        });
+    });
 });
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', function () {
-    // Form submission
-    const form = document.getElementById('lookup-form');
-    if (form) {
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData);
-
-            startLookup(data);
-        });
-    }
+    // Form submission is handled directly in lookup.html template
+    // to avoid conflicts with multiple event handlers
 
     // Cancel button
     const cancelBtn = document.getElementById('cancel-btn');
