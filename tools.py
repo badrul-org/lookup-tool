@@ -375,71 +375,34 @@ async def King_report_lookup(page, url, address_line_1: str):
     return king_reports, error_message
 
 async def Create_Customer(page, url, customer_data: dict):
+    try:
+        # Quick check if it is logout or not
+        login_email = page.locator("//input[@id='LoginEmail']")
+        try:
+            await login_email.wait_for(state="visible", timeout=1000)
+            # login if it is logout
+            with open("credentials.json", "r") as f:
+                credentials = json.load(f)
+            email = credentials.get("email")
+            password = credentials.get("password")
+            await page.locator("//input[@id='LoginEmail']").fill(email)
+            await page.locator("//input[@id='LoginPassword']").fill(password)
+            await page.locator("//input[@id='LoginButton']").click()
+            await page.wait_for_timeout(5000)
+            page.goto("https://login.fieldedge.com/#/List/1")
+            await page.wait_for_timeout(5000)
+        except Exception as e:
+            pass
+    except Exception as e:
+        pass
     """Minimal create customer flow placeholder.
     Expects an authenticated FieldEdge session already present on 'page'.
     Currently, this function navigates to the dashboard and returns successfully.
     """
     try:
-        
-        # check it is login or logout , if logout then login
-        def check_login(page):
-        # full_address = f"{customer_data.get('address1') or ''} {customer_data.get('address2') or ''} {customer_data.get('city') or ''} {customer_data.get('state') or ''} {customer_data.get('zip') or ''}"
-        # display_name = customer_data.get('displayName')
-        # seach_input = page.locator("//input[@id='search']")
-        # await seach_input.wait_for(state="visible", timeout=10000)
-        # await seach_input.fill(full_address)
-        # await seach_input.press("Enter")
-        # try:
-        #     no_record = page.locator("//div[normalize-space()='There are no active items entered']")
-        #     try:
-        #         await no_record.wait_for(state="visible", timeout=5000)
-                
-        #     except Exception:
-        #         table_rows = page.locator("//table//tr")
-        #         rows = await table_rows.all()
-        #         print(f"Rows: {len(rows)}")
-        #         if len(rows) > 1:
-        #             for i in range(len(rows)-1):
-                        
-        #                 full_address_find = await page.locator(f"(//table//tr)[{i+2}]//td").nth(2).text_content()
-        #                 print(f"Full address find: {full_address_find}")
-        #                 # Normalize whitespace (including non-breaking), remove punctuation consistently for both strings
-        #                 def normalize_address(s: str) -> str:
-        #                     if not s:
-        #                         return ''
-        #                     # Unicode normalize to split combined characters and fix NBSP
-        #                     s = unicodedata.normalize('NFKC', s)
-        #                     # Replace all whitespace (space, tabs, NBSP, newlines) with single space, then remove spaces
-        #                     s = re.sub(r"\s+", " ", s).strip()
-        #                     s = s.replace('\xa0', ' ').replace('\u00A0', ' ').replace(' ', '')
-        #                     # Remove common punctuation separators
-        #                     s = re.sub(r"[-.,;]", "", s)
-        #                     return s
-
-        #                 full_address_find = normalize_address(full_address_find)
-        #                 full_address = normalize_address(full_address)
-        #                 print(full_address + "----" + full_address_find)
-        #                 if full_address.lower() == full_address_find.lower():
-        #                     display_name_find = await page.locator(f"(//table//tr)[{i+2}]//td").nth(0).text_content()
-        #                     display_name_find = display_name_find.strip()
-        #                     #if display_name_find is not None and display_name_find != "" and display_name_find == display_name.strip():
-        #                     return "Already Exists", display_name_find
-                            
-        #                 else:
-        #                     pass
-        # except Exception:
-        #     pass
-        # # try:
-        # #     customer_button = page.locator("//a//span[normalize-space()='Customers']")
-        # #     await customer_button.wait_for(state="visible", timeout=10000)
-        # #     await customer_button.click()
-        # # except Exception:
-        # #     customer_button = page.locator("//a[@class='customers']")
-        # #     await customer_button.wait_for(state="visible", timeout=10000)
-        # #     await customer_button.click()
         create_customer_button = page.locator("//div[@id='add-item-button-container']")
         await create_customer_button.wait_for(state="visible", timeout=10000)
-        await create_customer_button.click()
+        await create_customer_button.click(force=True)
         display_name = customer_data.get('displayName')
         # await page.wait_for_timeout(10000)
         Tax_code_field = page.locator("(//div[@name='Tax Group']//div)[3]")
@@ -487,7 +450,7 @@ async def Create_Customer(page, url, customer_data: dict):
             await Terms_field.click()
             await Terms_field.fill({customer_data.get('terms')})
             await Terms_field.press("Enter")
-        except Exception:
+        except Exception as e:
             pass
         # try:
         #     await page.wait_for_timeout(10000)
@@ -522,20 +485,20 @@ async def Create_Customer(page, url, customer_data: dict):
             if await Customer_created.is_visible():
                 return "Created Successfully" , [display_name]
             
-        except Exception:
+        except Exception as e:
             try:
                 await customer_already_exists.wait_for(state="visible", timeout=10000)
                 if await customer_already_exists.is_visible():
                     return "Already Exists" , [display_name]
-            except Exception:
-                pass
-            except Exception:
+            # except Exception:
+            #     pass
+            except Exception as e:
                 # return "Creation Failed"
                 Yes_button = page.locator("(//span[normalize-space()='Yes'])[2]")
                 try:
                     await Yes_button.wait_for(state="visible", timeout=5000)
                     await Yes_button.click()
-                except Exception:
+                except Exception as e:
                     pass
 
                 customer_already_exists = page.locator("(//div[normalize-space()='Record Already Exists'])[1]")
@@ -543,24 +506,43 @@ async def Create_Customer(page, url, customer_data: dict):
                     await customer_already_exists.wait_for(state="visible", timeout=10000)
                     if await customer_already_exists.is_visible():
                         return "Already Exists" , [display_name]
-                except Exception:
+                except Exception as e:
                     try:
                         Customer_created = page.locator("//div[@class='header-customer-title trim-text']")
                         await Customer_created.wait_for(state="visible", timeout=10000)
                         if await Customer_created.is_visible():
                             return "Created Successfully" , [display_name]
-                    except Exception:
-
+                    except Exception as e:
+                        print(f"Error in Create_Customer: {e}")
                         return "Creation Failed" , []
-        return "Creation Failed" , []
-
         
     except Exception as e:
-        # Surface the error back to caller
-        raise e
+        print(f"Error in Create_Customer: {e}")
+        # Return a generic error status instead of surfacing raw errors
+        return "Creation Failed" , []
 
 
 async def Check_Existing_Customer(page, url, address_line_1: str):
+    try:
+        # Quick check if it is logout or not
+        login_email = page.locator("//input[@id='LoginEmail']")
+        try:
+            await login_email.wait_for(state="visible", timeout=1000)
+            # login if it is logout
+            with open("credentials.json", "r") as f:
+                credentials = json.load(f)
+            email = credentials.get("email")
+            password = credentials.get("password")
+            await page.locator("//input[@id='LoginEmail']").fill(email)
+            await page.locator("//input[@id='LoginPassword']").fill(password)
+            await page.locator("//input[@id='LoginButton']").click()
+            await page.wait_for_timeout(5000)
+            page.goto("https://login.fieldedge.com/#/List/1")
+            await page.wait_for_timeout(5000)
+        except Exception as e:
+            pass
+    except Exception as e:
+        pass
     try:
         Display_name_list = []
         search_input = page.locator("//input[@id='search']")
@@ -588,6 +570,26 @@ async def Check_Existing_Customer(page, url, address_line_1: str):
     
 
 async def Upload_Attachments(page, address_line_1: str, file_paths):
+    try:
+        # Quick check if it is logout or not
+        login_email = page.locator("//input[@id='LoginEmail']")
+        try:
+            await login_email.wait_for(state="visible", timeout=1000)
+            # login if it is logout
+            with open("credentials.json", "r") as f:
+                credentials = json.load(f)
+            email = credentials.get("email")
+            password = credentials.get("password")
+            await page.locator("//input[@id='LoginEmail']").fill(email)
+            await page.locator("//input[@id='LoginPassword']").fill(password)
+            await page.locator("//input[@id='LoginButton']").click()
+            await page.wait_for_timeout(5000)
+            page.goto("https://login.fieldedge.com/#/List/1")
+            await page.wait_for_timeout(5000)
+        except Exception as e:
+            pass
+    except Exception as e:
+        pass
     """Upload one or more files to the first matching customer by address.
     Assumes page is an authenticated FieldEdge customers list page.
     Returns tuple (num_uploaded, num_failed).
@@ -600,6 +602,7 @@ async def Upload_Attachments(page, address_line_1: str, file_paths):
 
     # Wait for at least one result row
     list_first_row = page.locator("(//table//tr)[2]")
+
     await list_first_row.wait_for(state="visible", timeout=15000)
 
     # Determine latest row by activity date if multiple rows are present
@@ -709,7 +712,268 @@ async def Upload_Attachments(page, address_line_1: str, file_paths):
 
     return uploaded, failed
 
-# async def upload_files(page, url, file_links):
-#     try:
-#         for file_link in file_links:
-#         # download the file from the file_link
+async def create_work_order(page, url, address_line_1: str, order_form_data: dict):
+    try:
+        # Quick check if it is logout or not
+        login_email = page.locator("//input[@id='LoginEmail']")
+        try:
+            await login_email.wait_for(state="visible", timeout=1000)
+            # login if it is logout
+            with open("credentials.json", "r") as f:
+                credentials = json.load(f)
+            email = credentials.get("email")
+            password = credentials.get("password")
+            await page.locator("//input[@id='LoginEmail']").fill(email)
+            await page.locator("//input[@id='LoginPassword']").fill(password)
+            await page.locator("//input[@id='LoginButton']").click()
+            await page.wait_for_timeout(5000)
+            page.goto("https://login.fieldedge.com/#/List/1")
+            await page.wait_for_timeout(5000)
+        except Exception as e:
+            pass
+    except Exception as e:
+        pass
+    try:
+    # search by address and get the result rows
+        search_input = page.locator("//input[@id='search']")
+        await search_input.wait_for(state="visible", timeout=15000)
+        await search_input.fill(address_line_1)
+        await search_input.press("Enter")
+        list_first_row = page.locator("(//table//tr)[2]")
+        await list_first_row.wait_for(state="visible", timeout=15000)
+        await list_first_row.click()
+        add_work_order = page.locator("(//div[contains(@data-automation-id, 'WorkOrders')]//div)[1]")
+        await add_work_order.wait_for(state="visible", timeout=15000)
+        await add_work_order.click()
+        add_work_order_button = page.locator("//div[contains(@class,'base-icon add')]")
+        await add_work_order_button.wait_for(state="visible", timeout=15000)
+        await add_work_order_button.click()
+        select_task = page.locator("//div[@name='Task']")
+        await select_task.wait_for(state="visible", timeout=15000)
+        await select_task.click()
+        await page.locator("//div[@name='Task']//input").fill(order_form_data.get('task') or '')
+        await page.locator("//div[@name='Task']//input").press("Enter")
+        select_lead_source = page.locator("//div[@name='Lead Source']")
+        await select_lead_source.wait_for(state="visible", timeout=15000)
+        await select_lead_source.click()
+        await page.locator("//div[@name='Lead Source']//input").fill(order_form_data.get('lead_source') or '')
+        await page.locator("//div[@name='Lead Source']//input").press("Enter")
+        await page.wait_for_timeout(1000)
+        await page.locator("(//div[@class='create-workorder-form-priority']//div)[6]").click()
+        await page.locator("//div[@class='create-workorder-form-priority']//input").fill(order_form_data.get('priority') or '')
+        await page.wait_for_timeout(1000)
+        await page.locator("//div[@class='create-workorder-form-priority']//input").press("Enter")
+        await page.wait_for_timeout(1000)
+        await page.locator("(//textarea)[2]").fill(order_form_data.get('description') or '')
+        await page.wait_for_timeout(1000)
+        save_button = page.locator("//button[contains(@class,'confirm')]//span[normalize-space()='Save']")
+        await save_button.wait_for(state="visible", timeout=15000)
+        await save_button.click()
+        try: 
+            work_order_number = page.locator("(//div[@class='title-container']//span)[1]")
+            await work_order_number.wait_for(state="visible", timeout=15000)
+            work_order_number_text = await work_order_number.text_content()
+            work_order_number = work_order_number_text.strip()
+            work_order_number = work_order_number.split(":")[1]
+            return "Created Successfully" , work_order_number
+        except Exception:
+            print(f"Error in creating work order: {e}")
+            return "Creation Failed" , None
+    except Exception as e:
+        print(f"Error in creating work order: {e}")
+        return "Error" , None
+
+
+
+async def upload_attachments_to_work_order(page, url, address_line_1: str, file_paths, work_order_number: str):
+    try:
+        # Quick check if it is logout or not
+        login_email = page.locator("//input[@id='LoginEmail']")
+        try:
+            await login_email.wait_for(state="visible", timeout=1000)
+            # login if it is logout
+            with open("credentials.json", "r") as f:
+                credentials = json.load(f)
+            email = credentials.get("email")
+            password = credentials.get("password")
+            await page.locator("//input[@id='LoginEmail']").fill(email)
+            await page.locator("//input[@id='LoginPassword']").fill(password)
+            await page.locator("//input[@id='LoginButton']").click()
+            await page.wait_for_timeout(5000)
+            page.goto("https://login.fieldedge.com/#/List/1")
+            await page.wait_for_timeout(5000)
+        except Exception as e:
+            pass
+    except Exception as e:
+        pass
+    try:
+        search_input = page.locator("//input[@id='search']")
+        await search_input.wait_for(state="visible", timeout=15000)
+        await search_input.fill(address_line_1)
+        await search_input.press("Enter")
+        list_first_row = page.locator("(//table//tr)[2]")
+        await list_first_row.wait_for(state="visible", timeout=15000)
+        await list_first_row.click()
+        add_work_order = page.locator("(//div[contains(@data-automation-id, 'WorkOrders')]//div)[1]")
+        await add_work_order.wait_for(state="visible", timeout=15000)
+        await add_work_order.click()
+    
+        table = page.locator("//tbody[@data-automation-id='table-body']")
+        await table.wait_for(state="visible", timeout=15000)
+        print(f"Table is visible")
+        work_order_list = page.locator("//tbody[@data-automation-id='table-body']//a")
+        # await work_order_list.wait_for(state="visible", timeout=15000)
+        work_order_list = await work_order_list.all()
+        for work_order in work_order_list:
+            work_order_number_text = await work_order.text_content()
+            work_order_number_text = work_order_number_text.strip()
+            if work_order_number_text == work_order_number:
+                await work_order.click()
+                break
+        else:
+            return "Work Order Not Found" , None
+        add_attachment = page.locator("(//a[contains(@class, 'base-link')]//div[normalize-space()='Add Attachment'])[1]")
+        uploaded = 0
+        failed = 0
+
+        for path in file_paths:
+            try:
+                await add_attachment.wait_for(state="visible", timeout=15000)
+                # Try the canonical file chooser path first
+                try:
+                    async with page.expect_file_chooser(timeout=3000) as chooser_info:
+                        await add_attachment.click()
+                    chooser = await chooser_info.value
+                    await chooser.set_files(path)
+                    uploaded += 1
+                    await page.wait_for_timeout(500)
+                    continue
+                except Exception:
+                    # Fallback: click then try to find a file input and set files directly
+                    try:
+                        await add_attachment.click()
+                    except Exception:
+                        pass
+                    selectors = [
+                        "input[type='file'][accept*='pdf']",
+                        "input[type='file']",
+                        "//input[@type='file']",
+                    ]
+                    input_found = False
+                    for sel in selectors:
+                        try:
+                            file_input = page.locator(sel).first
+                            await file_input.wait_for(state="attached", timeout=3000)
+                            await file_input.set_input_files(path)
+                            uploaded += 1
+                            input_found = True
+                            await page.wait_for_timeout(500)
+                            break
+                        except Exception:
+                            continue
+                    if not input_found:
+                        failed += 1
+                        print(f"Upload fallback failed for {path}: no file input found")
+            except Exception as e:
+                print(f"Upload failed for {path}: {e}")
+                failed += 1
+                continue
+
+        return "Uploaded Successfully" , uploaded
+    except Exception as e:
+        print(f"Error in uploading attachments to work order: {e}")
+        return "Error" , None
+
+
+async def Accella_report_lookup(page, url, session_id, address_line_1: str):
+    try:
+        root_page = page
+        street_number = address_line_1.split(" ")[0]
+        street_name = address_line_1.split(" ")[1]
+        search_input_from = page.locator("//input[@title='Street No. From	']")
+        await search_input_from.wait_for(state="visible", timeout=15000)
+        await search_input_from.fill(street_number)
+        search_input_to = page.locator("//input[@title='Street No. To	']")
+        await search_input_to.wait_for(state="visible", timeout=15000)
+        await search_input_to.fill(street_number)
+        await page.locator("//input[contains(@name, 'txtGSStreetName')]").fill(street_name)
+        await page.wait_for_timeout(1000)
+        await page.locator("//a[contains(@id, 'Main_btnNewSearch')]").click()
+        await page.wait_for_timeout(2000)
+        try:
+            first_row = page.locator("(//div[@class='ACA_Grid_OverFlow']//tr[contains(@class, 'TabRow')])[2]")
+            await first_row.wait_for(state="visible", timeout=15000)
+            rows = await page.locator("(//div[@class='ACA_Grid_OverFlow']//tr[contains(@class, 'TabRow')])").all()
+            length = len(rows)
+            
+            # start from 2nd row
+            for i in range(1, length):
+                row = page.locator(f"(//div[@class='ACA_Grid_OverFlow']//tr[contains(@class, 'TabRow')])[{i}]")
+                row_text = await row.text_content()
+                row_text = row_text.strip()
+                if "Asbuilt Approved" in row_text:
+                    await page.locator(f"(//div[@class='ACA_Grid_OverFlow']//tr[contains(@class, 'TabRow')])[{i}]//a").click()
+                    try:
+                        await page.wait_for_timeout(5000)
+                        record_info = page.locator("//a[@title='Record Info menu, press tab to expand']")
+                        await record_info.wait_for(state="visible", timeout=15000)
+                        await record_info.click()
+                        #
+                        click_attachments = page.locator("//a[@data-control='tab-attachments']")
+                        await click_attachments.click()
+                        await page.wait_for_timeout(5000)
+                        try:
+                            # First, try if attachments table is rendered inline on the current page
+                            tbl_frame = None
+                            try:
+                                inline_rows = page.locator("(//table[contains(@id,'attachmentList')]//tr[contains(@class, 'TabRow')])")
+                                await inline_rows.nth(1).wait_for(state="visible", timeout=2000)
+                                tbl_frame = page
+                            except Exception:
+                                tbl_frame = None
+
+                            # If not inline, search all frames for the attachments table
+                            if tbl_frame is None:
+                                for f in root_page.frames:
+                                    try:
+                                        probe = f.locator("(//table[contains(@id,'attachmentList')]//tr[contains(@class, 'TabRow')])")
+                                        await probe.nth(1).wait_for(state="visible", timeout=2000)
+                                        tbl_frame = f
+                                        break
+                                    except Exception:
+                                        continue
+
+                            if tbl_frame is None:
+                                print("Attachments table not visible in page or frames")
+                                return "No record found" , None
+
+                            rows = await tbl_frame.locator("(//table[contains(@id,'attachmentList')]//tr[contains(@class, 'TabRow')])").all()
+                            length = len(rows)
+                            for i in range(1, length):
+                                row = tbl_frame.locator(f"(//table[contains(@id,'attachmentList')]//tr[contains(@class, 'TabRow')])[{i+1}]")
+                                row_text = await row.text_content()
+                                row_text = row_text.strip()
+                                if "Approved Asbuilt" in row_text:
+                                    # download the pdf from the link in the same row
+                                    async with root_page.expect_download() as download_info:
+                                        download_path = tbl_frame.locator(f"((//table[contains(@id,'attachmentList')]//tr[contains(@class, 'TabRow')])[{i+1}]//a)[1]")
+                                        await download_path.click()
+                                    download = await download_info.value
+                                    file_name = download.suggested_filename
+                                    await download.save_as(f"Accella_Reports/{session_id}_{file_name}")
+                                    return "Downloaded Successfully" , f"{session_id}_{file_name}"
+                                    
+                        except Exception as e:
+                            print(f"Error in downloading approved asbuilt: {e}")
+                            return "No record found" , None
+                    except Exception as e:
+                        print(f"Error in clicking attachments: {e}")
+                        return "No record found" , None
+            # If loop completes without finding a match, return a fallback
+            return "No record found" , None
+        except Exception as e:
+            print(f"Error in Accella report lookup: {e}")
+            return "Error" , None
+    except Exception as e:
+        print(f"Error in Accella report lookup: {e}")
+        return "Error" , None

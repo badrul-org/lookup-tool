@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, jsonify, session
+from flask import Flask, render_template, request, jsonify, session, send_file, send_from_directory
 import asyncio
 import json
 from datetime import datetime
 
 import asyncio
 from playwright.async_api import async_playwright
-from tools import tax_rate_lookup, address_search, get_pdf_all_reports, Tacoma_report_lookup, King_report_lookup, close_browser , Create_Customer, Check_Existing_Customer, Upload_Attachments
+from tools import tax_rate_lookup, address_search, get_pdf_all_reports, Tacoma_report_lookup, King_report_lookup, close_browser , Create_Customer, Check_Existing_Customer, Upload_Attachments, create_work_order, upload_attachments_to_work_order, Accella_report_lookup
 import threading
 import uuid
 import sqlite3
@@ -52,8 +52,11 @@ location_url = ""
 property_url = ""
 tacoma_url = ""
 king_url = ""
+accella_url = ""
 # Database setup
-DATABASE = 'lookup_sessions.db'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE = os.path.join(BASE_DIR, 'lookup_sessions.db')
+LANDING_BUILD_DIR = os.path.join(BASE_DIR, 'sterling-septic-landing-page', 'build')
 async def start_browsers():
     global browsers, browsers_initialized, browser_init_pid, browser_init_lock, browsers_initializing
     global playwright_controller
@@ -129,13 +132,15 @@ async def start_browsers():
     browsers['tacoma_context'] = await browsers['main_browser'].new_context()
     browsers['king_context'] = await browsers['main_browser'].new_context()
     browsers['customer_context'] = await browsers['main_browser'].new_context()
+    browsers['accella_context'] = await browsers['main_browser'].new_context()
     # Create pages from contexts
     browsers['location_page'] = await browsers['location_context'].new_page()
     browsers['property_page'] = await browsers['property_context'].new_page()
     browsers['tacoma_page'] = await browsers['tacoma_context'].new_page()
     browsers['king_page'] = await browsers['king_context'].new_page()
     browsers['customer_page'] = await browsers['customer_context'].new_page()
-    print("Created 4 contexts and pages from single browser")
+    browsers['accella_page'] = await browsers['accella_context'].new_page()
+    print("Created 5 contexts and pages from single browser")
     print(f"Browser is running: {browsers['main_browser'].is_connected()}")
     print(f"Browser version: {browsers['main_browser'].version}")
     
@@ -148,12 +153,14 @@ async def start_browsers():
     global property_url
     global tacoma_url
     global king_url
+    global accella_url
     location_url = "https://webgis.dor.wa.gov/taxratelookup/SalesTax.aspx"
     property_url = "https://www.onlinerme.com/contractorsearchproperty.aspx"
     tacoma_url = "https://edocs.tpchd.org/"
     king_url = "https://kingcounty.maps.arcgis.com/apps/instant/sidebar/index.html?appid=6c0bbaa4339c4ffab0c53cfe1f8d3d85"
     customer_url = "https://login.fieldedge.com"
     customer_dashboard_url = "https://login.fieldedge.com/#/List/1"
+    accella_url = "https://aca-prod.accela.com/TPCHD/Cap/CapHome.aspx?module=EnvHealth&TabName=EnvHealth"
     try :
         await browsers['location_page'].goto(location_url, timeout=3000)
     except Exception as e:
@@ -171,11 +178,19 @@ async def start_browsers():
     except Exception as e:
         print(e)
     try :
+        await browsers['accella_page'].goto(accella_url, timeout=3000)
+    except Exception as e:
+        print(e)
+    try :
+        with open('credentails.json', 'r') as f:
+            credentails = json.load(f)
+        email = credentails.get('email')
+        password = credentails.get('password')
         customer_page = browsers['customer_page']
         await customer_page.goto(customer_url, timeout=60000)
         await customer_page.wait_for_selector("//input[@id='LoginEmail']")
-        await customer_page.fill("//input[@id='LoginEmail']","ahmedyarabbassi@gmail.com")
-        await customer_page.fill("//input[@id='Password']","Program1!")
+        await customer_page.fill("//input[@id='LoginEmail']",email)
+        await customer_page.fill("//input[@id='Password']",password)
         await customer_page.click("//input[@value='Sign in to your account']")
         await customer_page.wait_for_timeout(10000)
         await customer_page.goto(customer_dashboard_url, timeout=30000)
@@ -193,9 +208,11 @@ async def start_browsers():
         page_locks['king'] = asyncio.Lock()
     if 'customer' not in page_locks:
         page_locks['customer'] = asyncio.Lock()
+    if 'accella' not in page_locks:
+        page_locks['accella'] = asyncio.Lock()
     # Mark browsers as initialized
     browsers_initialized = True
-    print(f"Browsers initialization completed. Total browser objects: {len(browsers)} (1 browser, 4 contexts, 4 pages)")
+    print(f"Browsers initialization completed. Total browser objects: {len(browsers)} (1 browser, 5 contexts, 5 pages)")
     
     print("Browser initialization completed successfully")
     
@@ -206,14 +223,14 @@ async def close_browsers():
     """Close all browsers, contexts, and pages, and stop Playwright."""
     global browsers, browsers_initialized, browsers_initializing, page_locks, playwright_controller
     # Close pages
-    for key in ['location_page', 'property_page', 'tacoma_page', 'king_page', 'customer_page']:
+    for key in ['location_page', 'property_page', 'tacoma_page', 'king_page', 'customer_page', 'accella_page']:
         try:
             if key in browsers and browsers[key]:
                 await browsers[key].close()
         except Exception:
             pass
     # Close contexts
-    for key in ['location_context', 'property_context', 'tacoma_context', 'king_context', 'customer_context']:
+    for key in ['location_context', 'property_context', 'tacoma_context', 'king_context', 'customer_context', 'accella_context']:
         try:
             if key in browsers and browsers[key]:
                 await browsers[key].close()
@@ -317,6 +334,26 @@ def init_db():
             Customer_display_name TEXT
         )
     ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS landing_leads (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            full_name TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            email TEXT NOT NULL,
+            address TEXT,
+            system_type TEXT,
+            digging_needed TEXT,
+            obstacles TEXT,
+            service_timeline TEXT,
+            service_needed TEXT,
+            contact_preference TEXT,
+            referral_source TEXT,
+            household_size TEXT,
+            additional_notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
     
     # Helper to ensure columns exist (idempotent)
     def ensure_columns(table_name, columns):
@@ -343,6 +380,12 @@ def init_db():
         { 'name': 'Customer_display_name', 'type': 'TEXT' },
         { 'name': 'upload_status', 'type': 'TEXT' },
         { 'name': 'uploaded_files', 'type': 'INTEGER' },
+        { 'name': 'work_order_status', 'type': 'TEXT' },
+        { 'name': 'work_order_id', 'type': 'TEXT' },
+        { 'name': 'work_order_upload_status', 'type': 'TEXT' },
+        { 'name': 'work_order_uploaded_files', 'type': 'INTEGER' },
+        { 'name': 'accella_reports_path', 'type': 'TEXT' },
+        { 'name': 'accella_reports_status', 'type': 'TEXT' },
     ])
     
     conn.commit()
@@ -403,6 +446,166 @@ lookup_sessions = {}
 # asyncio.run(start_browsers())
 
 @app.route('/')
+@app.route('/landing')
+def landing():
+    """Serve the React-based public landing page build."""
+    index_path = os.path.join(LANDING_BUILD_DIR, 'index.html')
+    if os.path.isfile(index_path):
+        return send_from_directory(LANDING_BUILD_DIR, 'index.html')
+    # Fallback plain message if build missing
+    return "Landing page build not found. Please run npm run build in sterling-septic-landing-page.", 503
+
+@app.route('/landing/<path:filename>')
+def landing_static(filename):
+    """Serve static assets for the React landing page."""
+    file_path = os.path.join(LANDING_BUILD_DIR, filename)
+    if os.path.isfile(file_path):
+        return send_from_directory(LANDING_BUILD_DIR, filename)
+    return jsonify({'error': 'Asset not found'}), 404
+
+@app.route('/vite.svg')
+def landing_vite_svg():
+    """Serve the Vite favicon used by the React landing page."""
+    file_path = os.path.join(LANDING_BUILD_DIR, 'vite.svg')
+    if os.path.isfile(file_path):
+        return send_from_directory(LANDING_BUILD_DIR, 'vite.svg')
+    return jsonify({'error': 'Asset not found'}), 404
+
+@app.route('/leads')
+def leads():
+    """Admin view for landing page leads."""
+    page = max(int(request.args.get('page', 1)), 1)
+    per_page = 20
+    offset = (page - 1) * per_page
+
+    rows = db_query_all('SELECT COUNT(*) as total FROM landing_leads')
+    total = rows[0]['total'] if rows else 0
+    total_pages = max((total + per_page - 1) // per_page, 1)
+
+    leads_rows = db_query_all(
+        'SELECT * FROM landing_leads ORDER BY created_at DESC LIMIT ? OFFSET ?',
+        (per_page, offset)
+    )
+    leads_list = [dict(row) for row in leads_rows]
+
+    return render_template('leads.html',
+                           leads=leads_list,
+                           page=page,
+                           per_page=per_page,
+                           total=total,
+                           total_pages=total_pages)
+
+@app.route('/api/leads', methods=['POST'])
+def create_lead():
+    """Capture a lead submitted from the public landing page."""
+    try:
+        data = request.get_json(silent=True) or request.form.to_dict()
+
+        def clean_value(key):
+            value = data.get(key, '')
+            return value.strip() if isinstance(value, str) else value
+
+        required_fields = {
+            'full_name': 'Name',
+            'phone': 'Phone',
+            'email': 'Email'
+        }
+        missing_labels = [
+            label for key, label in required_fields.items()
+            if not clean_value(key)
+        ]
+        if missing_labels:
+            return jsonify({'error': f"Missing required field(s): {', '.join(missing_labels)}"}), 400
+
+        db_execute(
+            '''
+            INSERT INTO landing_leads (
+                full_name,
+                phone,
+                email,
+                address,
+                system_type,
+                digging_needed,
+                obstacles,
+                service_timeline,
+                service_needed,
+                contact_preference,
+                referral_source,
+                household_size,
+                additional_notes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''',
+            (
+                clean_value('full_name'),
+                clean_value('phone'),
+                clean_value('email'),
+                clean_value('address'),
+                clean_value('system_type'),
+                clean_value('digging_needed'),
+                clean_value('obstacles'),
+                clean_value('service_timeline'),
+                clean_value('service_needed'),
+                clean_value('contact_preference'),
+                clean_value('referral_source'),
+                clean_value('household_size'),
+                clean_value('additional_notes')
+            )
+        )
+
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+def _lead_to_dict(row):
+    return {
+        'id': row['id'],
+        'full_name': row['full_name'],
+        'phone': row['phone'],
+        'email': row['email'],
+        'address': row['address'],
+        'system_type': row['system_type'],
+        'digging_needed': row['digging_needed'],
+        'obstacles': row['obstacles'],
+        'service_timeline': row['service_timeline'],
+        'service_needed': row['service_needed'],
+        'contact_preference': row['contact_preference'],
+        'referral_source': row['referral_source'],
+        'household_size': row['household_size'],
+        'additional_notes': row['additional_notes'],
+        'created_at': row['created_at'],
+    }
+
+@app.route('/api/leads/<int:lead_id>', methods=['GET', 'PUT'])
+def lead_detail(lead_id):
+    """Retrieve or update a specific lead entry."""
+    row = db_query_one('SELECT * FROM landing_leads WHERE id = ?', (lead_id,))
+    if not row:
+        return jsonify({'error': 'Lead not found'}), 404
+
+    if request.method == 'GET':
+        return jsonify(_lead_to_dict(row))
+
+    data = request.get_json(force=True) or {}
+    required_fields = ['full_name', 'phone', 'email']
+    for field in required_fields:
+        value = (data.get(field) or '').strip()
+        if not value:
+            return jsonify({'error': f'{field.replace("_", " ").title()} is required'}), 400
+
+    update_fields = [
+        'full_name', 'phone', 'email', 'address', 'system_type', 'digging_needed',
+        'obstacles', 'service_timeline', 'service_needed', 'contact_preference',
+        'referral_source', 'household_size', 'additional_notes'
+    ]
+    assignments = ', '.join(f"{field} = ?" for field in update_fields)
+    params = [data.get(field, '') for field in update_fields]
+    params.append(lead_id)
+    db_execute(f'UPDATE landing_leads SET {assignments} WHERE id = ?', tuple(params))
+
+    updated_row = db_query_one('SELECT * FROM landing_leads WHERE id = ?', (lead_id,))
+    return jsonify(_lead_to_dict(updated_row))
+
+@app.route('/dashboard')
 def dashboard():
     """Dashboard page showing overview and recent lookups"""
     # Load sessions from DB to render without client API calls
@@ -555,6 +758,7 @@ def start_lookup():
                     needed_keys.append('location')
                 if county.lower() == 'pierce':
                     needed_keys.append('tacoma')
+                    needed_keys.append('accella')
                 elif county.lower() == 'king':
                     needed_keys.append('king')
                 busy = asyncio.run_coroutine_threadsafe(are_pages_busy(needed_keys), browser_loop).result(timeout=0.5)
@@ -712,6 +916,182 @@ def upload_pdfs():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/upload-workorder-pdfs', methods=['POST'])
+def upload_workorder_pdfs():
+    try:
+        start_browser_loop_thread()
+        data = request.get_json(force=True) or {}
+        session_id = data.get('session_id')
+        override_wo = (data.get('work_order_id') or '').strip() or None
+        if not session_id:
+            return jsonify({'error': 'session_id required'}), 400
+
+        # Collect URLs and Work Order from DB
+        row = db_query_one('SELECT address, pdf_urls, tacoma_reports, king_reports, work_order_id FROM lookup_sessions WHERE session_id = ?', (session_id,))
+        if not row:
+            return jsonify({'error': 'Session not found'}), 404
+
+        work_order_id = override_wo or (row['work_order_id'] or '').strip()
+        if not work_order_id:
+            return jsonify({'error': 'No work order ID found for this session'}), 400
+
+        address_line_1 = row['address']
+        items = []  # list of { 'url': str, 'name': str }
+        try:
+            if row['pdf_urls']:
+                rme_list = json.loads(row['pdf_urls'])
+                for entry in rme_list:
+                    parts = (entry or '').split(',')
+                    url = (parts[0] if len(parts) > 0 else '').strip()
+                    rme_type = (parts[1] if len(parts) > 1 else '').strip().replace(' ', '_') or 'report'
+                    rme_date = (parts[2] if len(parts) > 2 else '').strip().replace('/', '-') or 'date'
+                    if url:
+                        name = f"rme_{rme_type}_{rme_date}.pdf"
+                        items.append({'url': url, 'name': name})
+        except Exception:
+            pass
+        try:
+            if row['tacoma_reports']:
+                tpchd_list = json.loads(row['tacoma_reports'])
+                for i, entry in enumerate(tpchd_list, 1):
+                    parts = (entry or '').split(',')
+                    url = (parts[0] if len(parts) > 0 else '').strip()
+                    tp_type = (parts[1] if len(parts) > 1 else '').strip().replace(' ', '_') or 'report'
+                    if url:
+                        name = f"tpchd_{tp_type}_{i}.pdf"
+                        items.append({'url': url, 'name': name})
+        except Exception:
+            pass
+        try:
+            if row['king_reports']:
+                k_list = json.loads(row['king_reports'])
+                for i, url in enumerate(k_list, 1):
+                    url = (url or '').strip()
+                    if url:
+                        name = f"king_report_{i}.pdf"
+                        items.append({'url': url, 'name': name})
+        except Exception:
+            pass
+
+        if not items:
+            try:
+                db_execute('UPDATE lookup_sessions SET upload_status = ? WHERE session_id = ?', ('No reports found to upload', session_id))
+            except Exception:
+                pass
+            return jsonify({'error': 'No report URLs found for this session'}), 400
+
+        # Download PDFs to temp dir
+        tmpdir = tempfile.mkdtemp(prefix=f"wo_attach_{session_id}_")
+        session_http = requests.Session()
+        session_http.headers.update({
+            'User-Agent': 'Mozilla/5.0',
+            'Accept': 'application/pdf,application/octet-stream,*/*;q=0.8'
+        })
+        file_paths = []
+        for it in items:
+            try:
+                r = session_http.get(it['url'], timeout=30, allow_redirects=True)
+                data = r.content
+                if not (r.headers.get('Content-Type','').lower().startswith('application/pdf') or data[:4] == b'%PDF'):
+                    continue
+                safe_name = ''.join(c for c in it['name'] if c.isalnum() or c in ('-', '_', '.'))
+                if not safe_name.endswith('.pdf'):
+                    safe_name += '.pdf'
+                fname = os.path.join(tmpdir, safe_name)
+                with open(fname, 'wb') as f:
+                    f.write(data)
+                file_paths.append(fname)
+            except Exception:
+                continue
+
+        if not file_paths:
+            try:
+                db_execute('UPDATE lookup_sessions SET upload_status = ? WHERE session_id = ?', ('Failed to download PDFs', session_id))
+            except Exception:
+                pass
+            return jsonify({'error': 'Failed to download any PDFs'}), 500
+
+        async def run_upload_to_wo():
+            if not browsers_initialized:
+                await start_browsers()
+            page = browsers.get('customer_page')
+            if page is None:
+                main_browser = browsers.get('main_browser')
+                if main_browser:
+                    browsers['customer_context'] = await main_browser.new_context()
+                    browsers['customer_page'] = await browsers['customer_context'].new_page()
+                    page = browsers['customer_page']
+            status_text, uploaded = await upload_attachments_to_work_order(page, 'https://login.fieldedge.com/#/List/1', address_line_1, file_paths, work_order_id)
+            await close_browser(page, 'https://login.fieldedge.com/#/List/1')
+            # status_text expected like 'Uploaded Successfully' or 'Error'
+            failed = max(0, len(file_paths) - (uploaded or 0))
+            return {'text': status_text, 'count': uploaded or 0, 'failed': failed, 'dir': tmpdir}
+
+        result = run_on_browser_loop(run_upload_to_wo())
+        try:
+            db_execute('UPDATE lookup_sessions SET work_order_upload_status = ?, work_order_uploaded_files = ? WHERE session_id = ?', (f"{result.get('text', '')}: Uploaded {result.get('count', 0)} file(s), Failed {result.get('failed', 0)}", result.get('count', 0), session_id))
+        except Exception:
+            pass
+        try:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+        except Exception:
+            pass
+        return jsonify({'status': 'ok', 'uploaded': result.get('count', 0), 'failed': result.get('failed', 0)})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/create-work-order', methods=['POST'])
+def api_create_work_order():
+    try:
+        start_browser_loop_thread()
+        data = request.get_json(force=True) or {}
+        session_id = data.get('session_id')
+        if not session_id:
+            return jsonify({'error': 'session_id required'}), 400
+        # Fetch session for address
+        row = db_query_one('SELECT address FROM lookup_sessions WHERE session_id = ?', (session_id,))
+        if not row:
+            return jsonify({'error': 'Session not found'}), 404
+        address_line_1 = row['address']
+
+        order_form_data = {
+            'immediate': (data.get('immediate') or '').strip(),
+            'task': (data.get('task') or '').strip(),
+            'task_duration': (data.get('task_duration') or '').strip(),
+            'priority': (data.get('priority') or '').strip(),
+            'lead_source': (data.get('lead_source') or '').strip(),
+            'primary_tech': (data.get('primary_tech') or '').strip(),
+            'start_date': (data.get('start_date') or '').strip(),
+            'start_time': (data.get('start_time') or '').strip(),
+            'customer_po': (data.get('customer_po') or '').strip(),
+            'description': (data.get('description') or '').strip(),
+            'tags': (data.get('tags') or '').strip(),
+        }
+
+        async def run_create_wo():
+            if not browsers_initialized:
+                await start_browsers()
+            page = browsers.get('customer_page')
+            if page is None:
+                main_browser = browsers.get('main_browser')
+                if main_browser:
+                    browsers['customer_context'] = await main_browser.new_context()
+                    browsers['customer_page'] = await browsers['customer_context'].new_page()
+                    page = browsers['customer_page']
+            status_text, work_order_number = await create_work_order(page, 'https://login.fieldedge.com/#/List/1', address_line_1, order_form_data)
+            await close_browser(page, 'https://login.fieldedge.com/#/List/1')
+            return {'text': status_text, 'number': work_order_number}
+
+        result = run_on_browser_loop(run_create_wo())
+        # Persist to DB
+        try:
+            db_execute('UPDATE lookup_sessions SET work_order_status = ?, work_order_id = ? WHERE session_id = ?', (result.get('text'), result.get('number'), session_id))
+        except Exception:
+            pass
+        return jsonify({'status': 'ok', 'text': result.get('text'), 'work_order_number': result.get('number')})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/lookup/<session_id>')
 def get_lookup_status(session_id):
     """Get lookup status and results"""
@@ -809,6 +1189,23 @@ def delete_lookup(session_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/download-accella/<session_id>')
+def download_accella(session_id):
+    """Download the Accella report PDF for a session, if available."""
+    try:
+        row = db_query_one('SELECT accella_reports_path FROM lookup_sessions WHERE session_id = ?', (session_id,))
+        if not row:
+            return jsonify({'error': 'Session not found'}), 404
+        file_path = (row['accella_reports_path'] or '').strip()
+        if not file_path:
+            return jsonify({'error': 'No Accella report available for this session'}), 404
+        if not os.path.isfile(file_path):
+            return jsonify({'error': 'Accella report file not found on server'}), 404
+        # Serve inline for iframe display (no forced download)
+        return send_file(file_path, mimetype='application/pdf', as_attachment=False, download_name=os.path.basename(file_path))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 def is_session_cancelled(session_id):
     """Check if the session has been cancelled"""
     # Check memory storage first
@@ -851,6 +1248,7 @@ def run_lookup(session_id, address_line_1, city, zip_code, county):
             location_tool = None
             property_tool = None
             county_tool = None
+            accella_tool = None
             
             try:                
                 # Update status to running when acquiring first needed lock
@@ -870,6 +1268,9 @@ def run_lookup(session_id, address_line_1, city, zip_code, county):
                     county_tool = browsers['tacoma_page']
                 elif county.lower() == 'king':
                     county_tool = browsers['king_page']
+                # Task 4: Accella lookup (Pierce County)
+                if county.lower() == 'pierce':
+                    accella_tool = browsers['accella_page']
                 
                 # Check if cancelled after opening browsers
                 if is_session_cancelled(session_id):
@@ -885,6 +1286,8 @@ def run_lookup(session_id, address_line_1, city, zip_code, county):
                             browsers_to_reset.append(close_browser(county_tool, tacoma_url))
                         elif county.lower() == 'king':
                             browsers_to_reset.append(close_browser(county_tool, king_url))
+                    if accella_tool:
+                        browsers_to_reset.append(close_browser(accella_tool, accella_url))
                     
                     if browsers_to_reset:
                         await asyncio.gather(*browsers_to_reset, return_exceptions=True)
@@ -955,6 +1358,14 @@ def run_lookup(session_id, address_line_1, city, zip_code, county):
                     county_task = asyncio.create_task(run_king())
                     tasks.append(county_task)
                 
+                # Task 4: Accella lookup (Pierce only)
+                if county.lower() == 'pierce' and accella_tool:
+                    async def run_accella():
+                        async with page_locks['accella']:
+                            return await accella_lookup_task(browsers['accella_page'], accella_url, address_line_1, session_id)
+                    accella_task = asyncio.create_task(run_accella())
+                    tasks.append(accella_task)
+                
                 # Run all tasks in parallel
                 print(f"Starting {len(tasks)} parallel lookup tasks for session {session_id}")
                 results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -966,6 +1377,8 @@ def run_lookup(session_id, address_line_1, city, zip_code, county):
                 is_multimatch = False
                 tacoma_reports = []
                 king_reports = []
+                accella_reports_status = None
+                accella_reports_path = None
                 
                 for i, result in enumerate(results):
                     if isinstance(result, Exception):
@@ -985,6 +1398,9 @@ def run_lookup(session_id, address_line_1, city, zip_code, county):
                             tacoma_reports = result['tacoma_reports']
                         elif 'king_reports' in result:
                             king_reports = result['king_reports']
+                        elif 'accella_reports_status' in result or 'accella_reports_path' in result:
+                            accella_reports_status = result.get('accella_reports_status')
+                            accella_reports_path = result.get('accella_reports_path')
                 
                 # Mark as completed
                 db_execute('UPDATE lookup_sessions SET status = ?, completed_at = ? WHERE session_id = ?', ('completed', datetime.now().isoformat(), session_id))
@@ -997,6 +1413,8 @@ def run_lookup(session_id, address_line_1, city, zip_code, county):
                     'location_code': location_code,
                     'tacoma_reports': tacoma_reports,
                     'king_reports': king_reports,
+                    'accella_reports_status': accella_reports_status,
+                    'accella_reports_path': accella_reports_path,
                     'completed_at': datetime.now().isoformat()
                 }
                 lookup_sessions[session_id]['status'] = 'completed'
@@ -1022,6 +1440,8 @@ def run_lookup(session_id, address_line_1, city, zip_code, county):
                         browsers_to_reset.append(close_browser(county_tool, tacoma_url))
                     elif county.lower() == 'king':
                         browsers_to_reset.append(close_browser(county_tool, king_url))
+                if accella_tool:
+                    browsers_to_reset.append(close_browser(accella_tool, accella_url))
                 
                 if browsers_to_reset:
                     await asyncio.gather(*browsers_to_reset, return_exceptions=True)
@@ -1175,6 +1595,49 @@ def run_lookup(session_id, address_line_1, city, zip_code, county):
                 await close_browser(page, url)
                 return None
         
+        # Helper function for Accella lookup (Pierce County)
+        async def accella_lookup_task(page, url, address_line_1, session_id):
+            try:
+                # Check if cancelled before starting
+                if is_session_cancelled(session_id):
+                    print(f"Accella lookup cancelled for session {session_id}")
+                    await close_browser(page, url)
+                    return None
+                
+                # Ensure output directory exists
+                try:
+                    os.makedirs("Accella_Reports", exist_ok=True)
+                except Exception:
+                    pass
+                
+                status_text, file_name = await Accella_report_lookup(page, url, session_id, address_line_1)
+                
+                # Check if cancelled after lookup
+                if is_session_cancelled(session_id):
+                    print(f"Accella lookup cancelled after completion for session {session_id}")
+                    await close_browser(page, url)
+                    return None
+                
+                # Compute saved path if we have a filename
+                saved_path = f"Accella_Reports/{file_name}" if (file_name or '').strip() else ""
+                try:
+                    db_execute('UPDATE lookup_sessions SET accella_reports_status = ?, accella_reports_path = ? WHERE session_id = ?', (status_text or '', saved_path, session_id))
+                except Exception:
+                    pass
+                
+                # Navigate back to base URL instead of closing browser
+                await close_browser(page, url)
+                print(f"Accella browser navigated back for session {session_id}")
+                
+                return {
+                    'accella_reports_status': status_text or '',
+                    'accella_reports_path': saved_path
+                }
+            except Exception as e:
+                print(f"Accella lookup failed: {e}")
+                await close_browser(page, url)
+                return None
+        
         # Run the coroutine on the dedicated browser loop
         run_on_browser_loop(async_lookup())
         
@@ -1272,7 +1735,6 @@ def create_customer():
                     display_name_str = display_name or ""
                 await close_browser(customer_page, customer_url)
 
-
                 # Persist status in DB when session_id is provided
                 print(f"Status text: {status_text}")
                 print(f"sessoon id is {session_id}")
@@ -1333,6 +1795,192 @@ def create_customer():
         return jsonify({'status': 'ok', 'text': result.get('text') or 'Customer created successfully', 'display_name': result.get('display_name', '')})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/customer/create-workorder')
+def customer_workorder_create():
+    """Combined customer and work order creation page."""
+    session_id = request.args.get('session_id')
+    session_data = None
+    if session_id:
+        try:
+            conn = get_db_connection()
+            row = conn.execute('SELECT * FROM lookup_sessions WHERE session_id = ?', (session_id,)).fetchone()
+            conn.close()
+            if row:
+                session_data = dict(row)
+        except Exception:
+            session_data = None
+    return render_template('customer_workorder_create.html', session_data=session_data)
+
+@app.route('/api/create-customer-workorder', methods=['POST'])
+def create_customer_workorder():
+    try:
+        start_browser_loop_thread()
+        data = request.get_json(force=True) or {}
+        customer_data = data.get('customer', {})
+        work_order_data = data.get('work_order', {})
+        session_id = customer_data.get('session_id') or work_order_data.get('session_id')
+
+        if not session_id:
+            return jsonify({'error': 'session_id required'}), 400
+
+        # Fetch session for address and reports
+        row = db_query_one('SELECT address, pdf_urls, tacoma_reports, king_reports FROM lookup_sessions WHERE session_id = ?', (session_id,))
+        if not row:
+            return jsonify({'error': 'Session not found'}), 404
+        
+        address_line_1 = row['address']
+
+        # Prepare items for download (reusing logic from upload_workorder_pdfs)
+        items = []
+        try:
+            if row['pdf_urls']:
+                rme_list = json.loads(row['pdf_urls'])
+                for entry in rme_list:
+                    parts = (entry or '').split(',')
+                    url = (parts[0] if len(parts) > 0 else '').strip()
+                    rme_type = (parts[1] if len(parts) > 1 else '').strip().replace(' ', '_') or 'report'
+                    rme_date = (parts[2] if len(parts) > 2 else '').strip().replace('/', '-') or 'date'
+                    if url:
+                        name = f"rme_{rme_type}_{rme_date}.pdf"
+                        items.append({'url': url, 'name': name})
+        except Exception:
+            pass
+        try:
+            if row['tacoma_reports']:
+                tpchd_list = json.loads(row['tacoma_reports'])
+                for i, entry in enumerate(tpchd_list, 1):
+                    parts = (entry or '').split(',')
+                    url = (parts[0] if len(parts) > 0 else '').strip()
+                    tp_type = (parts[1] if len(parts) > 1 else '').strip().replace(' ', '_') or 'report'
+                    if url:
+                        name = f"tpchd_{tp_type}_{i}.pdf"
+                        items.append({'url': url, 'name': name})
+        except Exception:
+            pass
+        try:
+            if row['king_reports']:
+                k_list = json.loads(row['king_reports'])
+                for i, url in enumerate(k_list, 1):
+                    url = (url or '').strip()
+                    if url:
+                        name = f"king_report_{i}.pdf"
+                        items.append({'url': url, 'name': name})
+        except Exception:
+            pass
+
+        async def run_combined_flow():
+            if not browsers_initialized:
+                await start_browsers()
+            
+            # 1. Create Customer
+            customer_page = browsers.get('customer_page')
+            customer_url = 'https://login.fieldedge.com/#/List/1'
+            if customer_page is None:
+                main_browser = browsers.get('main_browser')
+                if main_browser:
+                    browsers['customer_context'] = await main_browser.new_context()
+                    browsers['customer_page'] = await browsers['customer_context'].new_page()
+                    customer_page = browsers['customer_page']
+                else:
+                    await start_browsers()
+                    customer_page = browsers.get('customer_page')
+
+            cust_status, cust_display = await Create_Customer(customer_page, customer_url, customer_data)
+            
+            # Coerce display_name
+            if isinstance(cust_display, (list, tuple)):
+                cust_display_str = ", ".join([d for d in cust_display if d])
+            else:
+                cust_display_str = cust_display or ""
+
+            # Update DB for customer
+            try:
+                db_execute('UPDATE lookup_sessions SET Customer_status = ?, Customer_display_name = ? WHERE session_id = ?', (cust_status, cust_display_str, session_id))
+            except Exception:
+                pass
+
+            if cust_status == "Creation Failed":
+                return {'status': 'error', 'error': 'Customer creation failed', 'step': 'customer'}
+
+            # 2. Create Work Order
+            # We need to ensure we are back at the list or appropriate state, Create_Customer seems to leave us there or close enough
+            # But create_work_order starts by searching address, so it should be fine.
+            # However, create_work_order uses `page` which is `customer_page` here.
+            
+            wo_status, wo_number = await create_work_order(customer_page, customer_url, address_line_1, work_order_data)
+            
+            try:
+                db_execute('UPDATE lookup_sessions SET work_order_status = ?, work_order_id = ? WHERE session_id = ?', (wo_status, wo_number, session_id))
+            except Exception:
+                pass
+
+            if not wo_number:
+                return {'status': 'error', 'error': 'Work Order creation failed', 'step': 'work_order', 'customer_status': cust_status}
+
+            # 3. Upload Documents
+            upload_result = {'count': 0, 'failed': 0}
+            if items:
+                tmpdir = tempfile.mkdtemp(prefix=f"combined_{session_id}_")
+                try:
+                    session_http = requests.Session()
+                    session_http.headers.update({
+                        'User-Agent': 'Mozilla/5.0',
+                        'Accept': 'application/pdf,application/octet-stream,*/*;q=0.8'
+                    })
+                    file_paths = []
+                    for it in items:
+                        try:
+                            r = session_http.get(it['url'], timeout=30, allow_redirects=True)
+                            data = r.content
+                            if not (r.headers.get('Content-Type','').lower().startswith('application/pdf') or data[:4] == b'%PDF'):
+                                continue
+                            safe_name = ''.join(c for c in it['name'] if c.isalnum() or c in ('-', '_', '.'))
+                            if not safe_name.endswith('.pdf'):
+                                safe_name += '.pdf'
+                            fname = os.path.join(tmpdir, safe_name)
+                            with open(fname, 'wb') as f:
+                                f.write(data)
+                            file_paths.append(fname)
+                        except Exception:
+                            continue
+                    
+                    if file_paths:
+                        status_text, uploaded_count = await upload_attachments_to_work_order(customer_page, customer_url, address_line_1, file_paths, wo_number)
+                        
+                        if uploaded_count is None:
+                             uploaded_count = 0
+                             failed_count = len(file_paths)
+                        else:
+                             failed_count = len(file_paths) - uploaded_count
+
+                        upload_result['count'] = uploaded_count
+                        upload_result['failed'] = failed_count
+                        
+                        # Update DB
+                        status_msg = f"Uploaded {uploaded_count} file(s), Failed {failed_count}"
+                        db_execute('UPDATE lookup_sessions SET work_order_upload_status = ?, work_order_uploaded_files = ? WHERE session_id = ?', (status_msg, uploaded_count, session_id))
+
+                finally:
+                    shutil.rmtree(tmpdir, ignore_errors=True)
+
+            await close_browser(customer_page, customer_url)
+            
+            return {
+                'status': 'ok',
+                'customer_status': cust_status,
+                'customer_display': cust_display_str,
+                'work_order_status': wo_status,
+                'work_order_number': wo_number,
+                'upload_result': upload_result
+            }
+
+        result = run_on_browser_loop(run_combined_flow())
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     # Disable debug mode to prevent double browser initialization
     app.run(debug=False, host='0.0.0.0', port=5001)

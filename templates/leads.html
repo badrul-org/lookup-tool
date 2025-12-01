@@ -1,0 +1,532 @@
+{% extends "base.html" %}
+
+{% block title %}Leads | Sterling Septic & Plumbing{% endblock %}
+
+{% block content %}
+<div class="all-lookups-container">
+    <div class="row">
+        <div class="col-12">
+            <div class="mb-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <h1 class="h3 mb-0">Landing Page Leads</h1>
+                        <span class="badge bg-primary fs-6">{{ total }} total leads</span>
+                    </div>
+                    <p class="text-muted mb-0 mt-2">
+                        Showing {{ ((page - 1) * per_page) + 1 }} -
+                        {{ ((page - 1) * per_page) + leads|length }} of {{ total }}
+                    </p>
+                </div>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#leadAddModal">
+                    <i class="fas fa-plus me-1"></i>Add Lead
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-table me-2"></i>
+                        Leads Table
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if leads %}
+                    <div class="table-responsive leads-table-scroll">
+                        <table class="table table-hover table-striped table-bordered align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="lead-col-submitted">Submitted</th>
+                                    <th scope="col" class="lead-col-name">Name</th>
+                                    <th scope="col" class="lead-col-phone">Phone</th>
+                                    <th scope="col" class="lead-col-email">Email</th>
+                                    <th scope="col" class="lead-col-address">Address</th>
+                                    <th scope="col" class="lead-col-system">System Type</th>
+                                    <th scope="col" class="lead-col-digging">Digging Needed</th>
+                                    <th scope="col" class="lead-col-obstacles">Obstacles</th>
+                                    <th scope="col" class="lead-col-timeline">Service Timeline</th>
+                                    <th scope="col" class="lead-col-service">Service Needed</th>
+                                    <th scope="col" class="lead-col-contact">Contact Preference</th>
+                                    <th scope="col" class="lead-col-referral">Referral Source</th>
+                                    <th scope="col" class="lead-col-household">Household Size</th>
+                                    <th scope="col" class="lead-col-notes">Additional Notes</th>
+                                    <th scope="col" class="lead-col-actions text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lead in leads %}
+                                <tr class="lead-row" data-lead-id="{{ lead.id }}">
+                                    <td class="lead-col-submitted">
+                                        <div class="lead-cell lead-cell-sm">
+                                            <div class="fw-semibold">{{ lead.created_at or '—' }}</div>
+                                            <small class="text-muted">Lead #{{ loop.index }}</small>
+                                        </div>
+                                    </td>
+                                    <td class="lead-col-name">
+                                        <div class="lead-cell" title="{{ lead.full_name or '—' }}">
+                                            {{ lead.full_name or '—' }}
+                                        </div>
+                                    </td>
+                                    <td class="lead-col-phone">
+                                        <div class="lead-cell" title="{{ lead.phone or '—' }}">
+                                            {{ lead.phone or '—' }}
+                                        </div>
+                                    </td>
+                                    <td class="lead-col-email">
+                                        <div class="lead-cell" title="{{ lead.email or '—' }}">
+                                            {% if lead.email %}
+                                            <a href="mailto:{{ lead.email }}">{{ lead.email }}</a>
+                                            {% else %}
+                                            —
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="lead-col-address">
+                                        <div class="lead-cell" title="{{ lead.address or '—' }}">{{ lead.address or '—'
+                                            }}</div>
+                                    </td>
+                                    <td class="lead-col-system">
+                                        <div class="lead-cell" title="{{ lead.system_type or '—' }}">{{ lead.system_type
+                                            or '—' }}</div>
+                                    </td>
+                                    <td class="lead-col-digging">
+                                        <div class="lead-cell" title="{{ lead.digging_needed or '—' }}">{{
+                                            lead.digging_needed or '—' }}</div>
+                                    </td>
+                                    <td class="lead-col-obstacles">
+                                        <div class="lead-cell" title="{{ lead.obstacles or '—' }}">{{ lead.obstacles or
+                                            '—' }}</div>
+                                    </td>
+                                    <td class="lead-col-timeline">
+                                        <div class="lead-cell" title="{{ lead.service_timeline or '—' }}">{{
+                                            lead.service_timeline or '—' }}</div>
+                                    </td>
+                                    <td class="lead-col-service">
+                                        <div class="lead-cell" title="{{ lead.service_needed or '—' }}">{{
+                                            lead.service_needed or '—' }}</div>
+                                    </td>
+                                    <td class="lead-col-contact">
+                                        <div class="lead-cell" title="{{ lead.contact_preference or '—' }}">{{
+                                            lead.contact_preference or '—' }}</div>
+                                    </td>
+                                    <td class="lead-col-referral">
+                                        <div class="lead-cell" title="{{ lead.referral_source or '—' }}">{{
+                                            lead.referral_source or '—' }}</div>
+                                    </td>
+                                    <td class="lead-col-household">
+                                        <div class="lead-cell" title="{{ lead.household_size or '—' }}">{{
+                                            lead.household_size or '—' }}</div>
+                                    </td>
+                                    <td class="lead-col-notes">
+                                        <div class="lead-cell" title="{{ lead.additional_notes or '—' }}">{{
+                                            lead.additional_notes or '—' }}</div>
+                                    </td>
+                                    <td class="lead-col-actions">
+                                        <div class="d-flex gap-1 justify-content-center">
+                                            <button class="btn btn-xs btn-primary lead-view-btn"
+                                                data-lead-id="{{ lead.id }}" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-xs btn-secondary lead-edit-btn"
+                                                data-lead-id="{{ lead.id }}" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">No leads captured yet. Once the landing page form is submitted,
+                            entries will appear here.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if total_pages > 1 %}
+    <div class="row mt-3">
+        <div class="col-12">
+            <nav aria-label="Lead pagination">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('leads', page=page-1) }}" aria-label="Previous">
+                            &laquo;
+                        </a>
+                    </li>
+                    {% for p in range(1, total_pages + 1) %}
+                    <li class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('leads', page=p) }}">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+                    <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('leads', page=page+1) }}" aria-label="Next">
+                            &raquo;
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- View Lead Modal -->
+<div class="modal fade" id="leadViewModal" tabindex="-1" aria-labelledby="leadViewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="leadViewModalLabel">Lead Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <dl class="row" id="leadViewContent"></dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Lead Modal -->
+<div class="modal fade" id="leadEditModal" tabindex="-1" aria-labelledby="leadEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="leadEditForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="leadEditModalLabel">Edit Lead</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editLeadId">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="editFullName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input type="text" class="form-control" id="editPhone" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Address</label>
+                            <input type="text" class="form-control" id="editAddress">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">System Type</label>
+                            <input type="text" class="form-control" id="editSystemType">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Digging Needed</label>
+                            <input type="text" class="form-control" id="editDiggingNeeded">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Obstacles</label>
+                            <input type="text" class="form-control" id="editObstacles">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Service Timeline</label>
+                            <input type="text" class="form-control" id="editServiceTimeline">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Service Needed</label>
+                            <input type="text" class="form-control" id="editServiceNeeded">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Contact Preference</label>
+                            <input type="text" class="form-control" id="editContactPreference">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Referral Source</label>
+                            <input type="text" class="form-control" id="editReferralSource">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Household Size</label>
+                            <input type="text" class="form-control" id="editHouseholdSize">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Additional Notes</label>
+                            <textarea class="form-control" id="editAdditionalNotes" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div id="leadEditAlert" class="alert d-none mb-0"></div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Lead Modal -->
+<div class="modal fade" id="leadAddModal" tabindex="-1" aria-labelledby="leadAddModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="leadAddForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="leadAddModalLabel">Add Lead</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="addFullName" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input type="text" class="form-control" id="addPhone" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="addEmail" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Address</label>
+                            <input type="text" class="form-control" id="addAddress">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">System Type</label>
+                            <input type="text" class="form-control" id="addSystemType">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Digging Needed</label>
+                            <input type="text" class="form-control" id="addDiggingNeeded">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Obstacles</label>
+                            <input type="text" class="form-control" id="addObstacles">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Service Timeline</label>
+                            <input type="text" class="form-control" id="addServiceTimeline">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Service Needed</label>
+                            <input type="text" class="form-control" id="addServiceNeeded">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Contact Preference</label>
+                            <input type="text" class="form-control" id="addContactPreference">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Referral Source</label>
+                            <input type="text" class="form-control" id="addReferralSource">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Household Size</label>
+                            <input type="text" class="form-control" id="addHouseholdSize">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Additional Notes</label>
+                            <textarea class="form-control" id="addAdditionalNotes" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div id="leadAddAlert" class="alert d-none mb-0"></div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Lead</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    const viewModalEl = document.getElementById('leadViewModal');
+    const editModalEl = document.getElementById('leadEditModal');
+    const viewModal = viewModalEl ? new bootstrap.Modal(viewModalEl) : null;
+    const editModal = editModalEl ? new bootstrap.Modal(editModalEl) : null;
+
+    async function fetchLead(id) {
+        const res = await fetch(`/api/leads/${id}`);
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.error || 'Unable to load lead');
+        }
+        return res.json();
+    }
+
+    function populateViewModal(data) {
+        const container = document.getElementById('leadViewContent');
+        if (!container) return;
+        const fields = [
+            ['Full Name', data.full_name],
+            ['Phone', data.phone],
+            ['Email', data.email],
+            ['Address', data.address],
+            ['System Type', data.system_type],
+            ['Digging Needed', data.digging_needed],
+            ['Obstacles', data.obstacles],
+            ['Service Timeline', data.service_timeline],
+            ['Service Needed', data.service_needed],
+            ['Contact Preference', data.contact_preference],
+            ['Referral Source', data.referral_source],
+            ['Household Size', data.household_size],
+            ['Additional Notes', data.additional_notes],
+            ['Submitted', data.created_at],
+        ];
+        container.innerHTML = fields.map(([label, value]) => `
+            <dt class="col-sm-4 text-muted">${label}</dt>
+            <dd class="col-sm-8">${value || '—'}</dd>
+        `).join('');
+    }
+
+    function populateEditModal(data) {
+        document.getElementById('editLeadId').value = data.id;
+        document.getElementById('editFullName').value = data.full_name || '';
+        document.getElementById('editPhone').value = data.phone || '';
+        document.getElementById('editEmail').value = data.email || '';
+        document.getElementById('editAddress').value = data.address || '';
+        document.getElementById('editSystemType').value = data.system_type || '';
+        document.getElementById('editDiggingNeeded').value = data.digging_needed || '';
+        document.getElementById('editObstacles').value = data.obstacles || '';
+        document.getElementById('editServiceTimeline').value = data.service_timeline || '';
+        document.getElementById('editServiceNeeded').value = data.service_needed || '';
+        document.getElementById('editContactPreference').value = data.contact_preference || '';
+        document.getElementById('editReferralSource').value = data.referral_source || '';
+        document.getElementById('editHouseholdSize').value = data.household_size || '';
+        document.getElementById('editAdditionalNotes').value = data.additional_notes || '';
+    }
+
+    document.querySelectorAll('.lead-view-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            try {
+                const data = await fetchLead(btn.dataset.leadId);
+                populateViewModal(data);
+                viewModal?.show();
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+    });
+
+    document.querySelectorAll('.lead-edit-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const alertEl = document.getElementById('leadEditAlert');
+            alertEl?.classList.add('d-none');
+            try {
+                const data = await fetchLead(btn.dataset.leadId);
+                populateEditModal(data);
+                editModal?.show();
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+    });
+
+    const editForm = document.getElementById('leadEditForm');
+    if (editForm) {
+        editForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const alertEl = document.getElementById('leadEditAlert');
+            alertEl.classList.add('d-none');
+            const leadId = document.getElementById('editLeadId').value;
+            const payload = {
+                full_name: document.getElementById('editFullName').value,
+                phone: document.getElementById('editPhone').value,
+                email: document.getElementById('editEmail').value,
+                address: document.getElementById('editAddress').value,
+                system_type: document.getElementById('editSystemType').value,
+                digging_needed: document.getElementById('editDiggingNeeded').value,
+                obstacles: document.getElementById('editObstacles').value,
+                service_timeline: document.getElementById('editServiceTimeline').value,
+                service_needed: document.getElementById('editServiceNeeded').value,
+                contact_preference: document.getElementById('editContactPreference').value,
+                referral_source: document.getElementById('editReferralSource').value,
+                household_size: document.getElementById('editHouseholdSize').value,
+                additional_notes: document.getElementById('editAdditionalNotes').value,
+            };
+
+            try {
+                const res = await fetch(`/api/leads/${leadId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to update lead');
+                alertEl.textContent = 'Lead updated successfully. Please refresh the page to see the latest data.';
+                alertEl.className = 'alert alert-success mb-0';
+                setTimeout(() => {
+                    editModal?.hide();
+                }, 1200);
+            } catch (error) {
+                alertEl.textContent = error.message || 'Something went wrong';
+                alertEl.className = 'alert alert-danger mb-0';
+            } finally {
+                alertEl.classList.remove('d-none');
+            }
+        });
+    }
+
+    const addForm = document.getElementById('leadAddForm');
+    if (addForm) {
+        addForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const alertEl = document.getElementById('leadAddAlert');
+            alertEl.classList.add('d-none');
+            const payload = {
+                full_name: document.getElementById('addFullName').value,
+                phone: document.getElementById('addPhone').value,
+                email: document.getElementById('addEmail').value,
+                address: document.getElementById('addAddress').value,
+                system_type: document.getElementById('addSystemType').value,
+                digging_needed: document.getElementById('addDiggingNeeded').value,
+                obstacles: document.getElementById('addObstacles').value,
+                service_timeline: document.getElementById('addServiceTimeline').value,
+                service_needed: document.getElementById('addServiceNeeded').value,
+                contact_preference: document.getElementById('addContactPreference').value,
+                referral_source: document.getElementById('addReferralSource').value,
+                household_size: document.getElementById('addHouseholdSize').value,
+                additional_notes: document.getElementById('addAdditionalNotes').value,
+            };
+
+            try {
+                const res = await fetch('/api/leads', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to add lead');
+                alertEl.textContent = 'Lead added successfully. Reloading...';
+                alertEl.className = 'alert alert-success mb-0';
+                alertEl.classList.remove('d-none');
+                setTimeout(() => window.location.reload(), 1200);
+            } catch (error) {
+                alertEl.textContent = error.message || 'Something went wrong';
+                alertEl.className = 'alert alert-danger mb-0';
+                alertEl.classList.remove('d-none');
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof closeSidebar === 'function') {
+            closeSidebar();
+        }
+    });
+</script>
+{% endblock %}

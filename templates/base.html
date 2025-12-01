@@ -37,6 +37,13 @@
                         Lookup Tool
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'leads' %}active{% endif %}"
+                        href="{{ url_for('leads') }}">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Leads
+                    </a>
+                </li>
             </ul>
         </nav>
 

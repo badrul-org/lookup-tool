@@ -1,0 +1,67 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+@import "tailwindcss";
+@plugin "flowbite-react/plugin/tailwindcss";
+@source "../.flowbite-react/class-list.json";
+
+/* @custom-variant dark (&:where(.dark, .dark *)); */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+}
+
+.text-custom-color {
+  color: #ee0202;
+}
+
+.bg-custom-color-primary {
+  background-color: #ee0202;
+}
+
+.bg-custom-color-secondary {
+  background-color: #77b3db;
+}
+
+.mask1 {
+  -webkit-mask-image: url(./assets/images/mask-1.png);
+  mask-image: url(./assets/images/mask-1.png);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+
+.mask2 {
+  -webkit-mask-image: url(./assets/images/mask-2.png);
+  mask-image: url(./assets/images/mask-2.png);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+
+.responsive-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+#modal-header {
+  color: black !important;
+}
+
+@media (max-width: 640px) {
+  .bg-wave {
+    background-color: #77b3db;
+  }
+}
+
+@media (min-width: 641px) {
+  .bg-wave {
+    background-image: url(./assets/images/bg-wave.png);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+  }
+}

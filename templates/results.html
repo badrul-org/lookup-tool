@@ -36,10 +36,10 @@
         <!-- Session Info -->
         <div class="row mb-3">
             <div class="col-12 d-flex justify-content-end gap-2">
-                <a id="add-customer-btn" class="btn btn-success" href="#"
-                    data-url="{{ url_for('customer_create') }}?session_id={{ session_data.session_id if session_data else '' }}&address={{ session_data.address if session_data else '' }}&city={{ session_data.city if session_data else '' }}&zip={{ session_data.zip_code if session_data else '' }}&county={{ session_data.county if session_data else '' }}&location_code={{ session_data.location_code if session_data else '' }}&embed=1">
-                    <i class="fas fa-user-plus me-1"></i>
-                    Add Customer
+                <a id="add-customer-workorder-btn" class="btn btn-success" href="#"
+                    data-url="{{ url_for('customer_workorder_create') }}?session_id={{ session_data.session_id if session_data else '' }}&address={{ session_data.address if session_data else '' }}&city={{ session_data.city if session_data else '' }}&zip={{ session_data.zip_code if session_data else '' }}&county={{ session_data.county if session_data else '' }}&location_code={{ session_data.location_code if session_data else '' }}&embed=1">
+                    <i class="fas fa-plus-circle me-1"></i>
+                    Add Customer + Work Order
                 </a>
                 <button id="cancel-lookup-btn" class="btn btn-outline-warning" style="display: none;"
                     onclick="cancelCurrentLookup()">
@@ -57,6 +57,116 @@
             </div>
         </div>
 
+        <!-- Create Work Order Modal -->
+        <div class="modal fade" id="workOrderModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fas fa-file-alt me-2"></i>Create Work Order</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="work-order-form" onsubmit="return false;">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Immediate Action</label>
+                                    <select id="wo-immediate" class="form-select">
+                                        <option>Create Work Order</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Task *</label>
+                                    <select id="wo-task" class="form-select" required>
+                                        <option value="" selected>Select</option>
+                                        <option>HOME SALE</option>
+                                        <option>HOME SALE REPAIR</option>
+                                        <option>PUMPING</option>
+                                        <option>ROUTINE INSPECTION</option>
+                                        <option>SERVICE CALL / TROUBLESHOOT</option>
+                                        <option>SERVICE TRUCK - 1/2 DAY</option>
+                                        <option>SERVICE TRUCK - 1/4 DAY</option>
+                                        <option>SERVICE TRUCK - FULL DAY</option>
+                                    </select>
+                                    <div class="invalid-feedback">Task is required.</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Task Duration</label>
+                                    <input type="text" id="wo-duration" class="form-control" value="0"
+                                        placeholder="1:00" />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Priority</label>
+                                    <select id="wo-priority" class="form-select">
+                                        <option value="" selected>Select</option>
+                                        <option>ADVANCED SVC</option>
+                                        <option>ADVANCED SVC - EMERGENCY</option>
+                                        <option>CLERICAL</option>
+                                        <option>EXCAVATOR</option>
+                                        <option>HOMESALE</option>
+                                        <option>PREP / RETURN</option>
+                                        <option>PUMPING</option>
+                                        <option>PUMPING - ASSIST</option>
+                                        <option>PUMPING - EMERGENCY</option>
+                                        <option>SVC TRUCK</option>
+                                        <option>SVC TRUCK - ASSIST</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Lead Source *</label>
+                                    <select id="wo-lead-source" class="form-select" required>
+                                        <option value="" selected>Select</option>
+                                        <option>Existing Customer</option>
+                                        <option>Google</option>
+                                        <option>Sterling Septic -FE</option>
+                                        <option>Thryv</option>
+                                        <option>Yelp</option>
+                                    </select>
+                                    <div class="invalid-feedback">Lead source is required.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Primary Tech</label>
+                                    <input type="text" id="wo-primary-tech" class="form-control"
+                                        placeholder="Type here" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Start Date</label>
+                                    <input type="text" id="wo-start-date" class="form-control"
+                                        placeholder="MM/DD/YYYY" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Start Time</label>
+                                    <input type="text" id="wo-start-time" class="form-control" placeholder="0:00" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Customer PO</label>
+                                    <input type="text" id="wo-customer-po" class="form-control"
+                                        placeholder="Type Here" />
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Work Order Description</label>
+                                    <textarea id="wo-description" class="form-control" rows="3"
+                                        placeholder="Type Here"></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Tags</label>
+                                    <input type="text" id="wo-tags" class="form-control" placeholder="Type here" />
+                                </div>
+                                <!-- <div class="col-md-6">
+                                    <label class="form-label">Task Status</label>
+                                    <input type="text" id="wo-task-status" class="form-control"
+                                        placeholder="Type here" />
+                                </div> -->
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" id="wo-save-btn" class="btn btn-success">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Session Info -->
         <div class="row mb-4">
             <div class="col-12">
@@ -68,6 +178,7 @@
                         </h5>
                     </div>
                     <div class="card-body">
+                        <!-- Row 1 -->
                         <div class="d-flex flex-nowrap gap-3 overflow-auto w-100">
                             <div class="flex-fill">
                                 <div class="info-item text-nowrap">
@@ -107,16 +218,37 @@
                                     <span id="result-customer-status" class="badge bg-secondary">N/A</span>
                                 </div>
                             </div>
+                        </div>
+                        <!-- Row 2 -->
+                        <div class="d-flex flex-nowrap gap-3 overflow-auto w-100 mt-2">
                             <div class="flex-fill">
                                 <div class="info-item text-nowrap">
                                     <strong>Customer Display Name:</strong><br>
                                     <span id="result-customer-display">N/A</span>
                                 </div>
                             </div>
-                            <div class="flex-fill">
+                            <!-- <div class="flex-fill">
                                 <div class="info-item text-nowrap">
                                     <strong>Upload Status:</strong><br>
                                     <span id="result-upload-status">N/A</span>
+                                </div>
+                            </div> -->
+                            <div class="flex-fill">
+                                <div class="info-item text-nowrap">
+                                    <strong>Work Order Status:</strong><br>
+                                    <span id="result-workorder-status">N/A</span>
+                                </div>
+                            </div>
+                            <div class="flex-fill">
+                                <div class="info-item text-nowrap">
+                                    <strong>Work Order ID:</strong><br>
+                                    <span id="result-workorder-id">N/A</span>
+                                </div>
+                            </div>
+                            <div class="flex-fill">
+                                <div class="info-item text-nowrap">
+                                    <strong>WO Upload Status:</strong><br>
+                                    <span id="result-wo-upload-status">N/A</span>
                                 </div>
                             </div>
                         </div>
@@ -175,10 +307,15 @@
         <!-- Upload PDFs Action (separate section below Location Code) -->
         <div class="row mb-3">
             <div class="col-12 d-flex justify-content-start">
-                <button id="upload-pdfs-btn" class="btn btn-outline-primary"
+                <!-- <button id="upload-pdfs-btn" class="btn btn-outline-primary"
                     title="Download and upload all reports to FieldEdge">
                     <i class="fas fa-file-upload me-1"></i>
                     Upload PDFs
+                </button> -->
+                <button id="upload-wo-pdfs-btn" class="btn btn-outline-secondary ms-2"
+                    title="Download and upload all reports to the Work Order">
+                    <i class="fas fa-file-upload me-1"></i>
+                    Work Order PDF Upload
                 </button>
             </div>
         </div>
@@ -207,6 +344,8 @@
             </div>
         </div>
 
+
+
         <!-- Multimatch Results -->
         <div class="row mb-4" id="multimatch-results-section">
             <div class="col-12">
@@ -224,7 +363,8 @@
                         </div>
                         <!-- No result found message -->
                         <div id="multimatch-no-result" class="alert alert-info mb-0" style="display: none;">
-                            <i class="fas fa-info-circle me-2"></i>No multiple property matches found for this address.
+                            <i class="fas fa-info-circle me-2"></i>No multiple property matches found for this
+                            address.
                         </div>
                     </div>
                 </div>
@@ -343,6 +483,39 @@
             </div>
         </div>
 
+        <!-- Accella Report Section (Pierce County) -->
+        <div class="row mb-4" id="accella-reports-section" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header" style="background-color:#fd7e14;color:#ffffff; cursor: pointer;"
+                        data-bs-toggle="collapse" data-bs-target="#accella-body" aria-expanded="true"
+                        aria-controls="accella-body">
+                        <h5 class="card-title mb-0 d-flex justify-content-between align-items-center">
+                            <span>
+                                <i class="fas fa-file-alt me-2"></i>
+                                Accella Report
+                                <span id="accella-count" class="badge bg-secondary ms-2">0</span>
+                            </span>
+                            <i class="fas fa-chevron-down" id="accella-toggle-icon"></i>
+                        </h5>
+                    </div>
+                    <div class="card-body collapse show" id="accella-body">
+                        <div id="accella-content">
+                            <!-- Accella Skeleton -->
+                            <div id="accella-skeleton" class="mb-3" style="display: none;">
+                                <div class="skeleton-text skeleton-title" style="width: 180px; height: 18px;"></div>
+                                <div class="skeleton-text" style="width: 100%; height: 320px; margin-top: 12px;"></div>
+                            </div>
+                            <div id="accella-iframe-container"></div>
+                            <div id="accella-no-result" class="alert alert-info mt-3 mb-0" style="display: none;">
+                                <i class="fas fa-info-circle me-2"></i>No records found.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Additional Results -->
         <div class="row mt-4" id="additional-results-section">
             <div class="col-12">
@@ -371,11 +544,13 @@
 {% endblock %}
 
 {% block scripts %}
+<script id="initial-session"
+    type="application/json">{{ session_data| tojson | safe if session_data else 'null' }}</script>
 <script>
     let sessionId = null;
     let loadingInterval = null;
     let rmeErrorShown = false;
-    const initialSession = {{ session_data| tojson | safe if session_data else 'null' }};
+    const initialSession = JSON.parse((document.getElementById('initial-session')?.textContent || 'null'));
 
     // Helper: ensure embedded PDFs open at desired zoom level
     function withPdfZoom(url, zoom) {
@@ -442,9 +617,32 @@
 
     window.addEventListener('resize', debounce(applyResponsiveZoomToAll, 150));
 
+    // Setup Accella collapse icon toggle
+    (function setupAccellaCollapseIcon() {
+        const accellaBody = document.getElementById('accella-body');
+        const accellaIcon = document.getElementById('accella-toggle-icon');
+        if (!accellaBody || !accellaIcon) return;
+        // Ensure correct initial icon based on current state
+        if (accellaBody.classList.contains('show')) {
+            accellaIcon.classList.remove('fa-chevron-right');
+            accellaIcon.classList.add('fa-chevron-down');
+        } else {
+            accellaIcon.classList.remove('fa-chevron-down');
+            accellaIcon.classList.add('fa-chevron-right');
+        }
+        accellaBody.addEventListener('show.bs.collapse', function () {
+            accellaIcon.classList.remove('fa-chevron-right');
+            accellaIcon.classList.add('fa-chevron-down');
+        });
+        accellaBody.addEventListener('hide.bs.collapse', function () {
+            accellaIcon.classList.remove('fa-chevron-down');
+            accellaIcon.classList.add('fa-chevron-right');
+        });
+    })();
+
     // Open customer create modal and load form
     document.addEventListener('click', function (e) {
-        const btn = e.target.closest('#add-customer-btn');
+        const btn = e.target.closest('#add-customer-workorder-btn');
         if (!btn) return;
         e.preventDefault();
         try {
@@ -474,23 +672,165 @@
         } catch (_) { }
     });
 
-    // Listen for customer creation status events from the iframe
+    // Open Create Work Order modal
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('#create-workorder-btn');
+        if (!btn) return;
+        e.preventDefault();
+        try {
+            const modal = new bootstrap.Modal(document.getElementById('workOrderModal'));
+            modal.show();
+        } catch (_) { }
+    });
+
+    // Auto-fill Task Duration for specific tasks
+    document.addEventListener('change', function (e) {
+        const sel = e.target.closest('#wo-task');
+        if (!sel) return;
+        const val = (sel.value || '').trim().toUpperCase();
+        const oneHourTasks = new Set([
+            'HOME SALE',
+            'HOME SALE REPAIR',
+            'PUMPING',
+            'ROUTINE INSPECTION',
+            'SERVICE CALL / TROUBLESHOOT'
+        ]);
+        const durationMap = new Map([
+            ['SERVICE TRUCK - 1/2 DAY', '4:00'],
+            ['SERVICE TRUCK - 1/4 DAY', '2:00'],
+            ['SERVICE TRUCK - FULL DAY', '8:00']
+        ]);
+        const dur = document.getElementById('wo-duration');
+        if (!dur) return;
+        if (durationMap.has(val)) {
+            dur.value = durationMap.get(val);
+        } else if (oneHourTasks.has(val)) {
+            dur.value = '1:00';
+        }
+    });
+
+    // Save Work Order
+    document.addEventListener('click', async function (e) {
+        const btn = e.target.closest('#wo-save-btn');
+        if (!btn) return;
+        e.preventDefault();
+        // Required validation for Task and Lead Source
+        const taskEl = document.getElementById('wo-task');
+        const leadEl = document.getElementById('wo-lead-source');
+        let valid = true;
+        if (taskEl && !taskEl.value) { taskEl.classList.add('is-invalid'); valid = false; } else if (taskEl) { taskEl.classList.remove('is-invalid'); }
+        if (leadEl && !leadEl.value) { leadEl.classList.add('is-invalid'); valid = false; } else if (leadEl) { leadEl.classList.remove('is-invalid'); }
+        if (!valid) { return; }
+        const task = (document.getElementById('wo-task')?.value || '').trim();
+        const lead = (document.getElementById('wo-lead-source')?.value || '').trim();
+        const immediate = (document.getElementById('wo-immediate')?.value || '').trim();
+        const duration = (document.getElementById('wo-duration')?.value || '').trim();
+        const priority = (document.getElementById('wo-priority')?.value || '').trim();
+        const primaryTech = (document.getElementById('wo-primary-tech')?.value || '').trim();
+        const startDate = (document.getElementById('wo-start-date')?.value || '').trim();
+        const startTime = (document.getElementById('wo-start-time')?.value || '').trim();
+        const customerPO = (document.getElementById('wo-customer-po')?.value || '').trim();
+        const description = (document.getElementById('wo-description')?.value || '').trim();
+        const tags = (document.getElementById('wo-tags')?.value || '').trim();
+        const sid = getSessionIdFromUrl();
+        if (!sid) { alert('Missing session id'); return; }
+        const old = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Saving...';
+        try {
+            const res = await fetch('/api/create-work-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_id: sid, task, lead_source: lead, immediate, task_duration: duration, priority, primary_tech: primaryTech, start_date: startDate, start_time: startTime, customer_po: customerPO, description, tags })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data && data.error || 'Failed to create work order');
+            try {
+                const modalEl = document.getElementById('workOrderModal');
+                const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                modal.hide();
+            } catch (_) { }
+            // Reflect work order status/id
+            const sEl = document.getElementById('result-workorder-status');
+            if (sEl) sEl.textContent = data.text || 'N/A';
+            const idEl = document.getElementById('result-workorder-id');
+            if (idEl) idEl.textContent = data.work_order_number || 'N/A';
+        } catch (err) {
+            // Quietly reflect error in UI instead of alert
+            const sEl = document.getElementById('result-workorder-status');
+            if (sEl) sEl.textContent = 'Error';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = old;
+        }
+    });
+
+    // Listen for combined creation status events from the iframe
     window.addEventListener('message', function (event) {
         const data = event.data || {};
-        if (data.type !== 'customer-create-status') return;
+        if (data.type !== 'combined-create-status' && data.type !== 'customer-create-status') return;
+
         const modalEl = document.getElementById('customerCreateModal');
         const statusEl = document.getElementById('result-customer-status');
         const displayEl = document.getElementById('result-customer-display');
+        const woStatusEl = document.getElementById('result-workorder-status');
+        const woIdEl = document.getElementById('result-workorder-id');
+        const woUploadEl = document.getElementById('result-wo-upload-status');
+
         if (data.phase === 'start') {
-            try { const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl); modal.hide(); } catch (_) { }
-            if (statusEl) { statusEl.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Creating...'; statusEl.className = 'badge bg-warning'; }
+            if (statusEl) { statusEl.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...'; statusEl.className = 'badge bg-warning'; }
         } else if (data.phase === 'done') {
-            if (statusEl) { statusEl.textContent = data.text || 'Customer created successfully'; statusEl.className = 'badge bg-success'; }
-            if (displayEl && data.displayName) { displayEl.textContent = data.displayName; }
+            try { const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl); modal.hide(); } catch (_) { }
+
+            if (data.data) {
+                const d = data.data;
+                if (statusEl) {
+                    statusEl.textContent = d.customer_status || 'Success';
+                    statusEl.className = (d.customer_status === 'Already Exists') ? 'badge bg-info' : 'badge bg-success';
+                }
+                if (displayEl && d.customer_display) { displayEl.textContent = d.customer_display; }
+                if (woStatusEl && d.work_order_status) { woStatusEl.textContent = d.work_order_status; }
+                if (woIdEl && d.work_order_number) { woIdEl.textContent = d.work_order_number; }
+                if (woUploadEl && d.upload_result) {
+                    woUploadEl.textContent = `Uploaded: ${d.upload_result.count}, Failed: ${d.upload_result.failed}`;
+                }
+            } else {
+                // Fallback
+                if (statusEl) { statusEl.textContent = data.text || 'Success'; statusEl.className = 'badge bg-success'; }
+                if (displayEl && data.displayName) { displayEl.textContent = data.displayName; }
+            }
+            updateCustomerStatusBadge();
         } else if (data.phase === 'error') {
-            if (statusEl) { statusEl.textContent = 'Error: ' + (data.error || 'Creation failed'); statusEl.className = 'badge bg-danger'; }
+            try { const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl); modal.hide(); } catch (_) { }
+            if (statusEl) { statusEl.textContent = 'Error: ' + (data.error || 'Failed'); statusEl.className = 'badge bg-danger'; }
         }
     });
+
+    // Function to convert "Already Exists" badge to button
+    function updateCustomerStatusBadge() {
+        const statusEl = document.getElementById('result-customer-status');
+        if (!statusEl) return;
+        const text = statusEl.textContent.trim();
+        if (text === 'Already Exists' || text === 'Existing Customer') {
+            if (statusEl.tagName === 'BUTTON' || statusEl.querySelector('button')) return;
+
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-sm btn-info text-white';
+            btn.innerHTML = '<i class="fas fa-file-alt me-1"></i>Create Work Order';
+            btn.onclick = function () {
+                try {
+                    const modal = new bootstrap.Modal(document.getElementById('workOrderModal'));
+                    modal.show();
+                } catch (_) { }
+            };
+            statusEl.innerHTML = '';
+            statusEl.appendChild(btn);
+            statusEl.className = '';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', updateCustomerStatusBadge);
+    setInterval(updateCustomerStatusBadge, 2000);
 
     // Upload PDFs button handler
     document.addEventListener('click', async function (e) {
@@ -515,6 +855,38 @@
             if (upEl) upEl.textContent = `Uploaded ${data.uploaded || 0} file(s)`;
         } catch (err) {
             alert('Upload error: ' + (err.message || err));
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = old;
+        }
+    });
+
+    // Upload PDFs to Work Order button handler
+    document.addEventListener('click', async function (e) {
+        const btn = e.target.closest('#upload-wo-pdfs-btn');
+        if (!btn) return;
+        e.preventDefault();
+        const sid = getSessionIdFromUrl();
+        if (!sid) { alert('Missing session id'); return; }
+        const woIdText = (document.getElementById('result-workorder-id')?.textContent || '').trim();
+        const work_order_id = (woIdText && woIdText !== 'N/A') ? woIdText : undefined;
+        const old = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Uploading...';
+        try {
+            const payload = { session_id: sid };
+            if (work_order_id) payload.work_order_id = work_order_id;
+            const res = await fetch('/api/upload-workorder-pdfs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data && data.error || 'Upload failed');
+            const woUpEl = document.getElementById('result-wo-upload-status');
+            if (woUpEl) woUpEl.textContent = `Uploaded ${data.uploaded || 0} file(s)`;
+        } catch (err) {
+            alert('WO upload error: ' + (err.message || err));
         } finally {
             btn.disabled = false;
             btn.innerHTML = old;
@@ -558,12 +930,15 @@
                     // Show skeleton briefly then render results from initial data
                     showRmeReportsSkeleton();
                     const results = {
+                        status: session.status || '',
                         pdf_urls: session.pdf_urls || [],
                         multimatch_data: session.multimatch_data || [],
                         is_multimatch: session.is_multimatch || false,
                         location_code: session.location_code,
                         tacoma_reports: session.tacoma_reports || [],
                         king_reports: session.king_reports || [],
+                        accella_reports_status: session.accella_reports_status || '',
+                        accella_reports_path: session.accella_reports_path || '',
                         county: session.county || '',
                         city: session.city || '',
                         zip_code: session.zip_code || '',
@@ -575,6 +950,19 @@
                     }, 300);
                     return; // Avoid initial API fetch
                 } else if (session.status === 'running' || session.status === 'waiting') {
+                    // Prefill skeletons while polling starts
+                    if (session.county && session.county.toLowerCase() === 'pierce') {
+                        const accellaSection = document.getElementById('accella-reports-section');
+                        const accellaSkeleton = document.getElementById('accella-skeleton');
+                        const accellaIframeContainer = document.getElementById('accella-iframe-container');
+                        const accellaNoResult = document.getElementById('accella-no-result');
+                        const accellaCount = document.getElementById('accella-count');
+                        if (accellaSection) accellaSection.style.display = 'block';
+                        if (accellaSkeleton) accellaSkeleton.style.display = 'block';
+                        if (accellaIframeContainer) accellaIframeContainer.innerHTML = '';
+                        if (accellaNoResult) accellaNoResult.style.display = 'none';
+                        if (accellaCount) accellaCount.textContent = '0';
+                    }
                     startPolling();
                     return; // Avoid initial API fetch; polling will fetch
                 } else if (session.status === 'error') {
@@ -609,12 +997,15 @@
 
                 // Create results object from session data
                 const results = {
+                    status: session.status || '',
                     pdf_urls: session.pdf_urls || [],
                     multimatch_data: session.multimatch_data || [],
                     is_multimatch: session.is_multimatch || false,
                     location_code: session.location_code,
                     tacoma_reports: session.tacoma_reports || [],
                     king_reports: session.king_reports || [],
+                    accella_reports_status: session.accella_reports_status || '',
+                    accella_reports_path: session.accella_reports_path || '',
                     county: session.county || '',
                     city: session.city || '',
                     zip_code: session.zip_code || '',
@@ -681,6 +1072,23 @@
         if (uploadStatusEl) {
             const us = (session.upload_status || '').trim();
             uploadStatusEl.textContent = us || 'N/A';
+        }
+
+        const woUploadStatusEl = document.getElementById('result-wo-upload-status');
+        if (woUploadStatusEl) {
+            const wus = (session.work_order_upload_status || '').trim();
+            woUploadStatusEl.textContent = wus || 'N/A';
+        }
+
+        const woStatusEl = document.getElementById('result-workorder-status');
+        if (woStatusEl) {
+            const ws = (session.work_order_status || '').trim();
+            woStatusEl.textContent = ws || 'N/A';
+        }
+        const woIdEl = document.getElementById('result-workorder-id');
+        if (woIdEl) {
+            const wid = (session.work_order_id || '').toString().trim();
+            woIdEl.textContent = wid || 'N/A';
         }
 
         // Update subtitle with address
@@ -2000,12 +2408,61 @@
                     tacomaNoResult.style.display = 'block';
                 }
             }
+
+            // Show Accella section and update its content (respect status for skeleton vs no-result)
+            const accellaSection = document.getElementById('accella-reports-section');
+            const accellaNoResult = document.getElementById('accella-no-result');
+            const accellaIframeContainer = document.getElementById('accella-iframe-container');
+            const accellaSkeleton = document.getElementById('accella-skeleton');
+            const accellaCount = document.getElementById('accella-count');
+            if (accellaSection) {
+                accellaSection.style.display = 'block';
+            }
+            const path = (results.accella_reports_path || '').trim();
+            if (accellaIframeContainer) {
+                if (path) {
+                    const url = `/api/download-accella/${sessionId}`;
+                    accellaIframeContainer.innerHTML = `
+                        <div class="pdf-iframe-container">
+                            <iframe
+                                data-base-src="${url}"
+                                src="${withPdfZoom(url, 125)}"
+                                class="pdf-iframe"
+                                title="Accella Report"
+                                onload="resizeIframe(this)"
+                                onerror="handleIframeError(this)">
+                            </iframe>
+                        </div>
+                    `;
+                    if (accellaNoResult) accellaNoResult.style.display = 'none';
+                    if (accellaSkeleton) accellaSkeleton.style.display = 'none';
+                    if (accellaCount) accellaCount.textContent = '1';
+                    applyResponsiveZoomToAll();
+                } else {
+                    accellaIframeContainer.innerHTML = '';
+                    // If we know lookup is completed and no path, show no-result; otherwise show skeleton
+                    if ((results.status || '').toLowerCase() === 'completed') {
+                        if (accellaSkeleton) accellaSkeleton.style.display = 'none';
+                        if (accellaNoResult) accellaNoResult.style.display = 'block';
+                        if (accellaCount) accellaCount.textContent = '0';
+                    } else {
+                        if (accellaSkeleton) accellaSkeleton.style.display = 'block';
+                        if (accellaNoResult) accellaNoResult.style.display = 'none';
+                        if (accellaCount) accellaCount.textContent = '0';
+                    }
+                }
+            }
         } else {
             console.log('Not Pierce County, hiding Tacoma section');
             // Hide Tacoma section for non-Pierce counties
             const tacomaSection = document.getElementById('tacoma-reports-section');
             if (tacomaSection) {
                 tacomaSection.style.display = 'none';
+            }
+            // Hide Accella section for non-Pierce counties
+            const accellaSection = document.getElementById('accella-reports-section');
+            if (accellaSection) {
+                accellaSection.style.display = 'none';
             }
         }
 
@@ -2179,11 +2636,66 @@
                             tacomaNoResult.style.display = 'none';
                         }
                     }
+
+                    // Update Accella section progressively
+                    const accellaSection = document.getElementById('accella-reports-section');
+                    const accellaNoResult = document.getElementById('accella-no-result');
+                    const accellaIframeContainer = document.getElementById('accella-iframe-container');
+                    const accellaSkeleton = document.getElementById('accella-skeleton');
+                    const accellaCount = document.getElementById('accella-count');
+                    if (accellaSection) {
+                        accellaSection.style.display = 'block';
+                    }
+                    const accPath = ((session.accella_reports_path || '') + '').trim();
+                    // No status/filename display for Accella
+                    // No status/filename display for Accella
+                    if (accellaIframeContainer) {
+                        if (accPath) {
+                            const url = `/api/download-accella/${sessionId}`;
+                            accellaIframeContainer.innerHTML = `
+                                <div class="pdf-iframe-container">
+                                    <iframe
+                                        data-base-src="${url}"
+                                        src="${withPdfZoom(url, 125)}"
+                                        class="pdf-iframe"
+                                        title="Accella Report"
+                                        onload="resizeIframe(this)"
+                                        onerror="handleIframeError(this)">
+                                    </iframe>
+                                </div>
+                            `;
+                            applyResponsiveZoomToAll();
+                            if (accellaNoResult) accellaNoResult.style.display = 'none';
+                            if (accellaSkeleton) accellaSkeleton.style.display = 'none';
+                            if (accellaCount) accellaCount.textContent = '1';
+                        } else {
+                            accellaIframeContainer.innerHTML = '';
+                            if (session.status === 'running' || session.status === 'waiting') {
+                                if (accellaSkeleton) accellaSkeleton.style.display = 'block';
+                                if (accellaNoResult) accellaNoResult.style.display = 'none';
+                                if (accellaCount) accellaCount.textContent = '0';
+                            } else if (session.status === 'completed') {
+                                if (accellaSkeleton) accellaSkeleton.style.display = 'none';
+                                if (accellaNoResult) accellaNoResult.style.display = 'block';
+                                if (accellaCount) accellaCount.textContent = '0';
+                            } else {
+                                // default while polling
+                                if (accellaSkeleton) accellaSkeleton.style.display = 'block';
+                                if (accellaNoResult) accellaNoResult.style.display = 'none';
+                                if (accellaCount) accellaCount.textContent = '0';
+                            }
+                        }
+                    }
                 } else if (session.county && session.county.toLowerCase() !== 'pierce') {
                     // Hide Tacoma section for non-Pierce counties
                     const tacomaSection = document.getElementById('tacoma-reports-section');
                     if (tacomaSection) {
                         tacomaSection.style.display = 'none';
+                    }
+                    // Hide Accella section for non-Pierce counties
+                    const accellaSection = document.getElementById('accella-reports-section');
+                    if (accellaSection) {
+                        accellaSection.style.display = 'none';
                     }
                 }
 
@@ -2312,8 +2824,8 @@
             // Use viewport height for responsive sizing
             const container = iframe.parentElement;
             const viewportHeight = window.innerHeight;
-            const responsiveHeight = Math.min(viewportHeight * 0.8, 900);
-            container.style.height = Math.max(responsiveHeight, 600) + 'px';
+            const responsiveHeight = Math.min(viewportHeight * 0.8, 1200);
+            container.style.height = Math.max(responsiveHeight, 800) + 'px';
         } catch (error) {
             console.log('Could not resize iframe:', error);
         }
@@ -2340,8 +2852,8 @@
             // Use viewport height for responsive sizing
             const container = iframe.parentElement;
             const viewportHeight = window.innerHeight;
-            const responsiveHeight = Math.min(viewportHeight * 0.7, 800);
-            container.style.height = Math.max(responsiveHeight, 500) + 'px';
+            const responsiveHeight = Math.min(viewportHeight * 0.7, 1200);
+            container.style.height = Math.max(responsiveHeight, 800) + 'px';
         } catch (error) {
             console.log('Could not resize King County iframe:', error);
         }
@@ -2368,8 +2880,8 @@
             // Use viewport height for responsive sizing
             const container = iframe.parentElement;
             const viewportHeight = window.innerHeight;
-            const responsiveHeight = Math.min(viewportHeight * 0.7, 800);
-            container.style.height = Math.max(responsiveHeight, 500) + 'px';
+            const responsiveHeight = Math.min(viewportHeight * 0.7, 1200);
+            container.style.height = Math.max(responsiveHeight, 800) + 'px';
         } catch (error) {
             console.log('Could not resize TPCHD iframe:', error);
         }
@@ -2466,8 +2978,8 @@
         position: relative;
         width: 100%;
         height: 80vh;
-        min-height: 600px;
-        max-height: 900px;
+        min-height: 800px;
+        max-height: 1200px;
         border: 1px solid #dee2e6;
         border-radius: 0.375rem;
         overflow: hidden;
@@ -2514,8 +3026,8 @@
         position: relative;
         width: 100%;
         height: 70vh;
-        min-height: 500px;
-        max-height: 800px;
+        min-height: 800px;
+        max-height: 1200px;
         border: 1px solid #dee2e6;
         border-radius: 0.375rem;
         overflow: hidden;
@@ -2532,8 +3044,8 @@
         position: relative;
         width: 100%;
         height: 70vh;
-        min-height: 500px;
-        max-height: 800px;
+        min-height: 800px;
+        max-height: 1200px;
         border: 1px solid #dee2e6;
         border-radius: 0.375rem;
         overflow: hidden;

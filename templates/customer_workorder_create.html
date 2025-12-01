@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Create Customer - Sterling Septic & Plumbing LLC{% endblock %}
+{% block title %}Create Customer & Work Order - Sterling Septic & Plumbing LLC{% endblock %}
 
 {% block content %}
 <div class="{% if request.args.get('embed') %}container-fluid px-0 py-3 cc-embed{% else %}container py-4{% endif %}">
     {% if not request.args.get('embed') %}
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h4 mb-0"><i class="fas fa-user-plus me-2"></i>Create Customer</h1>
+        <h1 class="h4 mb-0"><i class="fas fa-user-plus me-2"></i>Create Customer & Work Order</h1>
         <div class="d-flex gap-2">
             {% if request.args.get('session_id') %}
             <a href="{{ url_for('results') }}?session_id={{ request.args.get('session_id') }}"
@@ -24,8 +24,14 @@
 
     <div class="card">
         <div class="card-body">
-            <form id="customer-create-form" class="row g-3" onsubmit="return false;">
+            <form id="combined-form" class="row g-3" onsubmit="return false;">
                 <input type="hidden" id="cc-session-id" value="{{ request.args.get('session_id', '') }}" />
+                <input type="hidden" id="cc-work-order-id" value="" />
+
+                <!-- Customer Section -->
+                <div class="col-12">
+                    <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-user me-2"></i>Customer Details</h5>
+                </div>
 
                 <div class="col-md-4">
                     <label class="form-label">First Name</label>
@@ -41,7 +47,7 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label">Display Name *</label>
+                    <label class="form-label">Display Name <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="cc-display-name" placeholder="Type here" />
                     <div class="invalid-feedback">Display Name is required.</div>
                 </div>
@@ -81,8 +87,7 @@
                     <textarea class="form-control" id="cc-note" rows="2" placeholder="Type here"></textarea>
                 </div>
 
-                <hr />
-                <div class="col-12"><strong>Physical Location Details</strong></div>
+                <div class="col-12 mt-4"><strong>Physical Location Details</strong></div>
 
                 <div class="col-md-8">
                     <label class="form-label">Address 1</label>
@@ -143,8 +148,7 @@
                     </div>
                 </div>
 
-                <hr />
-                <div class="col-12"><strong>Contacts</strong></div>
+                <div class="col-12 mt-4"><strong>Contacts</strong></div>
 
                 <div class="col-md-6">
                     <label class="form-label">Contact Name</label>
@@ -179,10 +183,9 @@
                     <div class="invalid-feedback">Please enter a valid email address.</div>
                 </div>
 
-                <hr />
-                <div class="col-12"><strong>Business Profile</strong></div>
+                <div class="col-12 mt-4"><strong>Business Profile</strong></div>
                 <div class="col-md-4">
-                    <label class="form-label">Terms *</label>
+                    <label class="form-label">Terms <span class="text-danger">*</span></label>
                     <select class="form-select" id="cc-terms">
                         <option>Due On Reciept</option>
                         <option>Escrow Billing</option>
@@ -196,7 +199,7 @@
                     <div class="invalid-feedback">Terms is required.</div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Tax Code *</label>
+                    <label class="form-label">Tax Code <span class="text-danger">*</span></label>
                     <input type="text" class="form-control" id="cc-tax-code" placeholder="Type here"
                         value="{{ session_data.location_code if session_data else '' }}" />
                     <div class="invalid-feedback">Tax Code is required.</div>
@@ -230,11 +233,98 @@
                     </div>
                 </div>
 
-                <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+                <!-- Work Order Section -->
+                <div class="col-12 mt-5">
+                    <h5 class="border-bottom pb-2 mb-3"><i class="fas fa-file-alt me-2"></i>Work Order Details</h5>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Immediate Action</label>
+                    <select id="wo-immediate" class="form-select">
+                        <option>Create Work Order</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Task <span class="text-danger">*</span></label>
+                    <select id="wo-task" class="form-select" required>
+                        <option value="" selected>Select</option>
+                        <option>HOME SALE</option>
+                        <option>HOME SALE REPAIR</option>
+                        <option>PUMPING</option>
+                        <option>ROUTINE INSPECTION</option>
+                        <option>SERVICE CALL / TROUBLESHOOT</option>
+                        <option>SERVICE TRUCK - 1/2 DAY</option>
+                        <option>SERVICE TRUCK - 1/4 DAY</option>
+                        <option>SERVICE TRUCK - FULL DAY</option>
+                    </select>
+                    <div class="invalid-feedback">Task is required.</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Task Duration</label>
+                    <input type="text" id="wo-duration" class="form-control" value="0" placeholder="1:00" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Priority</label>
+                    <select id="wo-priority" class="form-select">
+                        <option value="" selected>Select</option>
+                        <option value="ADVANCED SVC" style="background-color: #ffcccc;">ADVANCED SVC</option>
+                        <option value="ADVANCED SVC - EMERGENCY" style="background-color: #ff0000; color: white;">
+                            ADVANCED SVC - EMERGENCY</option>
+                        <option value="CLERICAL" style="background-color: #e6e6e6;">CLERICAL</option>
+                        <option value="EXCAVATOR" style="background-color: #ffffcc;">EXCAVATOR</option>
+                        <option value="HOMESALE" style="background-color: #ccffcc;">HOMESALE</option>
+                        <option value="PREP / RETURN" style="background-color: #e6e6e6;">PREP / RETURN</option>
+                        <option value="PUMPING" style="background-color: #ccffff;">PUMPING</option>
+                        <option value="PUMPING - ASSIST" style="background-color: #ccffff;">PUMPING - ASSIST</option>
+                        <option value="PUMPING - EMERGENCY" style="background-color: #ff0000; color: white;">PUMPING -
+                            EMERGENCY</option>
+                        <option value="SVC TRUCK" style="background-color: #ccccff;">SVC TRUCK</option>
+                        <option value="SVC TRUCK - ASSIST" style="background-color: #ccccff;">SVC TRUCK - ASSIST
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Lead Source <span class="text-danger">*</span></label>
+                    <select id="wo-lead-source" class="form-select" required>
+                        <option value="" selected>Select</option>
+                        <option>Existing Customer</option>
+                        <option>Google</option>
+                        <option>Sterling Septic -FE</option>
+                        <option>Thryv</option>
+                        <option>Yelp</option>
+                    </select>
+                    <div class="invalid-feedback">Lead source is required.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Primary Tech</label>
+                    <input type="text" id="wo-primary-tech" class="form-control" placeholder="Type here" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Start Date</label>
+                    <input type="text" id="wo-start-date" class="form-control" placeholder="MM/DD/YYYY" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Start Time</label>
+                    <input type="text" id="wo-start-time" class="form-control" placeholder="0:00" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Customer PO</label>
+                    <input type="text" id="wo-customer-po" class="form-control" placeholder="Type Here" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Work Order Description</label>
+                    <textarea id="wo-description" class="form-control" rows="3" placeholder="Type Here"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Tags</label>
+                    <input type="text" id="wo-tags" class="form-control" placeholder="Type here" />
+                </div>
+
+                <div class="col-12 d-flex justify-content-end gap-2 mt-4 mb-5">
                     <button type="button" class="btn btn-secondary" onclick="window.history.back()"><i
                             class="fas fa-times me-1"></i>Cancel</button>
-                    <button type="button" class="btn btn-success" id="cc-submit-btn"><i
-                            class="fas fa-check me-1"></i>Create</button>
+                    <button type="button" class="btn btn-success" id="combined-submit-btn"><i
+                            class="fas fa-check me-1"></i>Add Customer + Work Order</button>
                 </div>
             </form>
         </div>
@@ -268,10 +358,12 @@
             } catch (_) { }
         }
 
-        async function createCustomer() {
+        async function createCombined() {
             const val = (id) => (document.getElementById(id)?.value || '').trim();
             const bool = (id) => !!document.getElementById(id)?.checked;
-            const payload = {
+
+            // Customer Payload
+            const customerPayload = {
                 firstName: val('cc-first-name'),
                 lastName: val('cc-last-name'),
                 companyName: val('cc-company-name'),
@@ -309,64 +401,46 @@
                 session_id: getSessionId()
             };
 
-            // validation: require Terms, Tax Code, and Display Name (show inline errors)
+            // Work Order Payload
+            const workOrderPayload = {
+                immediate: val('wo-immediate'),
+                task: val('wo-task'),
+                task_duration: val('wo-duration'),
+                priority: val('wo-priority'),
+                lead_source: val('wo-lead-source'),
+                primary_tech: val('wo-primary-tech'),
+                start_date: val('wo-start-date'),
+                start_time: val('wo-start-time'),
+                customer_po: val('wo-customer-po'),
+                description: val('wo-description'),
+                tags: val('wo-tags'),
+                session_id: getSessionId()
+            };
+
+            // Validation
             const missing = [];
-            const termsEl = document.getElementById('cc-terms');
-            const taxEl = document.getElementById('cc-tax-code');
-            const dispEl = document.getElementById('cc-display-name');
-            const setInvalid = (el, invalid) => {
+            const setInvalid = (id, invalid) => {
+                const el = document.getElementById(id);
                 if (!el) return;
                 if (invalid) el.classList.add('is-invalid'); else el.classList.remove('is-invalid');
             };
-            if (!payload.terms) { missing.push('Terms'); setInvalid(termsEl, true); } else setInvalid(termsEl, false);
-            if (!payload.taxCode) { missing.push('Tax Code'); setInvalid(taxEl, true); } else setInvalid(taxEl, false);
-            if (!payload.displayName) { missing.push('Display Name'); setInvalid(dispEl, true); } else setInvalid(dispEl, false);
-            // Contact channel validation
-            if (payload.phone_checkbox || payload.sms_checkbox) {
-                const phoneEl = document.getElementById('cc-phone-number');
-                if (!payload.phoneNumber) {
-                    missing.push('Phone Number');
-                    if (phoneEl) phoneEl.classList.add('is-invalid');
-                } else if (phoneEl) phoneEl.classList.remove('is-invalid');
-            }
-            if (payload.email_checkbox) {
-                const emailEl = document.getElementById('cc-email');
-                const emailVal = payload.email || '';
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-                if (!emailVal) {
-                    missing.push('Email');
-                    if (emailEl) emailEl.classList.add('is-invalid');
-                } else if (!emailRegex.test(emailVal)) {
-                    missing.push('Valid Email');
-                    if (emailEl) emailEl.classList.add('is-invalid');
-                } else if (emailEl) {
-                    emailEl.classList.remove('is-invalid');
-                }
-            } else {
-                // If email checkbox not selected but user typed something, still validate format
-                const emailEl = document.getElementById('cc-email');
-                const emailVal = (document.getElementById('cc-email')?.value || '').trim();
-                if (emailVal) {
-                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-                    if (!emailRegex.test(emailVal)) {
-                        missing.push('Valid Email');
-                        if (emailEl) emailEl.classList.add('is-invalid');
-                    } else if (emailEl) {
-                        emailEl.classList.remove('is-invalid');
-                    }
-                } else if (emailEl) {
-                    emailEl.classList.remove('is-invalid');
-                }
-            }
+
+            // Customer Validation
+            if (!customerPayload.terms) { missing.push('Terms'); setInvalid('cc-terms', true); } else setInvalid('cc-terms', false);
+            if (!customerPayload.taxCode) { missing.push('Tax Code'); setInvalid('cc-tax-code', true); } else setInvalid('cc-tax-code', false);
+            if (!customerPayload.displayName) { missing.push('Display Name'); setInvalid('cc-display-name', true); } else setInvalid('cc-display-name', false);
+
+            // Work Order Validation
+            if (!workOrderPayload.task) { missing.push('Task'); setInvalid('wo-task', true); } else setInvalid('wo-task', false);
+            if (!workOrderPayload.lead_source) { missing.push('Lead Source (WO)'); setInvalid('wo-lead-source', true); } else setInvalid('wo-lead-source', false);
 
             // Contact Name (Full Name) must be exactly two words
-            const fullNameEl = document.getElementById('cc-contact-name');
-            const fullNameWords = (payload.contactName || '').split(/\s+/).filter(Boolean);
+            const fullNameWords = (customerPayload.contactName || '').split(/\s+/).filter(Boolean);
             if (fullNameWords.length !== 2) {
                 missing.push('Contact Name (two words)');
-                setInvalid(fullNameEl, true);
+                setInvalid('cc-contact-name', true);
             } else {
-                setInvalid(fullNameEl, false);
+                setInvalid('cc-contact-name', false);
             }
 
             if (missing.length) {
@@ -374,24 +448,34 @@
                 return;
             }
 
-            const btn = document.getElementById('cc-submit-btn');
+            const btn = document.getElementById('combined-submit-btn');
             const oldHtml = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
-            // Notify parent (results page) we're starting creation so it can close modal and show status
-            try { window.parent && window.parent.postMessage({ type: 'customer-create-status', phase: 'start' }, '*'); } catch (_) { }
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+
             try {
-                const res = await fetch('/api/create-customer', {
+                // Notify parent we are starting
+                try { window.parent && window.parent.postMessage({ type: 'combined-create-status', phase: 'start' }, '*'); } catch (_) { }
+
+                const res = await fetch('/api/create-customer-workorder', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ customer: customerPayload, work_order: workOrderPayload })
                 });
                 const data = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error((data && data.text) || 'Failed to create customer');
-                // Inform parent to update status and display name
-                try { window.parent && window.parent.postMessage({ type: 'customer-create-status', phase: 'done', text: (data.text || 'Customer created successfully'), displayName: (data.display_name || payload.displayName) }, '*'); } catch (_) { }
+                if (!res.ok) throw new Error((data && data.error) || 'Failed to process request');
+
+                // Notify parent of success
+                try { window.parent && window.parent.postMessage({ type: 'combined-create-status', phase: 'done', text: 'Customer & Work Order Created, Documents Uploaded', data: data }, '*'); } catch (_) { }
+
+                // Redirect back to results or show success message
+                // For now, let's just alert and maybe reload or go back
+                // alert('Success! Customer and Work Order created.');
+                // window.history.back();
+
             } catch (e) {
-                try { window.parent && window.parent.postMessage({ type: 'customer-create-status', phase: 'error', error: e.message }, '*'); } catch (_) { }
+                try { window.parent && window.parent.postMessage({ type: 'combined-create-status', phase: 'error', error: e.message }, '*'); } catch (_) { }
+                alert('Error: ' + e.message);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = oldHtml;
@@ -403,12 +487,13 @@
             document.getElementById('cc-billing-fields').style.display = same ? 'none' : '';
         }
 
-        function initCreateCustomerPage() {
+        function initPage() {
             try {
                 prefillFromQuery();
                 const billingSame = document.getElementById('cc-billing-same');
                 if (billingSame) billingSame.addEventListener('change', toggleBilling);
                 toggleBilling();
+
                 const first = document.getElementById('cc-first-name');
                 const last = document.getElementById('cc-last-name');
                 const disp = document.getElementById('cc-display-name');
@@ -422,22 +507,57 @@
                 if (first) first.addEventListener('input', sync);
                 if (last) last.addEventListener('input', sync);
 
-                // Wire up create button safely (avoid inline handler issues)
-                const btn = document.getElementById('cc-submit-btn');
+                // Priority Color Logic
+                const prioritySelect = document.getElementById('wo-priority');
+                if (prioritySelect) {
+                    prioritySelect.addEventListener('change', function () {
+                        const selectedOption = this.options[this.selectedIndex];
+                        this.style.backgroundColor = selectedOption.style.backgroundColor;
+                        this.style.color = selectedOption.style.color;
+                    });
+                    // Trigger once to set initial color if value exists
+                    if (prioritySelect.value) {
+                        prioritySelect.dispatchEvent(new Event('change'));
+                    }
+                }
+
+                // Auto-fill Task Duration
+                const taskSelect = document.getElementById('wo-task');
+                if (taskSelect) {
+                    taskSelect.addEventListener('change', function () {
+                        const val = (this.value || '').trim().toUpperCase();
+                        const oneHourTasks = new Set([
+                            'HOME SALE', 'HOME SALE REPAIR', 'PUMPING',
+                            'ROUTINE INSPECTION', 'SERVICE CALL / TROUBLESHOOT'
+                        ]);
+                        const durationMap = new Map([
+                            ['SERVICE TRUCK - 1/2 DAY', '4:00'],
+                            ['SERVICE TRUCK - 1/4 DAY', '2:00'],
+                            ['SERVICE TRUCK - FULL DAY', '8:00']
+                        ]);
+                        const dur = document.getElementById('wo-duration');
+                        if (!dur) return;
+                        if (durationMap.has(val)) {
+                            dur.value = durationMap.get(val);
+                        } else if (oneHourTasks.has(val)) {
+                            dur.value = '1:00';
+                        }
+                    });
+                }
+
+                const btn = document.getElementById('combined-submit-btn');
                 if (btn && !btn.dataset.wired) {
-                    btn.addEventListener('click', createCustomer);
+                    btn.addEventListener('click', createCombined);
                     btn.dataset.wired = '1';
                 }
             } catch (e) { /* no-op */ }
         }
 
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initCreateCustomerPage);
+            document.addEventListener('DOMContentLoaded', initPage);
         } else {
-            initCreateCustomerPage();
+            initPage();
         }
-
-        window.CustomerCreatePage = { createCustomer };
     })();
 </script>
 {% endblock %}
