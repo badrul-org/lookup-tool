@@ -44,6 +44,13 @@
                         Leads
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'wo_status' %}active{% endif %}"
+                        href="{{ url_for('wo_status') }}">
+                        <i class="fas fa-clipboard-list me-2"></i>
+                        WO Status
+                    </a>
+                </li>
             </ul>
         </nav>
 

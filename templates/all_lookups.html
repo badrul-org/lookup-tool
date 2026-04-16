@@ -32,7 +32,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <h4 class="card-title">{{ lookups|length }}</h4>
+                            <h4 class="card-title">{{ stats.total }}</h4>
                             <p class="card-text">Total Lookups</p>
                         </div>
                         <div class="align-self-center">
@@ -48,9 +48,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <h4 class="card-title">{{ lookups|selectattr('status', 'equalto', 'completed')|list|length
-                                }}
-                            </h4>
+                            <h4 class="card-title">{{ stats.completed }}</h4>
                             <p class="card-text">Completed</p>
                         </div>
                         <div class="align-self-center">
@@ -66,8 +64,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <h4 class="card-title">{{ lookups|selectattr('status', 'equalto', 'running')|list|length }}
-                            </h4>
+                            <h4 class="card-title">{{ stats.running }}</h4>
                             <p class="card-text">Running</p>
                         </div>
                         <div class="align-self-center">
@@ -83,8 +80,7 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
                         <div>
-                            <h4 class="card-title">{{ lookups|selectattr('status', 'equalto', 'error')|list|length }}
-                            </h4>
+                            <h4 class="card-title">{{ stats.error }}</h4>
                             <p class="card-text">Failed</p>
                         </div>
                         <div class="align-self-center">
@@ -144,7 +140,11 @@
                         <i class="fas fa-table me-2"></i>
                         Lookup History
                     </h5>
-                    <span class="badge bg-primary" id="result-count">{{ lookups|length }} lookups</span>
+                    {% set startRecord = ((page - 1) * per_page) + 1 %}
+                    {% set endRecord = startRecord + lookups|length - 1 %}
+                    <span class="badge bg-primary" id="result-count">
+                        Showing {{ startRecord if lookups else 0 }} - {{ endRecord if lookups else 0 }} of {{ total }} lookups
+                    </span>
                 </div>
                 <div class="card-body">
                     {% if lookups %}
@@ -191,11 +191,11 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <small>{{ lookup.start_time }}</small>
+                                        <small>{{ lookup.start_time | dateformat }}</small>
                                     </td>
                                     <td>
                                         {% if lookup.completed_at %}
-                                        <small>{{ lookup.completed_at }}</small>
+                                        <small>{{ lookup.completed_at | dateformat }}</small>
                                         {% else %}
                                         <span class="text-muted">-</span>
                                         {% endif %}
@@ -238,6 +238,32 @@
             </div>
         </div>
     </div>
+
+    {% if total_pages > 1 %}
+    <div class="row mt-3">
+        <div class="col-12">
+            <nav aria-label="Pagination">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('all_lookups', page=page-1) }}" aria-label="Previous">
+                            &laquo;
+                        </a>
+                    </li>
+                    {% for p in range(1, total_pages + 1) %}
+                    <li class="page-item {% if p == page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('all_lookups', page=p) }}">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+                    <li class="page-item {% if page == total_pages %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('all_lookups', page=page+1) }}" aria-label="Next">
+                            &raquo;
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Refresh Button -->
     <div class="row mt-4">

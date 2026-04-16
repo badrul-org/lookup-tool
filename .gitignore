@@ -4,3 +4,9 @@ __pycache__
 .browser_init.lock
 lookup_sessions.db
 test.py
+Accella_Reports/*
+.DS_Store
+static/js/pdfjs-dist/*
+sterling-septic-landing-page/build/*
+test_rme.py
+credentials.json

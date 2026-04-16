@@ -36,10 +36,22 @@
         <!-- Session Info -->
         <div class="row mb-3">
             <div class="col-12 d-flex justify-content-end gap-2">
-                <a id="add-customer-workorder-btn" class="btn btn-success" href="#"
+                <a id="add-customer-workorder-btn"
+                    class="btn bg-white border rounded-pill d-flex align-items-center gap-2" href="#"
                     data-url="{{ url_for('customer_workorder_create') }}?session_id={{ session_data.session_id if session_data else '' }}&address={{ session_data.address if session_data else '' }}&city={{ session_data.city if session_data else '' }}&zip={{ session_data.zip_code if session_data else '' }}&county={{ session_data.county if session_data else '' }}&location_code={{ session_data.location_code if session_data else '' }}&embed=1">
-                    <i class="fas fa-plus-circle me-1"></i>
-                    Add Customer + Work Order
+                    <!-- <i class="fas fa-plus-circle me-1"></i> -->
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M5.64844 12.1957C5.64844 11.6977 6.05216 11.2939 6.55017 11.2939H17.5301C18.0281 11.2939 18.4318 11.6977 18.4318 12.1957C18.4318 12.6937 18.0281 13.0974 17.5301 13.0974H6.55017C6.05216 13.0974 5.64844 12.6937 5.64844 12.1957Z"
+                            fill="#3E9C40"></path>
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M12.1947 5.64697C12.6927 5.64697 13.0964 6.05069 13.0964 6.54871V17.5286C13.0964 18.0266 12.6927 18.4304 12.1947 18.4304C11.6967 18.4304 11.293 18.0266 11.293 17.5286V6.54871C11.293 6.05069 11.6967 5.64697 12.1947 5.64697Z"
+                            fill="#3E9C40"></path>
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M12 1.80347C6.36861 1.80347 1.80347 6.36861 1.80347 12C1.80347 17.6314 6.36861 22.1965 12 22.1965C17.6314 22.1965 22.1965 17.6314 22.1965 12C22.1965 6.36861 17.6314 1.80347 12 1.80347ZM0 12C0 5.37258 5.37258 0 12 0C18.6274 0 24 5.37258 24 12C24 18.6274 18.6274 24 12 24C5.37258 24 0 18.6274 0 12Z"
+                            fill="#3E9C40"></path>
+                    </svg>
+                    <span>Add Customer + Work Order</span>
                 </a>
                 <button id="cancel-lookup-btn" class="btn btn-outline-warning" style="display: none;"
                     onclick="cancelCurrentLookup()">
@@ -59,7 +71,7 @@
 
         <!-- Create Work Order Modal -->
         <div class="modal fade" id="workOrderModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-dialog modal-fullscreen modal-lg modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title"><i class="fas fa-file-alt me-2"></i>Create Work Order</h5>
@@ -98,17 +110,45 @@
                                     <label class="form-label">Priority</label>
                                     <select id="wo-priority" class="form-select">
                                         <option value="" selected>Select</option>
-                                        <option>ADVANCED SVC</option>
-                                        <option>ADVANCED SVC - EMERGENCY</option>
-                                        <option>CLERICAL</option>
-                                        <option>EXCAVATOR</option>
-                                        <option>HOMESALE</option>
-                                        <option>PREP / RETURN</option>
-                                        <option>PUMPING</option>
-                                        <option>PUMPING - ASSIST</option>
-                                        <option>PUMPING - EMERGENCY</option>
-                                        <option>SVC TRUCK</option>
-                                        <option>SVC TRUCK - ASSIST</option>
+                                        <option value="ADVANCED SVC" style="background-color: #FFF9C4; color: black;">
+                                            ADVANCED SVC</option>
+                                        <option value="ADVANCED SVC - EMERGENCY"
+                                            style="background-color: #FFCC80; color: black;">
+                                            ADVANCED SVC - EMERGENCY</option>
+                                        <option value="CLERICAL" style="background-color: #CFD8DC; color: black;">
+                                            CLERICAL
+                                        </option>
+                                        <option value="EXCAVATOR" style="background-color: #D7CCC8; color: black;">
+                                            EXCAVATOR
+                                        </option>
+                                        <option value="HOMESALE" style="background-color: #B3E5FC; color: black;">
+                                            HOMESALE
+                                        </option>
+                                        <option value="PREP / RETURN" style="background-color: #E1BEE7; color: black;">
+                                            PREP
+                                            / RETURN
+                                        </option>
+                                        <option value="PUMPING" style="background-color: #C8E6C9; color: black;">PUMPING
+                                        </option>
+                                        <option value="PUMPING - ASSIST"
+                                            style="background-color: #DCEDC8; color: black;">
+                                            PUMPING - ASSIST
+                                        </option>
+                                        <option value="PUMPING - EMERGENCY"
+                                            style="background-color: #66BB6A; color: white;">
+                                            PUMPING -
+                                            EMERGENCY</option>
+                                        <option value="SVC TRUCK" style="background-color: #F48FB1; color: black;">SVC
+                                            TRUCK</option>
+                                        <option value="SVC TRUCK - ASSIST"
+                                            style="background-color: #F8BBD0; color: black;">SVC TRUCK -
+                                            ASSIST
+                                        </option>
+                                        <option value="SVC TRUCK - EMERGENCY"
+                                            style="background-color: #E57373; color: white;">
+                                            SVC TRUCK -
+                                            EMERGENCY
+                                        </option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
@@ -125,8 +165,30 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Primary Tech</label>
-                                    <input type="text" id="wo-primary-tech" class="form-control"
-                                        placeholder="Type here" />
+                                    <select id="wo-primary-tech" class="form-select">
+                                        <option value="" selected>Select</option>
+                                        <option value="01 - Mackie">01 - Mackie</option>
+                                        <option value="02 - Huss">02 - Huss</option>
+                                        <option value="03 - Russell">03 - Russell</option>
+                                        <option value="04 - Ahkeem">04 - Ahkeem</option>
+                                        <option value="05 - Danny">05 - Danny</option>
+                                        <option value="06 - Cris">06 - Cris</option>
+                                        <option value="07 - Gene">07 - Gene</option>
+                                        <option value="08 - Cameron">08 - Cameron</option>
+                                        <option value="09 - Eric">09 - Eric</option>
+                                        <option value="10 - Damon">10 - Damon</option>
+                                        <option value="11 - Andrea">11 - Andrea</option>
+                                        <option value="Ahmed T.">Ahmed T.</option>
+                                        <option value="Cameron P.">Cameron P.</option>
+                                        <option value="Damien S.">Damien S.</option>
+                                        <option value="Ethan M.">Ethan M.</option>
+                                        <option value="LookUp T.">LookUp T.</option>
+                                        <option value="Marquee I.">Marquee I.</option>
+                                        <option value="Mary- TAX/ACT">Mary- TAX/ACT</option>
+                                        <option value="Office S.">Office S.</option>
+                                        <option value="Ray I.">Ray I.</option>
+                                        <option value="Rene I.">Rene I.</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Start Date</label>
@@ -135,7 +197,8 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Start Time</label>
-                                    <input type="text" id="wo-start-time" class="form-control" placeholder="0:00" />
+                                    <input type="text" id="wo-start-time" class="form-control" data-id="timePicker"
+                                        placeholder="10:15" />
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Customer PO</label>
@@ -182,6 +245,14 @@
                         <div class="d-flex flex-nowrap gap-3 overflow-auto w-100">
                             <div class="flex-fill">
                                 <div class="info-item text-nowrap">
+                                    <strong>Lookup Status:</strong><br>
+                                    <span id="result-status" class="badge text-white bg-warning"><i
+                                            class="fas fa-spinner fa-spin me-1"></i>Processing</span>
+                                </div>
+                            </div>
+
+                            <div class="flex-fill">
+                                <div class="info-item text-nowrap">
                                     <strong>Address:</strong><br>
                                     <span id="result-address" class="text-break">{{ session_data.address if session_data
                                         else 'N/A' }}</span>
@@ -205,28 +276,29 @@
                                     <span id="result-county">{{ session_data.county if session_data else 'N/A' }}</span>
                                 </div>
                             </div>
-                            <div class="flex-fill">
-                                <div class="info-item text-nowrap">
-                                    <strong>Status:</strong><br>
-                                    <span id="result-status" class="badge bg-warning"><i
-                                            class="fas fa-spinner fa-spin me-1"></i>Processing</span>
-                                </div>
-                            </div>
-                            <div class="flex-fill">
-                                <div class="info-item text-nowrap">
-                                    <strong>Customer Status:</strong><br>
-                                    <span id="result-customer-status" class="badge bg-secondary">N/A</span>
-                                </div>
-                            </div>
                         </div>
                         <!-- Row 2 -->
+                        <!-- <h5 class="mt-4"><i class="far fa-user me-2"></i>Customer Information</h4> -->
                         <div class="d-flex flex-nowrap gap-3 overflow-auto w-100 mt-2">
                             <div class="flex-fill">
                                 <div class="info-item text-nowrap">
                                     <strong>Customer Display Name:</strong><br>
                                     <span id="result-customer-display">N/A</span>
+                                    <span id="result-customer-create-btn"></span>
                                 </div>
                             </div>
+
+                            <div class="flex-fill">
+                                <div class="info-item text-nowrap">
+                                    <strong>Customer Status:</strong><br>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span id="result-customer-status"
+                                            class="badge text-white bg-secondary">N/A</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- <div class="d-flex flex-nowrap gap-3 overflow-auto w-100 mt-2"> -->
                             <!-- <div class="flex-fill">
                                 <div class="info-item text-nowrap">
                                     <strong>Upload Status:</strong><br>
@@ -251,7 +323,14 @@
                                     <span id="result-wo-upload-status">N/A</span>
                                 </div>
                             </div>
+                            <!-- </div> -->
+
+
                         </div>
+
+                        <!-- Row 3 -->
+                        <!-- <h5 class="mt-4"><i class="fas fa-gears me-2"></i>Work Order Information</h4> -->
+
                     </div>
                 </div>
             </div>
@@ -259,7 +338,7 @@
 
         <!-- Customer Create Modal (loads form page in an iframe) -->
         <div class="modal fade" id="customerCreateModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-fullscreen-sm-down modal-lg modal-dialog-centered">
+            <div class="modal-dialog modal-fullscreen modal-lg modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Add Customer</h5>
@@ -333,6 +412,39 @@
                     </div>
                     <div class="card-body">
                         <div id="tacoma-container">
+                            <!-- Skeleton loading for Tacoma reports -->
+                            <div id="tacoma-skeleton" class="mb-3">
+                                <div class="card tacoma-type-group">
+                                    <div class="card-header" style="cursor: pointer;">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="skeleton-text skeleton-title"
+                                                style="width: 200px; height: 20px;">
+                                            </div>
+                                            <div class="skeleton-text" style="width: 20px; height: 20px;"></div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body collapse show">
+                                        <!-- <div class="row">
+                                            <div class="col-lg-12 mb-3">
+                                                <div class="card tacoma-card">
+                                                    <div class="card-header">
+                                                        <div class="skeleton-text skeleton-title"
+                                                            style="width: 150px; height: 18px;"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-12 mb-3">
+                                                <div class="card tacoma-card">
+                                                    <div class="card-header">
+                                                        <div class="skeleton-text skeleton-title"
+                                                            style="width: 150px; height: 18px;"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div> -->
+                                    </div>
+                                </div>
+                            </div>
                             <!-- Tacoma reports will be loaded here -->
                         </div>
                         <!-- No result found message -->
@@ -359,6 +471,39 @@
                     </div>
                     <div class="card-body">
                         <div id="multimatch-container">
+                            <!-- Skeleton loading for Multimatch results -->
+                            <div id="multimatch-skeleton" class="mb-3">
+                                <div class="card multimatch-type-group">
+                                    <div class="card-header" style="cursor: pointer;">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="skeleton-text skeleton-title"
+                                                style="width: 200px; height: 20px;">
+                                            </div>
+                                            <div class="skeleton-text" style="width: 20px; height: 20px;"></div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body collapse show">
+                                        <!-- <div class="row">
+                                            <div class="col-lg-12 mb-3">
+                                                <div class="card multimatch-card">
+                                                    <div class="card-header">
+                                                        <div class="skeleton-text skeleton-title"
+                                                            style="width: 150px; height: 18px;"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-12 mb-3">
+                                                <div class="card multimatch-card">
+                                                    <div class="card-header">
+                                                        <div class="skeleton-text skeleton-title"
+                                                            style="width: 150px; height: 18px;"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div> -->
+                                    </div>
+                                </div>
+                            </div>
                             <!-- Multimatch data will be loaded here -->
                         </div>
                         <!-- No result found message -->
@@ -421,7 +566,7 @@
                                 </div>
 
                                 <!-- Group 2: Structural Reports -->
-                                <div class="col-lg-12 mb-4">
+                                <!-- <div class="col-lg-12 mb-4">
                                     <div class="card pdf-type-group">
                                         <div class="card-header" style="cursor: pointer;">
                                             <div class="d-flex justify-content-between align-items-center">
@@ -444,10 +589,10 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </div> -->
 
                                 <!-- Group 3: Other Reports -->
-                                <div class="col-lg-12 mb-4">
+                                <!-- <div class="col-lg-12 mb-4">
                                     <div class="card pdf-type-group">
                                         <div class="card-header" style="cursor: pointer;">
                                             <div class="d-flex justify-content-between align-items-center">
@@ -470,7 +615,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
                             <!-- PDFs will be loaded here -->
                         </div>
@@ -483,33 +628,99 @@
             </div>
         </div>
 
+        <!-- Application History Section (Time of Sale Reports) -->
+        <!--
+        <div class="row mb-4" id="application-history-section" style="display: none;">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header" style="background-color:#183A7A;color:#ffffff;border-bottom:1px solid #183A7A;">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-file-alt me-2"></i>
+                            APPLICATION HISTORY
+                            <span id="application-history-count" class="badge bg-secondary ms-2">0</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="application-history-container">
+                            <div id="application-history-skeleton" class="mb-3" style="display: none;">
+                                <div class="row">
+                                    <div class="col-lg-12 mb-3">
+                                        <div class="card pdf-card">
+                                            <div class="card-header">
+                                                <div class="skeleton-text skeleton-title" style="width: 260px; height: 16px;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-12 mb-3">
+                                        <div class="card pdf-card">
+                                            <div class="card-header">
+                                                <div class="skeleton-text skeleton-title" style="width: 200px; height: 16px;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="application-history-no-result" class="alert alert-info mb-0" style="display: none;">
+                            <i class="fas fa-info-circle me-2"></i>No Application History reports found for this address.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        -->
+
         <!-- Accella Report Section (Pierce County) -->
         <div class="row mb-4" id="accella-reports-section" style="display: none;">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header" style="background-color:#fd7e14;color:#ffffff; cursor: pointer;"
-                        data-bs-toggle="collapse" data-bs-target="#accella-body" aria-expanded="true"
-                        aria-controls="accella-body">
-                        <h5 class="card-title mb-0 d-flex justify-content-between align-items-center">
-                            <span>
-                                <i class="fas fa-file-alt me-2"></i>
-                                Accella Report
-                                <span id="accella-count" class="badge bg-secondary ms-2">0</span>
-                            </span>
-                            <i class="fas fa-chevron-down" id="accella-toggle-icon"></i>
+                    <div class="card-header" style="background-color:#fd7e14;color:#ffffff;">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-file-alt me-2"></i>
+                            Accella Report
+                            <span id="accella-count" class="badge bg-secondary ms-2">0</span>
                         </h5>
                     </div>
-                    <div class="card-body collapse show" id="accella-body">
+                    <div class="card-body">
                         <div id="accella-content">
-                            <!-- Accella Skeleton -->
-                            <div id="accella-skeleton" class="mb-3" style="display: none;">
-                                <div class="skeleton-text skeleton-title" style="width: 180px; height: 18px;"></div>
-                                <div class="skeleton-text" style="width: 100%; height: 320px; margin-top: 12px;"></div>
+                            <!-- Skeleton loading for Accella reports -->
+                            <div id="accella-skeleton" class="mb-3">
+                                <div class="card accella-type-group">
+                                    <div class="card-header" style="cursor: pointer;">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="skeleton-text skeleton-title"
+                                                style="width: 200px; height: 20px;">
+                                            </div>
+                                            <div class="skeleton-text" style="width: 20px; height: 20px;"></div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body collapse show">
+                                        <!-- <div class="row">
+                                            <div class="col-lg-12 mb-3">
+                                                <div class="card accella-card">
+                                                    <div class="card-header">
+                                                        <div class="skeleton-text skeleton-title"
+                                                            style="width: 150px; height: 18px;"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-12 mb-3">
+                                                <div class="card accella-card">
+                                                    <div class="card-header">
+                                                        <div class="skeleton-text skeleton-title"
+                                                            style="width: 150px; height: 18px;"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div> -->
+                                    </div>
+                                </div>
                             </div>
-                            <div id="accella-iframe-container"></div>
-                            <div id="accella-no-result" class="alert alert-info mt-3 mb-0" style="display: none;">
-                                <i class="fas fa-info-circle me-2"></i>No records found.
-                            </div>
+                            <!-- Accella reports will be loaded here -->
+                        </div>
+                        <!-- No result found message -->
+                        <div id="accella-no-result" class="alert alert-info mb-0" style="display: none;">
+                            <i class="fas fa-info-circle me-2"></i>No Accella reports found for this address.
                         </div>
                     </div>
                 </div>
@@ -523,12 +734,27 @@
                     <div class="card-header" style="background-color: #6f42c1; color: white;">
                         <h5 class="card-title mb-0">
                             <i class="fas fa-crown me-2"></i>
-                            King County Reports
+                            KING COUNTY AS-BUILTS
                             <span id="king-count" class="badge ms-2"
                                 style="background-color: #ff1493 !important; color: white; border: 2px solid #ff69b4; font-weight: 700; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); box-shadow: 0 4px 12px rgba(255, 20, 147, 0.4);">0</span>
                         </h5>
                     </div>
                     <div class="card-body" id="additional-results-content">
+                        <!-- Skeleton loading for King County reports -->
+                        <div id="king-skeleton" class="mb-3" style="display: none;">
+                            <div class="card king-report-card">
+                                <div class="card-header">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="skeleton-text skeleton-title" style="width: 200px; height: 20px;">
+                                        </div>
+                                        <div class="skeleton-text" style="width: 20px; height: 20px;"></div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="skeleton-text" style="width: 100%; height: 100px;"></div>
+                                </div>
+                            </div>
+                        </div>
                         <!-- Additional results will be loaded here -->
                         <!-- No result found message -->
                         <div id="king-no-result" class="alert alert-info mb-0" style="display: none;">
@@ -539,11 +765,25 @@
             </div>
         </div>
     </div>
+    <div style="position: fixed; bottom: 40px; right: 40px;">
+        <button type="button" onclick="hideClosePDFButton()" id="close-pdf-btn" data-bs-toggle="collapse"
+            data-bs-target="" class="btn btn-danger rounded-circle d-none">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
 </div>
+
 
 {% endblock %}
 
 {% block scripts %}
+<!-- jQuery (required for bootstrap-datepicker) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Flatpickr -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
 <script id="initial-session"
     type="application/json">{{ session_data| tojson | safe if session_data else 'null' }}</script>
 <script>
@@ -551,6 +791,48 @@
     let loadingInterval = null;
     let rmeErrorShown = false;
     const initialSession = JSON.parse((document.getElementById('initial-session')?.textContent || 'null'));
+
+    // Initialize Flatpickr for Work Order Start Date
+    const date_optional_config = {
+        dateFormat: "m/d/Y",
+        allowInput: true,
+        parseDate: (datestr, format) => {
+            return flatpickr.parseDate(datestr.replace(/-/g, '/'), format);
+        }
+    }
+
+    $("#wo-start-date").flatpickr(date_optional_config);
+
+    // Initialize flapicker for Work Order Start Time
+    const time_optional_config = {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+    }
+
+    $("#wo-start-time").flatpickr(time_optional_config);
+
+    // Show close PDF button, with the target set to the iframe
+    function showClosePDFButton(dataBsTarget) {
+        const closeBtn = document.getElementById('close-pdf-btn');
+
+        // ccheck if button has d-none class in classNames, otherwise add it
+        if (closeBtn.classList.contains('d-none')) {
+            closeBtn.classList.remove('d-none');
+        } else {
+            closeBtn.classList.add('d-none');
+        }
+
+        closeBtn.setAttribute('data-bs-target', dataBsTarget);
+    }
+
+    // hide the close pdf button, when click on the button itself, removing the data-bs-target attribute
+    function hideClosePDFButton() {
+        const closeBtn = document.getElementById('close-pdf-btn');
+        closeBtn.classList.add('d-none');
+
+        closeBtn.setAttribute('data-bs-target', '');
+    }
 
     // Helper: ensure embedded PDFs open at desired zoom level
     function withPdfZoom(url, zoom) {
@@ -563,7 +845,7 @@
             }
             return url + `&zoom=${z}`;
         }
-        return url + `#zoom=${z}`;
+        return url + `#view=Fit`;
     }
 
     function stripPdfZoom(url) {
@@ -581,7 +863,7 @@
         if (width >= 2200) return 175;
         if (width >= 1600) return 150;
         if (width >= 1200) return 125;
-        return 110;
+        return 125;
     }
 
     function applyResponsiveZoomToIframe(iframe) {
@@ -601,7 +883,7 @@
     }
 
     function applyResponsiveZoomToAll() {
-        const iframes = document.querySelectorAll('.pdf-iframe, .king-report-iframe, .tpchd-report-iframe');
+        const iframes = document.querySelectorAll('.pdf-iframe, .king-report-iframe, .tpchd-report-iframe, .accella-report-iframe');
         iframes.forEach(applyResponsiveZoomToIframe);
     }
 
@@ -617,28 +899,7 @@
 
     window.addEventListener('resize', debounce(applyResponsiveZoomToAll, 150));
 
-    // Setup Accella collapse icon toggle
-    (function setupAccellaCollapseIcon() {
-        const accellaBody = document.getElementById('accella-body');
-        const accellaIcon = document.getElementById('accella-toggle-icon');
-        if (!accellaBody || !accellaIcon) return;
-        // Ensure correct initial icon based on current state
-        if (accellaBody.classList.contains('show')) {
-            accellaIcon.classList.remove('fa-chevron-right');
-            accellaIcon.classList.add('fa-chevron-down');
-        } else {
-            accellaIcon.classList.remove('fa-chevron-down');
-            accellaIcon.classList.add('fa-chevron-right');
-        }
-        accellaBody.addEventListener('show.bs.collapse', function () {
-            accellaIcon.classList.remove('fa-chevron-right');
-            accellaIcon.classList.add('fa-chevron-down');
-        });
-        accellaBody.addEventListener('hide.bs.collapse', function () {
-            accellaIcon.classList.remove('fa-chevron-down');
-            accellaIcon.classList.add('fa-chevron-right');
-        });
-    })();
+
 
     // Open customer create modal and load form
     document.addEventListener('click', function (e) {
@@ -709,6 +970,19 @@
         }
     });
 
+    const prioritySelect = document.getElementById('wo-priority');
+    if (prioritySelect) {
+        prioritySelect.addEventListener('change', function () {
+            const selectedOption = this.options[this.selectedIndex];
+            this.style.backgroundColor = selectedOption.style.backgroundColor;
+            this.style.color = selectedOption.style.color;
+        });
+        // Trigger once to set initial color if value exists
+        if (prioritySelect.value) {
+            prioritySelect.dispatchEvent(new Event('change'));
+        }
+    }
+
     // Save Work Order
     document.addEventListener('click', async function (e) {
         const btn = e.target.closest('#wo-save-btn');
@@ -755,6 +1029,11 @@
             if (sEl) sEl.textContent = data.text || 'N/A';
             const idEl = document.getElementById('result-workorder-id');
             if (idEl) idEl.textContent = data.work_order_number || 'N/A';
+            // Update upload status if available
+            const uploadEl = document.getElementById('result-wo-upload-status');
+            if (uploadEl && data.upload_result) {
+                uploadEl.textContent = `Uploaded: ${data.upload_result.count}, Failed: ${data.upload_result.failed}`;
+            }
         } catch (err) {
             // Quietly reflect error in UI instead of alert
             const sEl = document.getElementById('result-workorder-status');
@@ -778,7 +1057,7 @@
         const woUploadEl = document.getElementById('result-wo-upload-status');
 
         if (data.phase === 'start') {
-            if (statusEl) { statusEl.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...'; statusEl.className = 'badge bg-warning'; }
+            if (statusEl) { statusEl.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...'; statusEl.className = 'badge text-white bg-warning'; }
         } else if (data.phase === 'done') {
             try { const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl); modal.hide(); } catch (_) { }
 
@@ -786,7 +1065,7 @@
                 const d = data.data;
                 if (statusEl) {
                     statusEl.textContent = d.customer_status || 'Success';
-                    statusEl.className = (d.customer_status === 'Already Exists') ? 'badge bg-info' : 'badge bg-success';
+                    statusEl.className = (d.customer_status === 'Already Exists') ? 'badge text-white bg-info' : 'badge text-white bg-success';
                 }
                 if (displayEl && d.customer_display) { displayEl.textContent = d.customer_display; }
                 if (woStatusEl && d.work_order_status) { woStatusEl.textContent = d.work_order_status; }
@@ -796,36 +1075,49 @@
                 }
             } else {
                 // Fallback
-                if (statusEl) { statusEl.textContent = data.text || 'Success'; statusEl.className = 'badge bg-success'; }
+                if (statusEl) { statusEl.textContent = data.text || 'Success'; statusEl.className = 'badge text-white bg-success'; }
                 if (displayEl && data.displayName) { displayEl.textContent = data.displayName; }
             }
             updateCustomerStatusBadge();
         } else if (data.phase === 'error') {
             try { const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl); modal.hide(); } catch (_) { }
-            if (statusEl) { statusEl.textContent = 'Error: ' + (data.error || 'Failed'); statusEl.className = 'badge bg-danger'; }
+            if (statusEl) { statusEl.textContent = 'Error: ' + (data.error || 'Failed'); statusEl.className = 'badge text-white bg-danger'; }
         }
     });
 
+    // SVG for plus circle
+    const svgPlusCircle = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M5.64844 12.1957C5.64844 11.6977 6.05216 11.2939 6.55017 11.2939H17.5301C18.0281 11.2939 18.4318 11.6977 18.4318 12.1957C18.4318 12.6937 18.0281 13.0974 17.5301 13.0974H6.55017C6.05216 13.0974 5.64844 12.6937 5.64844 12.1957Z"
+                            fill="#3E9C40"></path>
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M12.1947 5.64697C12.6927 5.64697 13.0964 6.05069 13.0964 6.54871V17.5286C13.0964 18.0266 12.6927 18.4304 12.1947 18.4304C11.6967 18.4304 11.293 18.0266 11.293 17.5286V6.54871C11.293 6.05069 11.6967 5.64697 12.1947 5.64697Z"
+                            fill="#3E9C40"></path>
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M12 1.80347C6.36861 1.80347 1.80347 6.36861 1.80347 12C1.80347 17.6314 6.36861 22.1965 12 22.1965C17.6314 22.1965 22.1965 17.6314 22.1965 12C22.1965 6.36861 17.6314 1.80347 12 1.80347ZM0 12C0 5.37258 5.37258 0 12 0C18.6274 0 24 5.37258 24 12C24 18.6274 18.6274 24 12 24C5.37258 24 0 18.6274 0 12Z"
+                            fill="#3E9C40"></path>
+                        </svg>`;
     // Function to convert "Already Exists" badge to button
     function updateCustomerStatusBadge() {
         const statusEl = document.getElementById('result-customer-status');
+        const createBtnEl = document.getElementById('result-customer-create-btn');
         if (!statusEl) return;
         const text = statusEl.textContent.trim();
         if (text === 'Already Exists' || text === 'Existing Customer') {
             if (statusEl.tagName === 'BUTTON' || statusEl.querySelector('button')) return;
 
             const btn = document.createElement('button');
-            btn.className = 'btn btn-sm btn-info text-white';
-            btn.innerHTML = '<i class="fas fa-file-alt me-1"></i>Create Work Order';
+            btn.className = 'btn bg-white border rounded-pill d-flex align-items-center gap-2';
+            btn.innerHTML = svgPlusCircle + '<span>Create Work Order</span>';
             btn.onclick = function () {
                 try {
                     const modal = new bootstrap.Modal(document.getElementById('workOrderModal'));
                     modal.show();
                 } catch (_) { }
             };
-            statusEl.innerHTML = '';
-            statusEl.appendChild(btn);
-            statusEl.className = '';
+            createBtnEl.innerHTML = '';
+            createBtnEl.appendChild(btn);
+            createBtnEl.className = '';
         }
     }
 
@@ -939,6 +1231,7 @@
                         king_reports: session.king_reports || [],
                         accella_reports_status: session.accella_reports_status || '',
                         accella_reports_path: session.accella_reports_path || '',
+                        application_history_reports: session.application_history_reports || [],
                         county: session.county || '',
                         city: session.city || '',
                         zip_code: session.zip_code || '',
@@ -962,6 +1255,15 @@
                         if (accellaIframeContainer) accellaIframeContainer.innerHTML = '';
                         if (accellaNoResult) accellaNoResult.style.display = 'none';
                         if (accellaCount) accellaCount.textContent = '0';
+                    }
+                    if (session.county && session.county.toLowerCase() === 'king') {
+                        showApplicationHistorySkeleton();
+                    } else {
+                        // Hide Application History section for non-King counties
+                        const applicationHistorySection = document.getElementById('application-history-section');
+                        if (applicationHistorySection) {
+                            applicationHistorySection.style.display = 'none';
+                        }
                     }
                     startPolling();
                     return; // Avoid initial API fetch; polling will fetch
@@ -1006,6 +1308,7 @@
                     king_reports: session.king_reports || [],
                     accella_reports_status: session.accella_reports_status || '',
                     accella_reports_path: session.accella_reports_path || '',
+                    application_history_reports: session.application_history_reports || [],
                     county: session.county || '',
                     city: session.city || '',
                     zip_code: session.zip_code || '',
@@ -1056,10 +1359,10 @@
                     badge = 'bg-info';
                 }
                 customerStatusEl.textContent = displayTxt;
-                customerStatusEl.className = 'badge ' + badge;
+                customerStatusEl.className = 'badge text-white ' + badge;
             } else {
                 customerStatusEl.textContent = 'N/A';
-                customerStatusEl.className = 'badge bg-secondary';
+                customerStatusEl.className = 'badge text-white bg-secondary';
             }
         }
         const customerDisplayEl = document.getElementById('result-customer-display');
@@ -1101,7 +1404,7 @@
 
         const statusElement = document.getElementById('result-status');
         statusElement.innerHTML = `${getStatusIcon(session.status)}${getStatusDisplayText(session.status)}`;
-        statusElement.className = `badge ${getStatusBadgeClass(session.status)}`;
+        statusElement.className = `badge text-white ${getStatusBadgeClass(session.status)}`;
 
         // Show/hide cancel button based on status
         updateCancelButton(session.status);
@@ -1288,6 +1591,41 @@
 
         // Display additional results
         displayAdditionalResults(results);
+        
+        // Display Application History (King County only) - ALWAYS show section for King County
+        if (results.county && results.county.toLowerCase() === 'king') {
+            const applicationHistorySection = document.getElementById('application-history-section');
+            const applicationHistorySkeleton = document.getElementById('application-history-skeleton');
+            const applicationHistoryNoResult = document.getElementById('application-history-no-result');
+            const applicationHistoryCount = document.getElementById('application-history-count');
+
+            if (applicationHistorySection) {
+                applicationHistorySection.style.display = 'block';
+            }
+
+            // In initial render, we are not "running", so ensure skeleton is hidden
+            if (applicationHistorySkeleton) {
+                applicationHistorySkeleton.style.display = 'none';
+            }
+
+            if (results.application_history_reports && results.application_history_reports.length > 0) {
+                displayApplicationHistoryReports(results.application_history_reports);
+            } else {
+                // No reports -> show no-result, keep section visible
+                if (applicationHistoryNoResult) {
+                    applicationHistoryNoResult.style.display = 'block';
+                }
+                if (applicationHistoryCount) {
+                    applicationHistoryCount.textContent = '0';
+                }
+            }
+        } else {
+            // Hide Application History section for non-King counties
+            const applicationHistorySection = document.getElementById('application-history-section');
+            if (applicationHistorySection) {
+                applicationHistorySection.style.display = 'none';
+            }
+        }
     }
 
     // Display grouped PDFs for single match
@@ -1488,7 +1826,7 @@
             content += `
                 <div class="col-lg-12 mb-3">
                     <div class="card pdf-card">
-                        <div class="card-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#${pdfId}" aria-expanded="false" aria-controls="${pdfId}">
+                        <div class="card-header" onclick="showClosePDFButton('#${pdfId}')" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#${pdfId}" aria-expanded="false" aria-controls="${pdfId}">
                             <h6 class="card-title mb-0 d-flex justify-content-between align-items-center">
                                 <span>
                                     <i class="fas fa-file-pdf me-2"></i>
@@ -1520,6 +1858,11 @@
                                     </iframe>
                                 </div>
                             </div>
+                            <div class="card-footer text-end">
+                                <button class="btn btn-danger" data-bs-toggle="collapse" data-bs-target="#${pdfId}" aria-expanded="true" aria-controls="${pdfId}">
+                                    Close
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1550,12 +1893,155 @@
         });
     }
 
+    // Display Application History reports (Time of Sale Reports)
+    function displayApplicationHistoryReports(reports) {
+        const section = document.getElementById('application-history-section');
+        const container = document.getElementById('application-history-container');
+        const countElement = document.getElementById('application-history-count');
+        const noResult = document.getElementById('application-history-no-result');
+        const skeleton = document.getElementById('application-history-skeleton');
+
+        // Always show section when called
+        if (section) {
+            section.style.display = 'block';
+        }
+
+        if (!reports || reports.length === 0) {
+            if (noResult) {
+                noResult.style.display = 'block';
+            }
+            if (skeleton) {
+                skeleton.style.display = 'none';
+            }
+            if (countElement) {
+                countElement.textContent = '0';
+            }
+            if (container) {
+                container.innerHTML = '';
+            }
+            return;
+        }
+
+        // Hide skeleton and no-result message
+        if (skeleton) {
+            skeleton.style.display = 'none';
+        }
+        if (noResult) {
+            noResult.style.display = 'none';
+        }
+
+        // Show the section
+        if (section) {
+            section.style.display = 'block';
+        }
+
+        // Update count
+        if (countElement) {
+            countElement.textContent = reports.length;
+        }
+
+        // Parse reports and build content
+        let content = `
+            <div class="row">
+        `;
+
+        reports.forEach((reportData, index) => {
+            let reportUrl, reportType, completedDate;
+            if (reportData.includes(',')) {
+                const parts = reportData.split(',');
+                reportUrl = parts[0].trim();
+                reportType = (parts[1] || '').trim() || 'TIME OF SALE REPORT';
+                completedDate = (parts[2] || '').trim();
+            } else {
+                reportUrl = reportData.trim();
+                reportType = 'TIME OF SALE REPORT';
+                completedDate = '';
+            }
+
+            const reportId = `app-history-${index + 1}`;
+            const iconId = `app-history-icon-${index + 1}`;
+
+            content += `
+                <div class="col-lg-12 mb-3">
+                    <div class="card application-history-report-card">
+                        <div class="card-header" onclick="showClosePDFButton('#${reportId}')" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#${reportId}" aria-expanded="false" aria-controls="${reportId}">
+                            <h6 class="card-title mb-0 d-flex justify-content-between align-items-center">
+                                <span>
+                                    <i class="fas fa-file-alt me-2"></i>
+                                    ${reportType}${completedDate ? ` — <span class="text-white small">Completed: ${completedDate}</span>` : ''}
+                                </span>
+                                <div>
+                                    <a href="${reportUrl}" target="_blank" class="btn btn-sm btn-outline-primary me-2" onclick="event.stopPropagation();">
+                                        <i class="fas fa-external-link-alt me-1"></i>
+                                        Open
+                                    </a>
+                                    <i class="fas fa-chevron-right pdf-toggle-icon" id="${iconId}"></i>
+                                </div>
+                            </h6>
+                        </div>
+                        <div class="collapse" id="${reportId}">
+                            <div class="card-body p-0">
+                                <div class="pdf-iframe-container">
+                                    <iframe 
+                                        data-base-src="${reportUrl}"
+                                        src="${withPdfZoom(reportUrl, 125)}" 
+                                        class="pdf-iframe"
+                                        title="${reportType}"
+                                        onload="resizeIframe(this)"
+                                        onerror="handleIframeError(this)">
+                                    </iframe>
+                                </div>
+                            </div>
+                            <div class="card-footer text-end">
+                                <button class="btn btn-danger" data-bs-toggle="collapse" data-bs-target="#${reportId}" aria-expanded="true" aria-controls="${reportId}">
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        content += `
+            </div>
+        `;
+
+        if (container) {
+            container.innerHTML = content;
+        }
+
+        // Apply responsive zoom to newly inserted iframes
+        applyResponsiveZoomToAll();
+
+        // Add collapse icon toggles
+        reports.forEach((_, i) => {
+            const reportId = `app-history-${i + 1}`;
+            const iconId = `app-history-icon-${i + 1}`;
+            const collapseElement = document.getElementById(reportId);
+            const toggleIcon = document.getElementById(iconId);
+            if (collapseElement && toggleIcon) {
+                toggleIcon.classList.remove('fa-chevron-down');
+                toggleIcon.classList.add('fa-chevron-right');
+                collapseElement.addEventListener('show.bs.collapse', function () {
+                    toggleIcon.classList.remove('fa-chevron-right');
+                    toggleIcon.classList.add('fa-chevron-down');
+                });
+                collapseElement.addEventListener('hide.bs.collapse', function () {
+                    toggleIcon.classList.remove('fa-chevron-down');
+                    toggleIcon.classList.add('fa-chevron-right');
+                });
+            }
+        });
+    }
+
     // Display multimatch results
     function displayMultimatchResults(multimatchData) {
         const multimatchSection = document.getElementById('multimatch-results-section');
         const multimatchContainer = document.getElementById('multimatch-container');
         const multimatchCountElement = document.getElementById('multimatch-count');
         const multimatchNoResult = document.getElementById('multimatch-no-result');
+        const multimatchSkeleton = document.getElementById('multimatch-skeleton');
 
         // Always show the multimatch section when this function is called
         multimatchSection.style.display = 'block';
@@ -1565,6 +2051,11 @@
             const existingMultimatchEntries = multimatchContainer.querySelectorAll('.multimatch-entry-card');
             if (existingMultimatchEntries.length > 0) {
                 return; // Multimatch data already displayed, don't add duplicates
+            }
+
+            // Hide skeleton loading
+            if (multimatchSkeleton) {
+                multimatchSkeleton.style.display = 'none';
             }
 
             // Hide no-result message and show actual data
@@ -1669,7 +2160,7 @@
                         content += `
                                 <div class="col-lg-12 mb-3">
                                     <div class="card pdf-card">
-                                        <div class="card-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#${pdfId}" aria-expanded="false" aria-controls="${pdfId}">
+                                        <div class="card-header" onclick="showClosePDFButton('#${pdfId}')" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#${pdfId}" aria-expanded="false" aria-controls="${pdfId}">
                                             <h6 class="card-title mb-0 d-flex justify-content-between align-items-center">
                                                 <span>
                                                     <i class="fas fa-file-pdf me-2"></i>
@@ -1692,14 +2183,20 @@
                                             <div class="card-body p-0">
                                                 <div class="pdf-iframe-container">
                                                     <iframe 
-                                                    data-base-src="${pdf.url}"
-                                                    src="${withPdfZoom(pdf.url, 125)}" 
+                                                        data-base-src="${pdf.url}"
+                                                        src="${withPdfZoom(pdf.url, 125)}" 
                                                         class="pdf-iframe"
-                                                    title="${pdf.type}"
+                                                        title="${pdf.type}"
                                                         onload="resizeIframe(this)"
                                                         onerror="handleIframeError(this)">
                                                     </iframe>
                                                 </div>
+                                            </div>
+                                            <div class="card-footer text-end">
+                                                <button class="btn btn-danger" data-bs-toggle="collapse" data-bs-target="#${pdfId}" aria-expanded="true" aria-controls="${pdfId}">
+                                                    Close
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1904,6 +2401,32 @@
         }
     }
 
+    // Show Application History section with skeleton loading
+    function showApplicationHistorySkeleton() {
+        const applicationHistorySection = document.getElementById('application-history-section');
+        const applicationHistorySkeleton = document.getElementById('application-history-skeleton');
+        const applicationHistoryNoResult = document.getElementById('application-history-no-result');
+
+        if (applicationHistorySection) {
+            applicationHistorySection.style.display = 'block';
+        }
+
+        if (applicationHistorySkeleton) {
+            applicationHistorySkeleton.style.display = 'block';
+        }
+
+        if (applicationHistoryNoResult) {
+            applicationHistoryNoResult.style.display = 'none';
+        }
+
+        // Clear any existing content
+        const applicationHistoryContainer = document.getElementById('application-history-container');
+        if (applicationHistoryContainer) {
+            const existingReports = applicationHistoryContainer.querySelectorAll('.application-history-report-card');
+            existingReports.forEach(report => report.remove());
+        }
+    }
+
     // Hide location code skeleton when no location code is found
     function hideLocationCodeSkeleton() {
         const locationCodeSection = document.getElementById('location-code-section');
@@ -2013,12 +2536,18 @@
         const tacomaContainer = document.getElementById('tacoma-container');
         const tacomaCountElement = document.getElementById('tacoma-count');
         const tacomaNoResult = document.getElementById('tacoma-no-result');
+        const tacomaSkeleton = document.getElementById('tacoma-skeleton');
 
         if (tacomaReports && tacomaReports.length > 0) {
             // Check if Tacoma reports are already displayed to prevent duplicates
             const existingTacomaReports = tacomaContainer.querySelectorAll('.tacoma-report-card');
             if (existingTacomaReports.length > 0) {
                 return; // Tacoma reports already displayed, don't add duplicates
+            }
+
+            // Hide skeleton loading
+            if (tacomaSkeleton) {
+                tacomaSkeleton.style.display = 'none';
             }
 
             // Show the section and hide no-result message
@@ -2031,7 +2560,7 @@
             // Group reports by type
             const groupedReports = {};
             tacomaReports.forEach((report, index) => {
-                const [reportUrl, reportType] = report.split(',');
+                const [reportUrl, reportType, reportOwner, reportAddress, reportAdditional, reportCity, reportState, reportZipCode, reportParcel] = report.split(',');
                 const displayType = reportType ? reportType.trim() : 'Unknown Type';
 
                 if (!groupedReports[displayType]) {
@@ -2040,6 +2569,13 @@
                 groupedReports[displayType].push({
                     url: reportUrl,
                     type: displayType,
+                    owner: reportOwner,
+                    address: reportAddress,
+                    additional: reportAdditional,
+                    city: reportCity,
+                    state: reportState,
+                    zipCode: reportZipCode,
+                    parcel: reportParcel,
                     index: index + 1
                 });
             });
@@ -2053,12 +2589,14 @@
                 content += `
                     <div class="col-12 mb-4">
                         <div class="card tacoma-type-group">
-                            <div class="card-header" style="cursor: pointer;" onclick="toggleGroup('${type.replace(/[^a-zA-Z0-9]/g, '')}')">
+                            <div class="card-header" style="cursor: pointer;" data-bs-target="#group-${type.replace(/[^a-zA-Z0-9]/g, '')}" data-bs-toggle="collapse" aria-expanded="false" aria-controls="group-${type.replace(/[^a-zA-Z0-9]/g, '')}">
                                 <h6 class="card-title mb-0">
                                     <i class="fas fa-folder me-2"></i>
                                     ${type}
                                     <span class="badge bg-secondary ms-2">${reports.length}</span>
                                     <i class="fas fa-chevron-right ms-2 group-toggle-icon" id="icon-${type.replace(/[^a-zA-Z0-9]/g, '')}"></i>
+                                    <span class="ms-2 border border-1 border-danger bg-danger rounded p-1">${reports[0].address ? reports[0].address : ""} ${reports[0].city ? reports[0].city : ""} ${reports[0].state ? reports[0].state : ""} ${reports[0].zipCode ? reports[0].zipCode : ""}</span>
+                                    <span class="ms-2 border border-1 border-danger bg-danger rounded p-1">${reports[0].parcel ? reports[0].parcel : ""}</span>
                                 </h6>
                             </div>
                             <div class="card-body collapse" id="group-${type.replace(/[^a-zA-Z0-9]/g, '')}">
@@ -2073,7 +2611,7 @@
                     content += `
                         <div class="col-lg-12 mb-3">
                             <div class="card tacoma-report-card">
-                                <div class="card-header d-flex justify-content-between align-items-center" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#${reportId}" aria-expanded="false" aria-controls="${reportId}">
+                                <div class="card-header d-flex justify-content-between align-items-center" style="cursor: pointer;" data-bs-toggle="collapse" onclick="showClosePDFButton('#${reportId}')" data-bs-target="#${reportId}" aria-expanded="false" aria-controls="${reportId}">
                                     <div>
                                         <h6 class="card-title mb-0">
                                             <i class="fas fa-file-alt me-2"></i>
@@ -2081,7 +2619,7 @@
                                         </h6>
                                     </div>
                                     <div>
-                                        <a href="${report.url}" target="_blank" class="btn btn-sm btn-outline-info me-2" onclick="event.stopPropagation();">
+                                        <a href="${report.url}" target="_blank" class="btn btn-sm btn-info me-2" onclick="event.stopPropagation();">
                                             <i class="fas fa-external-link-alt me-1"></i>
                                             Open
                                         </a>
@@ -2100,6 +2638,11 @@
                                                 onerror="handleTpchdIframeError(this)">
                                             </iframe>
                                         </div>
+                                    </div>
+                                    <div class="card-footer text-end">
+                                        <button class="btn btn-sm btn-danger" data-bs-toggle="collapse" data-bs-target="#${reportId}" aria-expanded="false" aria-controls="${reportId}">
+                                            Close
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -2172,17 +2715,32 @@
     function displayKingReports(kingReports) {
         const additionalSection = document.getElementById('additional-results-section');
         const additionalContent = document.getElementById('additional-results-content');
+        const kingSkeleton = document.getElementById('king-skeleton');
         const kingNoResult = document.getElementById('king-no-result');
         const kingCountElement = document.getElementById('king-count');
 
         if (kingReports && kingReports.length > 0) {
             // Check if King County reports are already displayed to prevent duplicates
+            // But allow re-display if the content area is empty (might have been cleared)
             const existingKingReports = additionalContent.querySelectorAll('.king-report-card');
-            if (existingKingReports.length > 0) {
-                return; // King County reports already displayed, don't add duplicates
+            if (existingKingReports.length > 0 && existingKingReports.length === kingReports.length) {
+                // Reports already displayed with matching count, don't add duplicates
+                return;
             }
 
-            // Hide no-result message and update count
+            // If reports exist but count doesn't match, or content was cleared, clear and re-display
+            if (existingKingReports.length > 0) {
+                // Clear existing content to avoid duplicates
+                const kingReportsSection = additionalContent.querySelector('.king-reports-section');
+                if (kingReportsSection) {
+                    kingReportsSection.remove();
+                }
+            }
+
+            // Hide skeleton loader and no-result message, update count
+            if (kingSkeleton) {
+                kingSkeleton.style.display = 'none';
+            }
             if (kingNoResult) {
                 kingNoResult.style.display = 'none';
             }
@@ -2202,7 +2760,7 @@
                 content += `
                     <div class="col-lg-12 mb-3">
                         <div class="card king-report-card">
-                            <div class="card-header" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#${reportId}" aria-expanded="false" aria-controls="${reportId}">
+                            <div class="card-header" onclick="showClosePDFButton('#${reportId}')" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#${reportId}" aria-expanded="false" aria-controls="${reportId}">
                                 <h6 class="card-title mb-0 d-flex justify-content-between align-items-center">
                                     <span>
                                         <i class="fas fa-file-alt me-2"></i>
@@ -2229,6 +2787,11 @@
                                             onerror="handleKingIframeError(this)">
                                         </iframe>
                                     </div>
+                                </div>
+                                <div class="card-footer text-end">
+                                    <button class="btn btn-danger" data-bs-toggle="collapse" data-bs-target="#${reportId}" aria-expanded="true" aria-controls="${reportId}">
+                                        Close
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -2278,6 +2841,134 @@
             }, 100);
         }
     }
+
+    // Display Accella reports progressively (Pierce County)
+    // accellaReports is an array of strings
+    function displayAccellaReports(accellaReports) {
+        const accellaSection = document.getElementById('accella-reports-section');
+        const accellaContainer = document.getElementById('accella-content');
+        const accellaCountElement = document.getElementById('accella-count');
+        const accellaNoResult = document.getElementById('accella-no-result');
+        const accellaSkeleton = document.getElementById('accella-skeleton');
+
+        if (accellaReports && accellaReports.length > 0) {
+            // Check if Accella reports are already displayed to prevent duplicates
+            const existingAccellaReports = accellaContainer.querySelectorAll('.accella-report-card');
+            if (existingAccellaReports.length > 0) {
+                return; // Accella reports already displayed, don't add duplicates
+            }
+
+            // Hide skeleton loading
+            if (accellaSkeleton) {
+                accellaSkeleton.style.display = 'none';
+            }
+
+            // Show the section and hide no-result message
+            accellaSection.style.display = 'block';
+            if (accellaNoResult) {
+                accellaNoResult.style.display = 'none';
+            }
+            accellaCountElement.textContent = accellaReports.length;
+
+            let content = `
+                <div class="mb-3 accella-reports-section">
+                    <div class="row">
+            `;
+
+            accellaReports.forEach((reportData, index) => {
+                // Parse the report data: format is "path,name,upload_date"
+                const parts = (reportData || '').split(',');
+                const reportPath = (parts.length > 0 ? parts[0] : '').trim();
+                const reportName = (parts.length > 1 ? parts[1] : 'Accella Report').trim();
+                const uploadDate = (parts.length > 2 ? parts[2] : '').trim();
+
+                const reportId = `accella-report-${index + 1}`;
+                const iconId = `accella-icon-${index + 1}`;
+                const url = `/api/download-accella/${sessionId}?index=${index}`;
+
+                content += `
+                    <div class="col-lg-12 mb-3">
+                        <div class="card accella-report-card">
+                            <div class="card-header" onclick="showClosePDFButton('#${reportId}')" style="cursor: pointer; background-color: #fd9843; color: #ffffff" data-bs-toggle="collapse" data-bs-target="#${reportId}" aria-expanded="false" aria-controls="${reportId}">
+                                <h6 class="card-title mb-0 d-flex justify-content-between align-items-center">
+                                    <span>
+                                        <i class="fas fa-file-alt me-2"></i>
+                                        ${reportName}
+                                        ${uploadDate ? `<small class="ms-2">(${uploadDate})</small>` : ''}
+                                    </span>
+                                    <div>
+                                        <a href="${url}" target="_blank" class="btn btn-sm btn-warning me-2" onclick="event.stopPropagation();">
+                                            <i class="fas fa-external-link-alt me-1"></i>
+                                            Open
+                                        </a>
+                                        <i class="fas fa-chevron-right accella-toggle-icon" id="${iconId}"></i>
+                                    </div>
+                                </h6>
+                            </div>
+                            <div class="collapse" id="${reportId}">
+                                <div class="card-body p-0">
+                                    <div class="accella-report-iframe-container">
+                                        <iframe 
+                                            data-base-src="${url}"
+                                            src="${withPdfZoom(url, 125)}" 
+                                            class="accella-report-iframe"
+                                            title="${reportName}"
+                                            onload="resizeAccellaIframe(this)"
+                                            onerror="handleAccellaIframeError(this)">
+                                        </iframe>
+                                    </div>
+                                </div>
+                                <div class="card-footer text-end">
+                                    <button class="btn btn-danger" data-bs-toggle="collapse" data-bs-target="#${reportId}" aria-expanded="true" aria-controls="${reportId}">
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            content += `
+                    </div>
+                </div>
+            `;
+
+            accellaContainer.innerHTML = content;
+            // Apply responsive zoom to Accella iframes
+            applyResponsiveZoomToAll();
+
+            // Add animation effect
+            accellaSection.style.opacity = '0';
+            accellaSection.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                accellaSection.style.transition = 'all 0.5s ease-in-out';
+                accellaSection.style.opacity = '1';
+                accellaSection.style.transform = 'translateY(0)';
+
+                // Add event listeners for Accella report collapse toggles
+                accellaReports.forEach((report, index) => {
+                    const reportId = `accella-report-${index + 1}`;
+                    const iconId = `accella-icon-${index + 1}`;
+                    const collapseElement = document.getElementById(reportId);
+                    const iconElement = document.getElementById(iconId);
+
+                    if (collapseElement && iconElement) {
+                        collapseElement.addEventListener('show.bs.collapse', function () {
+                            iconElement.classList.remove('fa-chevron-right');
+                            iconElement.classList.add('fa-chevron-down');
+                        });
+
+                        collapseElement.addEventListener('hide.bs.collapse', function () {
+                            iconElement.classList.remove('fa-chevron-down');
+                            iconElement.classList.add('fa-chevron-right');
+                        });
+                    }
+                });
+            }, 100);
+        }
+    }
+
 
     // Create PDF card with iframe
     function createPdfCard(url, index) {
@@ -2402,7 +3093,11 @@
                 displayTacomaReports(results.tacoma_reports);
             } else {
                 console.log('No Tacoma reports found, showing no result message');
-                // Show no result message for Tacoma
+                // Hide skeleton and show no result message for Tacoma
+                const tacomaSkeleton = document.getElementById('tacoma-skeleton');
+                if (tacomaSkeleton) {
+                    tacomaSkeleton.style.display = 'none';
+                }
                 const tacomaNoResult = document.getElementById('tacoma-no-result');
                 if (tacomaNoResult) {
                     tacomaNoResult.style.display = 'block';
@@ -2412,44 +3107,29 @@
             // Show Accella section and update its content (respect status for skeleton vs no-result)
             const accellaSection = document.getElementById('accella-reports-section');
             const accellaNoResult = document.getElementById('accella-no-result');
-            const accellaIframeContainer = document.getElementById('accella-iframe-container');
-            const accellaSkeleton = document.getElementById('accella-skeleton');
             const accellaCount = document.getElementById('accella-count');
+
             if (accellaSection) {
                 accellaSection.style.display = 'block';
             }
-            const path = (results.accella_reports_path || '').trim();
-            if (accellaIframeContainer) {
-                if (path) {
-                    const url = `/api/download-accella/${sessionId}`;
-                    accellaIframeContainer.innerHTML = `
-                        <div class="pdf-iframe-container">
-                            <iframe
-                                data-base-src="${url}"
-                                src="${withPdfZoom(url, 125)}"
-                                class="pdf-iframe"
-                                title="Accella Report"
-                                onload="resizeIframe(this)"
-                                onerror="handleIframeError(this)">
-                            </iframe>
-                        </div>
-                    `;
-                    if (accellaNoResult) accellaNoResult.style.display = 'none';
-                    if (accellaSkeleton) accellaSkeleton.style.display = 'none';
-                    if (accellaCount) accellaCount.textContent = '1';
-                    applyResponsiveZoomToAll();
-                } else {
-                    accellaIframeContainer.innerHTML = '';
-                    // If we know lookup is completed and no path, show no-result; otherwise show skeleton
-                    if ((results.status || '').toLowerCase() === 'completed') {
-                        if (accellaSkeleton) accellaSkeleton.style.display = 'none';
-                        if (accellaNoResult) accellaNoResult.style.display = 'block';
-                        if (accellaCount) accellaCount.textContent = '0';
-                    } else {
-                        if (accellaSkeleton) accellaSkeleton.style.display = 'block';
-                        if (accellaNoResult) accellaNoResult.style.display = 'none';
-                        if (accellaCount) accellaCount.textContent = '0';
+
+            const hasAccellaReports = Array.isArray(results.accella_reports_path) && results.accella_reports_path.length > 0;
+
+            if (hasAccellaReports) {
+                // New array format - display all reports using displayAccellaReports
+                if (accellaNoResult) accellaNoResult.style.display = 'none';
+                if (accellaCount) accellaCount.textContent = results.accella_reports_path.length.toString();
+                displayAccellaReports(results.accella_reports_path);
+            } else {
+                // If we know lookup is completed and no path, show no-result
+                if ((results.status || '').toLowerCase() === 'completed') {
+                    // Hide skeleton first
+                    const accellaSkeleton = document.getElementById('accella-skeleton');
+                    if (accellaSkeleton) {
+                        accellaSkeleton.style.display = 'none';
                     }
+                    if (accellaNoResult) accellaNoResult.style.display = 'block';
+                    if (accellaCount) accellaCount.textContent = '0';
                 }
             }
         } else {
@@ -2470,26 +3150,38 @@
         if (results.county && results.county.toLowerCase() === 'king') {
             // Show the King County section for King County
             const additionalSection = document.getElementById('additional-results-section');
+            const kingSkeleton = document.getElementById('king-skeleton');
+            const kingNoResult = document.getElementById('king-no-result');
             if (additionalSection) {
                 additionalSection.style.display = 'block';
             }
 
             if (results.king_reports && results.king_reports.length > 0) {
+                // Hide skeleton and no-result, show reports
+                if (kingSkeleton) kingSkeleton.style.display = 'none';
+                if (kingNoResult) kingNoResult.style.display = 'none';
                 displayKingReports(results.king_reports);
             } else {
-                // Prefer King-specific error if present on initial render
-                const kingNoResult = document.getElementById('king-no-result');
-                if (kingNoResult) {
-                    if (results.king_error_message) {
-                        kingNoResult.classList.remove('alert-info');
-                        kingNoResult.classList.add('alert-danger');
-                        kingNoResult.innerHTML = `<i class=\"fas fa-exclamation-triangle me-2\"></i>${results.king_error_message}`;
-                    } else {
-                        kingNoResult.classList.remove('alert-danger');
-                        kingNoResult.classList.add('alert-info');
-                        kingNoResult.innerHTML = '<i class=\"fas fa-info-circle me-2\"></i>No King County reports found for this address.';
+                // Check if lookup is still running
+                if (results.status && results.status !== 'completed') {
+                    // Show skeleton loader while fetching
+                    if (kingSkeleton) kingSkeleton.style.display = 'block';
+                    if (kingNoResult) kingNoResult.style.display = 'none';
+                } else {
+                    // Lookup completed, hide skeleton and show no-result
+                    if (kingSkeleton) kingSkeleton.style.display = 'none';
+                    if (kingNoResult) {
+                        if (results.king_error_message) {
+                            kingNoResult.classList.remove('alert-info');
+                            kingNoResult.classList.add('alert-danger');
+                            kingNoResult.innerHTML = `<i class=\"fas fa-exclamation-triangle me-2\"></i>${results.king_error_message}`;
+                        } else {
+                            kingNoResult.classList.remove('alert-danger');
+                            kingNoResult.classList.add('alert-info');
+                            kingNoResult.innerHTML = '<i class=\"fas fa-info-circle me-2\"></i>No King County reports found for this address.';
+                        }
+                        kingNoResult.style.display = 'block';
                     }
-                    kingNoResult.style.display = 'block';
                 }
             }
         } else {
@@ -2511,11 +3203,15 @@
 
         // Show RME reports skeleton initially
         showRmeReportsSkeleton();
+        
+        // Show Application History section with skeleton during lookup (King County only)
+        // This will be handled in the polling loop based on county
 
         // Show location code skeleton if city and zip are provided
         // We'll check this in the first polling call
 
         loadingInterval = setInterval(async () => {
+            console.log('Polling for updates...');
             try {
                 const response = await fetch(`/api/lookup/${sessionId}`);
                 const session = await response.json();
@@ -2525,6 +3221,19 @@
                 }
 
                 updateSessionInfo(session);
+                
+                // Show Application History skeleton for King County during lookup
+                if (session.county && session.county.toLowerCase() === 'king') {
+                    if (session.status === 'running' || session.status === 'waiting') {
+                        showApplicationHistorySkeleton();
+                    }
+                } else {
+                    // Hide Application History section for non-King counties
+                    const applicationHistorySection = document.getElementById('application-history-section');
+                    if (applicationHistorySection) {
+                        applicationHistorySection.style.display = 'none';
+                    }
+                }
 
                 // Early-surface RME error while still running
                 if (!session.is_multimatch && (!session.pdf_urls || session.pdf_urls.length === 0) && session.error_message && !rmeErrorShown) {
@@ -2572,41 +3281,57 @@
                 }
 
                 // Handle PDF reports - simulate individual loading (for single match)
-                if (!session.is_multimatch && session.pdf_urls && session.pdf_urls.length > 0) {
+                if (!session.is_multimatch) {
+                    const pdfContainer = document.getElementById('pdf-container');
+                    const pdfCountElement = document.getElementById('pdf-count');
                     // Check if PDFs are already displayed to prevent duplicates
-                    const existingPdfs = document.querySelectorAll('.pdf-card');
-                    if (existingPdfs.length === 0) {
-                        // Hide skeleton loading when we have PDF data to display
+                    const existingPdfs = Array.from(document.querySelectorAll('.pdf-card')).filter(card => !card.closest('#skeleton-loading'));
+                    
+                    if (session.pdf_urls && session.pdf_urls.length > 0) {
+                        if (existingPdfs.length === 0) {
+                            // Hide skeleton loading when we have PDF data to display
+                            const skeletonLoading = document.getElementById('skeleton-loading');
+                            if (skeletonLoading) {
+                                skeletonLoading.style.display = 'none';
+                            }
+
+                            // Build flat list of PDFs and sort by date descending
+                            const pdfItems = session.pdf_urls.map((pdfData, pdfIndex) => {
+                                let pdfUrl, pdfType, pdfDate;
+                                if (pdfData.includes(',')) {
+                                    const parts = pdfData.split(',');
+                                    pdfUrl = parts[0];
+                                    pdfType = (parts[1] || '').trim() || 'Unknown Type';
+                                    pdfDate = (parts[2] || '').trim();
+                                } else {
+                                    pdfUrl = pdfData;
+                                    pdfType = 'General Report';
+                                    pdfDate = '';
+                                }
+                                return {
+                                    url: pdfUrl,
+                                    type: pdfType,
+                                    date: pdfDate,
+                                    index: pdfIndex + 1
+                                };
+                            }).sort((a, b) => parseReportDate(b.date) - parseReportDate(a.date));
+
+                            // Display flat, date-sorted PDFs
+                            displayFlatPdfs(pdfItems, pdfContainer, pdfCountElement);
+                        }
+                    } else if (session.status === 'completed' && existingPdfs.length === 0) {
+                        // When completed with no PDFs, hide skeleton and show no-result
                         const skeletonLoading = document.getElementById('skeleton-loading');
                         if (skeletonLoading) {
                             skeletonLoading.style.display = 'none';
                         }
-
-                        // Build flat list of PDFs and sort by date descending
-                        const pdfItems = session.pdf_urls.map((pdfData, pdfIndex) => {
-                            let pdfUrl, pdfType, pdfDate;
-                            if (pdfData.includes(',')) {
-                                const parts = pdfData.split(',');
-                                pdfUrl = parts[0];
-                                pdfType = (parts[1] || '').trim() || 'Unknown Type';
-                                pdfDate = (parts[2] || '').trim();
-                            } else {
-                                pdfUrl = pdfData;
-                                pdfType = 'General Report';
-                                pdfDate = '';
-                            }
-                            return {
-                                url: pdfUrl,
-                                type: pdfType,
-                                date: pdfDate,
-                                index: pdfIndex + 1
-                            };
-                        }).sort((a, b) => parseReportDate(b.date) - parseReportDate(a.date));
-
-                        // Display flat, date-sorted PDFs
-                        const pdfContainer = document.getElementById('pdf-container');
-                        const pdfCountElement = document.getElementById('pdf-count');
-                        displayFlatPdfs(pdfItems, pdfContainer, pdfCountElement);
+                        const pdfNoResult = document.getElementById('pdf-no-result');
+                        if (pdfNoResult) {
+                            pdfNoResult.style.display = 'block';
+                        }
+                        if (pdfCountElement) {
+                            pdfCountElement.textContent = '0';
+                        }
                     }
                 }
 
@@ -2627,6 +3352,11 @@
                         displayTacomaReports(session.tacoma_reports);
                     } else if (Array.isArray(session.tacoma_reports) && session.tacoma_reports.length === 0) {
                         // Show no-result immediately when the lookup has finished with no reports
+                        // Hide skeleton first
+                        const tacomaSkeleton = document.getElementById('tacoma-skeleton');
+                        if (tacomaSkeleton) {
+                            tacomaSkeleton.style.display = 'none';
+                        }
                         if (tacomaNoResult) {
                             tacomaNoResult.style.display = 'block';
                         }
@@ -2637,55 +3367,90 @@
                         }
                     }
 
-                    // Update Accella section progressively
+
+                    // Display Application History reports (King County only)
+                    if (session.county && session.county.toLowerCase() === 'king') {
+                        const applicationHistorySection = document.getElementById('application-history-section');
+                        const applicationHistorySkeleton = document.getElementById('application-history-skeleton');
+                        const applicationHistoryNoResult = document.getElementById('application-history-no-result');
+                        
+                        // Always show section for King County
+                        if (applicationHistorySection) {
+                            applicationHistorySection.style.display = 'block';
+                        }
+                        
+                        if (session.status === 'running' || session.status === 'waiting') {
+                            // Show skeleton during lookup
+                            if (applicationHistorySkeleton) {
+                                applicationHistorySkeleton.style.display = 'block';
+                            }
+                            if (applicationHistoryNoResult) {
+                                applicationHistoryNoResult.style.display = 'none';
+                            }
+                        } else {
+                            // Status is completed or other - check for reports first
+                            if (Array.isArray(session.application_history_reports) && session.application_history_reports.length > 0) {
+                                // Show reports if available
+                                displayApplicationHistoryReports(session.application_history_reports);
+                            } else if (session.status === 'completed') {
+                                // Show no-result when lookup is completed with no reports (but keep section visible)
+                                if (applicationHistorySkeleton) {
+                                    applicationHistorySkeleton.style.display = 'none';
+                                }
+                                if (applicationHistoryNoResult) {
+                                    applicationHistoryNoResult.style.display = 'block';
+                                }
+                                const applicationHistoryCount = document.getElementById('application-history-count');
+                                if (applicationHistoryCount) {
+                                    applicationHistoryCount.textContent = '0';
+                                }
+                            }
+                        }
+                    } else if (session.county && session.county.toLowerCase() !== 'king') {
+                        // Hide Application History section for non-King counties
+                        const applicationHistorySection = document.getElementById('application-history-section');
+                        if (applicationHistorySection) {
+                            applicationHistorySection.style.display = 'none';
+                        }
+                    }
+
+                    // Update Accella section progressively (Pierce County only)
                     const accellaSection = document.getElementById('accella-reports-section');
                     const accellaNoResult = document.getElementById('accella-no-result');
-                    const accellaIframeContainer = document.getElementById('accella-iframe-container');
-                    const accellaSkeleton = document.getElementById('accella-skeleton');
                     const accellaCount = document.getElementById('accella-count');
+
                     if (accellaSection) {
                         accellaSection.style.display = 'block';
                     }
-                    const accPath = ((session.accella_reports_path || '') + '').trim();
-                    // No status/filename display for Accella
-                    // No status/filename display for Accella
-                    if (accellaIframeContainer) {
-                        if (accPath) {
-                            const url = `/api/download-accella/${sessionId}`;
-                            accellaIframeContainer.innerHTML = `
-                                <div class="pdf-iframe-container">
-                                    <iframe
-                                        data-base-src="${url}"
-                                        src="${withPdfZoom(url, 125)}"
-                                        class="pdf-iframe"
-                                        title="Accella Report"
-                                        onload="resizeIframe(this)"
-                                        onerror="handleIframeError(this)">
-                                    </iframe>
-                                </div>
-                            `;
-                            applyResponsiveZoomToAll();
-                            if (accellaNoResult) accellaNoResult.style.display = 'none';
-                            if (accellaSkeleton) accellaSkeleton.style.display = 'none';
-                            if (accellaCount) accellaCount.textContent = '1';
-                        } else {
-                            accellaIframeContainer.innerHTML = '';
-                            if (session.status === 'running' || session.status === 'waiting') {
-                                if (accellaSkeleton) accellaSkeleton.style.display = 'block';
-                                if (accellaNoResult) accellaNoResult.style.display = 'none';
-                                if (accellaCount) accellaCount.textContent = '0';
-                            } else if (session.status === 'completed') {
-                                if (accellaSkeleton) accellaSkeleton.style.display = 'none';
-                                if (accellaNoResult) accellaNoResult.style.display = 'block';
-                                if (accellaCount) accellaCount.textContent = '0';
-                            } else {
-                                // default while polling
-                                if (accellaSkeleton) accellaSkeleton.style.display = 'block';
-                                if (accellaNoResult) accellaNoResult.style.display = 'none';
-                                if (accellaCount) accellaCount.textContent = '0';
-                            }
+
+                    // FIX: accella_reports_path is not a string, but array of strings
+                    // Wrongly parsing as string
+                    if (Array.isArray(session.accella_reports_path) && session.accella_reports_path.length > 0) {
+                        // Hide no-result and render reports
+                        if (accellaNoResult) {
+                            accellaNoResult.style.display = 'none';
+                        }
+                        displayAccellaReports(session.accella_reports_path);
+                    } else if (Array.isArray(session.accella_reports_path) && session.accella_reports_path.length === 0) {
+                        // Show no-result immediately when the lookup has finished with no reports
+                        // Hide skeleton first
+                        const accellaSkeleton = document.getElementById('accella-skeleton');
+                        if (accellaSkeleton) {
+                            accellaSkeleton.style.display = 'none';
+                        }
+                        if (accellaNoResult) {
+                            accellaNoResult.style.display = 'block';
+                        }
+                        if (accellaCount) {
+                            accellaCount.textContent = '0';
+                        }
+                    } else {
+                        // Undefined (likely still running) -> keep no-result hidden
+                        if (accellaNoResult) {
+                            accellaNoResult.style.display = 'none';
                         }
                     }
+
                 } else if (session.county && session.county.toLowerCase() !== 'pierce') {
                     // Hide Tacoma section for non-Pierce counties
                     const tacomaSection = document.getElementById('tacoma-reports-section');
@@ -2703,32 +3468,24 @@
                 if (session.county && session.county.toLowerCase() === 'king') {
                     // Show the King County section for King County
                     const additionalSection = document.getElementById('additional-results-section');
+                    const kingSkeleton = document.getElementById('king-skeleton');
                     const kingNoResult = document.getElementById('king-no-result');
                     if (additionalSection) {
                         additionalSection.style.display = 'block';
                     }
 
-                    // Show King error immediately if present (and no reports yet)
-                    if ((!session.king_reports || session.king_reports.length === 0) && session.king_error_message) {
-                        if (kingNoResult) {
-                            kingNoResult.classList.remove('alert-info');
-                            kingNoResult.classList.add('alert-danger');
-                            kingNoResult.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${session.king_error_message}`;
-                            kingNoResult.style.display = 'block';
-                        }
-                    }
+                    // Always hide skeleton first
+                    if (kingSkeleton) kingSkeleton.style.display = 'none';
 
+                    // Check for reports first (regardless of status)
                     if (Array.isArray(session.king_reports) && session.king_reports.length > 0) {
-                        // Hide no-result and render reports
+                        // Hide no-result and show reports
                         if (kingNoResult) {
                             kingNoResult.style.display = 'none';
-                            kingNoResult.classList.remove('alert-danger');
-                            kingNoResult.classList.add('alert-info');
-                            kingNoResult.innerHTML = '<i class="fas fa-info-circle me-2"></i>No King County reports found for this address.';
                         }
                         displayKingReports(session.king_reports);
                     } else if (session.status === 'completed') {
-                        // After completion with no reports: prefer King-specific error if present
+                        // After completion with no reports: show no-result or error
                         if (kingNoResult) {
                             if (session.king_error_message) {
                                 kingNoResult.classList.remove('alert-info');
@@ -2742,7 +3499,8 @@
                             kingNoResult.style.display = 'block';
                         }
                     } else {
-                        // While running: show skeleton only (keep no-result hidden)
+                        // While running: show skeleton loader (keep no-result hidden)
+                        if (kingSkeleton) kingSkeleton.style.display = 'block';
                         if (kingNoResult) {
                             kingNoResult.style.display = 'none';
                         }
@@ -2758,6 +3516,59 @@
                 if (session.status === 'completed') {
                     clearInterval(loadingInterval);
                     loadingInterval = null;
+
+                    // Refresh page when lookup is completed
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000); // Small delay to ensure all data is displayed before refresh
+
+                    // 1. Ensure RME (PDF) skeleton is hidden if no PDFs were found
+                    const skeletonLoading = document.getElementById('skeleton-loading');
+
+                    // Check if skeleton is still displayed
+                    if (skeletonLoading && skeletonLoading.style.display !== 'none') {
+                        // If we are here, it means the polling loop didn't hide it yet (likely because pdf_urls was empty)
+                        skeletonLoading.style.display = 'none';
+
+                        // If we have no PDFs (and not multimatch), show the "No Result" message
+                        if (!session.is_multimatch && (!session.pdf_urls || session.pdf_urls.length === 0)) {
+                            const pdfNoResult = document.getElementById('pdf-no-result');
+
+                            if (pdfNoResult) {
+                                pdfNoResult.style.display = 'block';
+
+                                // Optional: Reset generic info if it was changed to error
+                                if (!pdfNoResult.classList.contains('alert-danger')) {
+                                    pdfNoResult.classList.remove('alert-info');
+                                    pdfNoResult.classList.add('alert-info');
+                                    pdfNoResult.innerHTML = '<i class="fas fa-info-circle me-2"></i>No RME (PDF) found for this address.';
+                                }
+                            }
+
+                            const pdfCount = document.getElementById('pdf-count');
+
+                            if (pdfCount) pdfCount.textContent = '0';
+                        }
+                    }
+
+                    // 2. Ensure Accella skeleton is hidden (Pierce County only)
+                    if (session.county && session.county.toLowerCase() === 'pierce') {
+                        const accellaSkeleton = document.getElementById('accella-skeleton');
+
+                        if (accellaSkeleton && accellaSkeleton.style.display !== 'none') accellaSkeleton.style.display = 'none';
+
+                        // If we have no Accella reports, show the "No Result" message
+                        if (Array.isArray(session.accella_reports_path) && session.accella_reports_path.length === 0) {
+                            const accellaNoResult = document.getElementById('accella-no-result');
+
+                            if (accellaNoResult) accellaNoResult.style.display = 'block';
+
+                            const accellaCount = document.getElementById('accella-count');
+
+                            if (accellaCount) accellaCount.textContent = '0';
+                        }
+
+                    }
 
                     // Final check: ensure PDF section is hidden for multimatch cases
                     if (session.is_multimatch && session.multimatch_data && session.multimatch_data.length > 0) {
@@ -2793,6 +3604,7 @@
                 showError('Error loading results: ' + error.message);
             }
         }, 1000);
+
     }
 
 
@@ -2902,6 +3714,34 @@
         `;
     }
 
+    // Resize Accella iframe to fit content
+    function resizeAccellaIframe(iframe) {
+        try {
+            // Use viewport height for responsive sizing
+            const container = iframe.parentElement;
+            const viewportHeight = window.innerHeight;
+            const responsiveHeight = Math.min(viewportHeight * 0.7, 1200);
+            container.style.height = Math.max(responsiveHeight, 800) + 'px';
+        } catch (error) {
+            console.log('Could not resize Accella iframe:', error);
+        }
+    }
+
+    // Handle Accella iframe error
+    function handleAccellaIframeError(iframe) {
+        const container = iframe.parentElement;
+        container.innerHTML = `
+            <div class="alert alert-warning text-center">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Could not load Accella report preview. 
+                <a href="${iframe.src}" target="_blank" class="btn btn-sm btn-outline-warning ms-2">
+                    <i class="fas fa-external-link-alt me-1"></i>
+                    Open Report
+                </a>
+            </div>
+        `;
+    }
+
     // Handle window resize for responsive iframes
     window.addEventListener('resize', function () {
         // Re-resize all iframes when window is resized
@@ -2913,6 +3753,9 @@
 
         const tpchdIframes = document.querySelectorAll('.tpchd-report-iframe');
         tpchdIframes.forEach(iframe => resizeTpchdIframe(iframe));
+
+        const accellaIframes = document.querySelectorAll('.accella-report-iframe');
+        accellaIframes.forEach(iframe => resizeAccellaIframe(iframe));
     });
 
     // Initialize page
@@ -3006,8 +3849,12 @@
     /* Ensure iframe containers take full width of their cards */
     .pdf-iframe-container,
     .king-report-iframe-container,
-    .tpchd-report-iframe-container {
+    .tpchd-report-iframe-container,
+    .accella-report-iframe-container {
         width: 100%;
+        height: auto;
+        min-height: 10000px;
+        max-height: none;
         margin: 0;
         border-radius: 0.375rem;
     }
@@ -3024,10 +3871,6 @@
 
     .king-report-iframe-container {
         position: relative;
-        width: 100%;
-        height: 70vh;
-        min-height: 800px;
-        max-height: 1200px;
         border: 1px solid #dee2e6;
         border-radius: 0.375rem;
         overflow: hidden;
@@ -3042,10 +3885,6 @@
 
     .tpchd-report-iframe-container {
         position: relative;
-        width: 100%;
-        height: 70vh;
-        min-height: 800px;
-        max-height: 1200px;
         border: 1px solid #dee2e6;
         border-radius: 0.375rem;
         overflow: hidden;
@@ -3058,6 +3897,22 @@
         background-color: #f8f9fa;
     }
 
+    .accella-report-iframe-container {
+        position: relative;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        overflow: hidden;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .accella-report-iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background-color: #f8f9fa;
+    }
+
+
     /* Responsive adjustments for smaller screens */
     @media (max-width: 768px) {
         .pdf-iframe-container {
@@ -3066,7 +3921,8 @@
         }
 
         .king-report-iframe-container,
-        .tpchd-report-iframe-container {
+        .tpchd-report-iframe-container,
+        .accella-report-iframe-container {
             height: 55vh;
             min-height: 350px;
         }
@@ -3147,8 +4003,21 @@
     #tacoma-reports-section,
     #multimatch-results-section,
     #pdf-results-section,
-    #additional-results-section {
+    #additional-results-section,
+    #application-history-section {
         transition: all 0.5s ease-in-out;
+    }
+
+    /* Application History styling: keep it subtle/white */
+    .application-history-report-card {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        overflow: hidden;
+    }
+    .application-history-report-card .card-header {
+        background-color: #183A7A;
+        color: #ffffff;
+        border-bottom: 1px solid #183A7A;
     }
 
     /* Multimatch specific styling */
@@ -3386,6 +4255,50 @@
     .pdf-card .skeleton-text {
         background-color: #fff3e0;
         border: 1px solid #ffcc02;
+    }
+
+    .tacoma-type-group .skeleton-text {
+        background-color: #f8faf8;
+        border: 1px solid #e9efe9;
+    }
+
+    .tacoma-card .skeleton-text {
+        background-color: #e2ffe0;
+        border: 1px solid #0fff02;
+    }
+
+    .multimatch-card .skeleton-text {
+        background-color: #ffe0e4;
+        border: 1px solid #ff0217;
+    }
+
+    .multimatch-type-group .skeleton-text {
+        background-color: #faf8f8;
+        border: 1px solid #efe9eb;
+    }
+
+    .accella-type-group .skeleton-text {
+        background-color: #faf9f8;
+        border: 1px solid #efede9;
+    }
+
+    .accella-card .skeleton-text {
+        background-color: #fff0e0;
+        border: 1px solid #0fff02;
+    }
+
+    /* Application History skeleton loading override - white/light style */
+    #application-history-skeleton .pdf-card .card-header {
+        background-color: #ffffff !important;
+        color: #333333 !important;
+        border: 1px solid #e9ecef !important;
+        border-bottom: 1px solid #e9ecef !important;
+        box-shadow: none !important;
+    }
+
+    #application-history-skeleton .pdf-card {
+        background-color: #ffffff !important;
+        border: 1px solid #e9ecef !important;
     }
 </style>
 {% endblock %}

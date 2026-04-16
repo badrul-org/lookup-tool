@@ -61,7 +61,7 @@
                                 <tr class="lead-row" data-lead-id="{{ lead.id }}">
                                     <td class="lead-col-submitted">
                                         <div class="lead-cell lead-cell-sm">
-                                            <div class="fw-semibold">{{ lead.created_at or '—' }}</div>
+                                            <div class="fw-semibold">{{ lead.created_at | dateformat if lead.created_at else '—' }}</div>
                                             <small class="text-muted">Lead #{{ loop.index }}</small>
                                         </div>
                                     </td>
@@ -367,6 +367,23 @@
     function populateViewModal(data) {
         const container = document.getElementById('leadViewContent');
         if (!container) return;
+        function formatDateStr(dateStr) {
+            if (!dateStr) return '—';
+            try {
+                let d;
+                if (dateStr.includes('T')) {
+                    d = new Date(dateStr);
+                } else {
+                    d = new Date(dateStr.replace(' ', 'T') + 'Z');
+                }
+                if (isNaN(d.getTime())) return dateStr;
+                const pad = n => String(n).padStart(2, '0');
+                return `${pad(d.getUTCMonth() + 1)}/${pad(d.getUTCDate())}/${d.getUTCFullYear()} ` +
+                       `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`;
+            } catch {
+                return dateStr;
+            }
+        }
         const fields = [
             ['Full Name', data.full_name],
             ['Phone', data.phone],
@@ -381,7 +398,7 @@
             ['Referral Source', data.referral_source],
             ['Household Size', data.household_size],
             ['Additional Notes', data.additional_notes],
-            ['Submitted', data.created_at],
+            ['Submitted', formatDateStr(data.created_at)],
         ];
         container.innerHTML = fields.map(([label, value]) => `
             <dt class="col-sm-4 text-muted">${label}</dt>

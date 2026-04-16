@@ -5,7 +5,7 @@ from datetime import datetime
 
 import asyncio
 from playwright.async_api import async_playwright
-from tools import tax_rate_lookup, address_search, get_pdf_all_reports, Tacoma_report_lookup, King_report_lookup, close_browser , Create_Customer, Check_Existing_Customer, Upload_Attachments, create_work_order, upload_attachments_to_work_order, Accella_report_lookup
+from tools import tax_rate_lookup, address_search, get_pdf_all_reports, get_application_history_reports, Tacoma_report_lookup, King_report_lookup, close_browser , Create_Customer, Check_Existing_Customer, Upload_Attachments, create_work_order, upload_attachments_to_work_order, Accella_report_lookup
 import threading
 import uuid
 import sqlite3
@@ -13,9 +13,70 @@ import os
 import tempfile
 import shutil
 import requests
+import sys
+
+# Windows: Disable QuickEdit mode to prevent the console from freezing when clicked
+if sys.platform == "win32":
+    try:
+        import ctypes
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.GetStdHandle(-10) # STD_INPUT_HANDLE
+        mode = ctypes.c_uint()
+        if kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+            mode.value &= ~0x0040 # Disable ENABLE_QUICK_EDIT_MODE
+            mode.value |= 0x0080  # Enable ENABLE_EXTENDED_FLAGS (required to disable QuickEdit)
+            kernel32.SetConsoleMode(handle, mode)
+            print("✅ QuickEdit mode disabled")
+    except Exception:
+        pass
 
 app = Flask(__name__)
 app.secret_key = 'lookuptool2025'
+
+#############################
+# CUSTOM TEMPLATE FILTERS   #
+#############################
+@app.template_filter('dateformat')
+def dateformat(value):
+    if not value:
+        return value
+    if isinstance(value, str):
+        try:
+            if 'T' in value:
+                dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+            else:
+                dt = datetime.strptime(value.split('.')[0], '%Y-%m-%d %H:%M:%S')
+        except Exception:
+            try:
+                dt = datetime.strptime(value, '%Y-%m-%d')
+            except Exception:
+                return value
+    else:
+        dt = value
+    return dt.strftime('%m/%d/%Y %H:%M:%S')
+
+@app.template_filter('dateformat_short')
+def dateformat_short(value):
+    if not value:
+        return value
+    if isinstance(value, str):
+        try:
+            if 'T' in value:
+                dt = datetime.fromisoformat(value.replace('Z', '+00:00'))
+            else:
+                dt = datetime.strptime(value.split('.')[0], '%Y-%m-%d %H:%M:%S')
+        except Exception:
+            try:
+                dt = datetime.strptime(value, '%Y-%m-%d')
+            except Exception:
+                return value
+    else:
+        dt = value
+    return dt.strftime('%m/%d/%Y')
+
+# Scraper state
+scraper_last_run = None      # UTC datetime of last completed run
+scraper_is_running = False   # True while a run is in progress
 # Global variables for browser management
 browsers = {}
 browsers_initialized = False
@@ -354,6 +415,22 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS container_preference (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            size TEXT NOT NULL DEFAULT 'empty',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    container_preference = db_query_one('SELECT * FROM container_preference WHERE id = 1')
+
+    if not container_preference:
+        cursor.execute('''
+            INSERT INTO container_preference (size) VALUES ('empty')
+        ''')
+
     
     # Helper to ensure columns exist (idempotent)
     def ensure_columns(table_name, columns):
@@ -386,6 +463,7 @@ def init_db():
         { 'name': 'work_order_uploaded_files', 'type': 'INTEGER' },
         { 'name': 'accella_reports_path', 'type': 'TEXT' },
         { 'name': 'accella_reports_status', 'type': 'TEXT' },
+        { 'name': 'application_history_reports', 'type': 'TEXT' },
     ])
     
     conn.commit()
@@ -610,6 +688,9 @@ def dashboard():
     """Dashboard page showing overview and recent lookups"""
     # Load sessions from DB to render without client API calls
     rows = db_query_all('SELECT * FROM lookup_sessions ORDER BY start_time DESC')
+    container_rows = db_query_all('SELECT size FROM container_preference WHERE id = 1')
+
+    print(container_rows)
 
     lookups = [dict(r) for r in rows]
     # Preprocess JSON fields minimally for any consumer (not strictly needed for counts)
@@ -638,13 +719,46 @@ def dashboard():
             'running': running,
             'failed': failed
         },
-        recent_lookups=recent_lookups
+        recent_lookups=recent_lookups,
+        container_size=container_rows[0]['size']
     )
 
 @app.route('/lookup')
 def lookup_tool():
     """Lookup tool page"""
-    return render_template('lookup.html')
+    """Dashboard page showing overview and recent lookups"""
+    # Load sessions from DB to render without client API calls
+    rows = db_query_all('SELECT * FROM lookup_sessions ORDER BY start_time DESC')
+
+    lookups = [dict(r) for r in rows]
+    # Preprocess JSON fields minimally for any consumer (not strictly needed for counts)
+    for item in lookups:
+        for key in ('pdf_urls', 'multimatch_data', 'tacoma_reports', 'king_reports'):
+            if item.get(key) and isinstance(item.get(key), str):
+                try:
+                    item[key] = json.loads(item[key])
+                except Exception:
+                    item[key] = []
+
+    # Compute stats
+    total = len(lookups)
+    completed = sum(1 for s in lookups if s.get('status') == 'completed')
+    running = sum(1 for s in lookups if s.get('status') in ('running', 'waiting'))
+    failed = sum(1 for s in lookups if s.get('status') == 'error')
+
+    # Recent 5
+    recent_lookups = lookups[:5]
+
+    return render_template(
+        'lookup.html',
+        stats={
+            'total': total,
+            'completed': completed,
+            'running': running,
+            'failed': failed
+        },
+        recent_lookups=recent_lookups
+    )
 
 @app.route('/results')
 def results():
@@ -659,7 +773,7 @@ def results():
         if db_session:
             session_data = dict(db_session)
             # Parse JSON-like fields for direct template rendering
-            for key in ('pdf_urls', 'multimatch_data', 'tacoma_reports', 'king_reports'):
+            for key in ('pdf_urls', 'multimatch_data', 'tacoma_reports', 'king_reports', 'accella_reports_path', 'application_history_reports'):
                 try:
                     if session_data.get(key):
                         session_data[key] = json.loads(session_data[key])
@@ -691,15 +805,113 @@ def customer_create():
             session_data = None
     return render_template('customer_create.html', session_data=session_data)
 
+@app.route('/wo-status')
+def wo_status():
+    page = max(int(request.args.get('page', 1)), 1)
+    per_page = 50
+    offset = (page - 1) * per_page
+    
+    conn = get_db_connection()
+    try:
+        stats_query = """
+        SELECT 
+            COUNT(*) as total,
+            SUM(CASE WHEN rme_status = 'done' THEN 1 ELSE 0 END) as rme_done,
+            SUM(CASE WHEN tpchd_status = 'done' THEN 1 ELSE 0 END) as tpchd_done,
+            SUM(CASE WHEN invoice_status = 'done' THEN 1 ELSE 0 END) as invoice_done,
+            SUM(CASE WHEN king_status = 'done' THEN 1 ELSE 0 END) as king_done
+        FROM work_orders
+        """
+        stats_row = conn.execute(stats_query).fetchone()
+        stats = dict(stats_row) if stats_row else {'total': 0, 'rme_done': 0, 'tpchd_done': 0, 'invoice_done': 0, 'king_done': 0}
+        total = stats['total'] or 0
+        total_pages = max((total + per_page - 1) // per_page, 1)
+        
+        work_orders = conn.execute('SELECT * FROM work_orders ORDER BY created_at DESC LIMIT ? OFFSET ?', (per_page, offset)).fetchall()
+    except sqlite3.OperationalError:
+        # Table might not exist yet if scraper never ran
+        work_orders = []
+        total = 0
+        total_pages = 1
+        stats = {'total': 0, 'rme_done': 0, 'tpchd_done': 0, 'invoice_done': 0, 'king_done': 0}
+    finally:
+        conn.close()
+        
+    return render_template('wo_status.html',
+                           work_orders=work_orders,
+                           page=page,
+                           per_page=per_page,
+                           total=total,
+                           total_pages=total_pages,
+                           stats=stats)
+
+@app.route('/api/scraper-status')
+def api_scraper_status():
+    return jsonify({
+        'running': scraper_is_running,
+        'last_run': scraper_last_run.isoformat() + 'Z' if scraper_last_run else None,
+        'business_hours': _is_business_hours()
+    })
+
+@app.route('/api/run-scraper', methods=['POST'])
+def api_run_scraper():
+    global scraper_is_running
+    if scraper_is_running:
+        return jsonify({'status': 'already_running'})
+    thread = threading.Thread(target=_run_scraper_once, daemon=True)
+    thread.start()
+    return jsonify({'status': 'started'})
+
+@app.route('/api/delete-work-order/<wo_number>', methods=['DELETE'])
+def api_delete_work_order(wo_number):
+    try:
+        conn = sqlite3.connect('lookup_sessions.db')
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM work_orders WHERE wo_number = ?', (wo_number,))
+        deleted = cursor.rowcount
+        conn.commit()
+        conn.close()
+        if deleted:
+            return jsonify({'status': 'deleted'})
+        return jsonify({'status': 'not_found'}), 404
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 @app.route('/all-lookups')
 def all_lookups():
     """All lookups page showing all lookup sessions"""
-    lookups = db_query_all('SELECT * FROM lookup_sessions ORDER BY start_time DESC')
+    page = max(int(request.args.get('page', 1)), 1)
+    per_page = 50
+    offset = (page - 1) * per_page
+    
+    stats_query = """
+    SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+        SUM(CASE WHEN status = 'running' THEN 1 ELSE 0 END) as running,
+        SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as error
+    FROM lookup_sessions
+    """
+    stats_rows = db_query_all(stats_query)
+    stats = dict(stats_rows[0]) if stats_rows else {'total': 0, 'completed': 0, 'running': 0, 'error': 0}
+    total = stats['total'] or 0
+    total_pages = max((total + per_page - 1) // per_page, 1)
+
+    lookups = db_query_all(
+        'SELECT * FROM lookup_sessions ORDER BY start_time DESC LIMIT ? OFFSET ?',
+        (per_page, offset)
+    )
     
     # Convert to list of dictionaries
     lookups_list = [dict(lookup) for lookup in lookups]
     
-    return render_template('all_lookups.html', lookups=lookups_list)
+    return render_template('all_lookups.html', 
+                           lookups=lookups_list,
+                           page=page,
+                           per_page=per_page,
+                           total=total,
+                           total_pages=total_pages,
+                           stats=stats)
 
 @app.route('/api/lookup', methods=['POST'])
 def start_lookup():
@@ -932,8 +1144,9 @@ def upload_workorder_pdfs():
             return jsonify({'error': 'Session not found'}), 404
 
         work_order_id = override_wo or (row['work_order_id'] or '').strip()
-        if not work_order_id:
-            return jsonify({'error': 'No work order ID found for this session'}), 400
+        # if not work_order_id:
+        #     work_order_id = None
+            # return jsonify({'error': 'No work order ID found for this session'}), 400
 
         address_line_1 = row['address']
         items = []  # list of { 'url': str, 'name': str }
@@ -1048,11 +1261,52 @@ def api_create_work_order():
         session_id = data.get('session_id')
         if not session_id:
             return jsonify({'error': 'session_id required'}), 400
-        # Fetch session for address
-        row = db_query_one('SELECT address FROM lookup_sessions WHERE session_id = ?', (session_id,))
+        
+        # Fetch session for address and reports
+        row = db_query_one('SELECT address, pdf_urls, tacoma_reports, king_reports FROM lookup_sessions WHERE session_id = ?', (session_id,))
         if not row:
             return jsonify({'error': 'Session not found'}), 404
         address_line_1 = row['address']
+
+        # Prepare items for download (same logic as combined flow)
+        items = []
+        try:
+            if row['pdf_urls']:
+                rme_list = json.loads(row['pdf_urls'])
+                for entry in rme_list:
+                    parts = (entry or '').split(',')
+                    url = (parts[0] if len(parts) > 0 else '').strip()
+                    rme_type = (parts[1] if len(parts) > 1 else '').strip().replace(' ', '_') or 'report'
+                    rme_date = (parts[2] if len(parts) > 2 else '').strip().replace('/', '-') or 'date'
+                    if url:
+                        name = f"rme_{rme_type}_{rme_date}.pdf"
+                        items.append({'url': url, 'name': name})
+        except Exception:
+            pass
+        try:
+            if row['tacoma_reports']:
+                tpchd_list = json.loads(row['tacoma_reports'])
+                for i, entry in enumerate(tpchd_list, 1):
+                    parts = (entry or '').split(',')
+                    url = (parts[0] if len(parts) > 0 else '').strip()
+                    # Normalize URL: replace backslashes with forward slashes
+                    url = url.replace('\\', '/')
+                    tp_type = (parts[1] if len(parts) > 1 else '').strip().replace(' ', '_') or 'report'
+                    if url:
+                        name = f"tpchd_{tp_type}_{i}.pdf"
+                        items.append({'url': url, 'name': name})
+        except Exception:
+            pass
+        try:
+            if row['king_reports']:
+                k_list = json.loads(row['king_reports'])
+                for i, url in enumerate(k_list, 1):
+                    url = (url or '').strip()
+                    if url:
+                        name = f"king_report_{i}.pdf"
+                        items.append({'url': url, 'name': name})
+        except Exception:
+            pass
 
         order_form_data = {
             'immediate': (data.get('immediate') or '').strip(),
@@ -1078,17 +1332,75 @@ def api_create_work_order():
                     browsers['customer_context'] = await main_browser.new_context()
                     browsers['customer_page'] = await browsers['customer_context'].new_page()
                     page = browsers['customer_page']
-            status_text, work_order_number = await create_work_order(page, 'https://login.fieldedge.com/#/List/1', address_line_1, order_form_data)
-            await close_browser(page, 'https://login.fieldedge.com/#/List/1')
-            return {'text': status_text, 'number': work_order_number}
+            
+            # Create work order (standalone mode, will search for customer)
+            status_text, work_order_number = await create_work_order(page, 'https://login.fieldedge.com/#/List/1', address_line_1, order_form_data, combined=False)
+            # await close_browser(page, 'https://login.fieldedge.com/#/List/1')
+            if not work_order_number:
+                return {'text': status_text, 'number': None, 'upload_result': {'count': 0, 'failed': 0}}
+            
+            # Upload documents
+            upload_result = {'count': 0, 'failed': 0}
+            if items:
+                tmpdir = tempfile.mkdtemp(prefix=f"wo_{session_id}_")
+                try:
+                    session_http = requests.Session()
+                    session_http.headers.update({
+                        'User-Agent': 'Mozilla/5.0',
+                        'Accept': 'application/pdf,application/octet-stream,*/*;q=0.8'
+                    })
+                    file_paths = []
+                    for it in items:
+                        try:
+                            r = session_http.get(it['url'], timeout=30, allow_redirects=True)
+                            data = r.content
+                            if not (r.headers.get('Content-Type','').lower().startswith('application/pdf') or data[:4] == b'%PDF'):
+                                continue
+                            safe_name = ''.join(c for c in it['name'] if c.isalnum() or c in ('-', '_', '.'))
+                            if not safe_name.endswith('.pdf'):
+                                safe_name += '.pdf'
+                            fname = os.path.join(tmpdir, safe_name)
+                            with open(fname, 'wb') as f:
+                                f.write(data)
+                            file_paths.append(fname)
+                        except Exception:
+                            continue
+                    
+                    if file_paths:
+                        upload_status, uploaded_count = await upload_attachments_to_work_order(page, 'https://login.fieldedge.com/#/List/1', address_line_1, file_paths, work_order_number, combined=False)
+                        await close_browser(page, 'https://login.fieldedge.com/#/List/1')
+                        if uploaded_count is None:
+                            uploaded_count = 0
+                            failed_count = len(file_paths)
+                        else:
+                            failed_count = len(file_paths) - uploaded_count
+
+                        upload_result['count'] = uploaded_count
+                        upload_result['failed'] = failed_count
+                        
+                        # Update DB
+                        status_msg = f"Uploaded {uploaded_count} file(s), Failed {failed_count}"
+                        db_execute('UPDATE lookup_sessions SET work_order_upload_status = ?, work_order_uploaded_files = ? WHERE session_id = ?', (status_msg, uploaded_count, session_id))
+
+                finally:
+                    shutil.rmtree(tmpdir, ignore_errors=True)
+            
+            return {'text': status_text, 'number': work_order_number, 'upload_result': upload_result}
 
         result = run_on_browser_loop(run_create_wo())
+        
         # Persist to DB
         try:
             db_execute('UPDATE lookup_sessions SET work_order_status = ?, work_order_id = ? WHERE session_id = ?', (result.get('text'), result.get('number'), session_id))
         except Exception:
             pass
-        return jsonify({'status': 'ok', 'text': result.get('text'), 'work_order_number': result.get('number')})
+        
+        return jsonify({
+            'status': 'ok', 
+            'text': result.get('text'), 
+            'work_order_number': result.get('number'),
+            'upload_result': result.get('upload_result', {'count': 0, 'failed': 0})
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -1121,6 +1433,16 @@ def get_lookup_status(session_id):
                 session_data['king_reports'] = json.loads(session_data['king_reports'])
             except:
                 session_data['king_reports'] = []
+        if session_data.get('accella_reports_path'):
+            try:
+                session_data['accella_reports_path'] = json.loads(session_data['accella_reports_path'])
+            except:
+                session_data['accella_reports_path'] = []
+        if session_data.get('application_history_reports'):
+            try:
+                session_data['application_history_reports'] = json.loads(session_data['application_history_reports'])
+            except:
+                session_data['application_history_reports'] = []
         
         return jsonify(session_data)
     
@@ -1191,20 +1513,121 @@ def delete_lookup(session_id):
 
 @app.route('/api/download-accella/<session_id>')
 def download_accella(session_id):
-    """Download the Accella report PDF for a session, if available."""
+    """Download an Accella report PDF for a session. Supports index parameter for multiple files."""
     try:
         row = db_query_one('SELECT accella_reports_path FROM lookup_sessions WHERE session_id = ?', (session_id,))
         if not row:
             return jsonify({'error': 'Session not found'}), 404
-        file_path = (row['accella_reports_path'] or '').strip()
-        if not file_path:
+        
+        accella_path = row['accella_reports_path']
+        if not accella_path:
             return jsonify({'error': 'No Accella report available for this session'}), 404
+        
+        # Parse the accella_reports_path (could be array or string for backward compatibility)
+        file_paths = []
+        try:
+            # Try parsing as JSON array first
+            if isinstance(accella_path, str):
+                file_paths = json.loads(accella_path)
+            elif isinstance(accella_path, list):
+                file_paths = accella_path
+            else:
+                return jsonify({'error': 'Invalid accella_reports_path format'}), 500
+        except (json.JSONDecodeError, TypeError):
+            # Fallback to treating it as a single file path (old format)
+            file_paths = [accella_path]
+        
+        # Get index from query parameter (default to 0 for first file)
+        index = request.args.get('index', 0, type=int)
+        
+        if not file_paths or index < 0 or index >= len(file_paths):
+            return jsonify({'error': 'Invalid file index'}), 404
+        
+        # Extract the file path from the array element (format: "path,type,date")
+        file_entry = file_paths[index]
+        if ',' in file_entry:
+            # Parse "path,type,date" format
+            file_path = file_entry.split(',')[0].strip()
+        else:
+            file_path = file_entry.strip()
+        
         if not os.path.isfile(file_path):
-            return jsonify({'error': 'Accella report file not found on server'}), 404
+            return jsonify({'error': f'Accella report file not found on server: {file_path}'}), 404
+        
         # Serve inline for iframe display (no forced download)
         return send_file(file_path, mimetype='application/pdf', as_attachment=False, download_name=os.path.basename(file_path))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/accella-lookup', methods=['POST'])
+def accella_lookup_api():
+    """Standalone API endpoint for Accella Report Lookup (Pierce County)"""
+    try:
+        start_browser_loop_thread()
+        
+        data = request.get_json(force=True) or {}
+        address_line_1 = data.get('address_line_1', '').strip()
+        session_id = data.get('session_id', '').strip()
+        
+        # Validate required fields
+        if not address_line_1:
+            return jsonify({'error': 'address_line_1 is required'}), 400
+        
+        # Generate session_id if not provided
+        if not session_id:
+            session_id = str(uuid.uuid4())
+        
+        # Ensure output directory exists
+        try:
+            os.makedirs("Accella_Reports", exist_ok=True)
+        except Exception:
+            pass
+        
+        # Define async function to run Accella lookup
+        async def run_accella_lookup():
+            if not browsers_initialized:
+                await start_browsers()
+            
+            page = browsers.get('accella_page')
+            if page is None:
+                return {
+                    'error': 'Accella browser page not initialized',
+                    'status': 'error',
+                    'session_id': session_id
+                }
+            
+            # Acquire page lock and run lookup
+            async with page_locks['accella']:
+                status_text, file_names = await Accella_report_lookup(
+                    page, 
+                    accella_url, 
+                    session_id, 
+                    address_line_1
+                )
+                
+                # Navigate back to base URL
+                await close_browser(page, accella_url)
+                
+                return {
+                    'status': 'completed',
+                    'session_id': session_id,
+                    'address': address_line_1,
+                    'accella_reports_status': status_text or '',
+                    'accella_reports_path': file_names if file_names is not None else [],
+                    'file_names': file_names if file_names is not None else []
+                }
+        
+        # Run the lookup on the browser loop
+        result = run_on_browser_loop(run_accella_lookup())
+        
+        # Return the result
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            'error': str(e),
+            'status': 'error'
+        }), 500
 
 def is_session_cancelled(session_id):
     """Check if the session has been cancelled"""
@@ -1340,7 +1763,7 @@ def run_lookup(session_id, address_line_1, city, zip_code, county):
                 if property_tool:
                     async def run_property():
                         async with page_locks['property']:
-                            return await property_lookup_task(browsers['property_page'], property_url, street_number, street_name, county, session_id)
+                            return await property_lookup_task(browsers['property_page'], property_url, address_line_1, county, session_id)
                     property_task = asyncio.create_task(run_property())
                     tasks.append(property_task)
                 
@@ -1478,7 +1901,7 @@ def run_lookup(session_id, address_line_1, city, zip_code, county):
                 return None
         
         # Helper function for property lookup
-        async def property_lookup_task(page, url, street_number, street_name, county, session_id):
+        async def property_lookup_task(page, url, address_line_1, county, session_id):
             try:
                 # Check if cancelled before starting
                 if is_session_cancelled(session_id):
@@ -1487,7 +1910,7 @@ def run_lookup(session_id, address_line_1, city, zip_code, county):
                     return None
                 
                 # Run address search
-                await address_search(page, url, street_number, street_name, county)
+                await address_search(page, url, address_line_1, county)
                 
                 # Check if cancelled after address search
                 if is_session_cancelled(session_id):
@@ -1495,8 +1918,8 @@ def run_lookup(session_id, address_line_1, city, zip_code, county):
                     await close_browser(page, url)
                     return None
                 
-                # Get report PDFs and multimatch data
-                report_result = await get_pdf_all_reports(page, url)
+                # Get report PDFs and multimatch data (pass input address and county for validation)
+                report_result = await get_pdf_all_reports(page, url, address_line_1, county)
                 
                 # Check if cancelled after getting reports
                 if is_session_cancelled(session_id):
@@ -1510,8 +1933,59 @@ def run_lookup(session_id, address_line_1, city, zip_code, county):
                 is_multimatch = report_result.get('is_multimatch', False)
                 error_message = report_result.get('error_message')
                 
-                # Update database with all data
-                db_execute('UPDATE lookup_sessions SET pdf_urls = ?, multimatch_data = ?, is_multimatch = ?, error_message = ? WHERE session_id = ?', (json.dumps(pdf_urls), json.dumps(multimatch_data), is_multimatch, error_message, session_id))
+                # Get Application History reports (Time of Sale Reports)
+                # Check if Application History was already extracted in multimatch scenario
+                application_history_urls = report_result.get('application_history_reports', [])
+                application_history_error = report_result.get('application_history_error', None)
+                
+                # If not already extracted (single match or no exact match in multimatch), get it now
+                if not application_history_urls and not is_multimatch:
+                    try:
+                        # For single match: After RME reports, we're on Service History page
+                        # Go back ONCE to get to property page (where Application History button is)
+                        # Then click Application History directly - no address re-input needed
+                        print("Getting Application History for single match...")
+                        print("Going back to property page to access Application History...")
+                        try:
+                            await page.go_back()
+                            await page.wait_for_timeout(2000)
+                            print("Back on property page")
+                        except Exception as back_err:
+                            print(f"Error going back: {back_err}")
+                            # If go_back fails, try to navigate to property page
+                            await page.goto(url, wait_until="networkidle")
+                            await page.wait_for_timeout(2000)
+                        
+                        # Now we should be on property page, verify Application History button is visible
+                        # try:
+                        #     application_history_probe = page.locator("//div[contains(text(),'Application History')]")
+                        #     await application_history_probe.wait_for(state="visible", timeout=5000)
+                        #     application_history_visible = await application_history_probe.is_visible()
+                        #     if application_history_visible:
+                        #         print("✓ Application History button is visible, proceeding to extract...")
+                        #         # Click Application History directly - no need to re-search!
+                        #         application_history_urls, application_history_error = await get_application_history_reports(page, url, address_line_1, county, skip_check=True)
+                        #     else:
+                        #         raise Exception("Application History button not visible after going back")
+                        # except Exception as verify_err:
+                        #     print(f"Application History button not accessible: {verify_err}")
+                        #     application_history_urls = []
+                        #     application_history_error = f"Application History button not accessible: {verify_err}"
+                        application_history_urls = []
+                        application_history_error = "Disabled"
+                        
+                        print(f"Application History reports: {application_history_urls}")
+                    except Exception as e:
+                        print(f"Error fetching Application History reports: {e}")
+                        application_history_error = str(e)
+                elif application_history_urls:
+                    print(f"Application History already extracted from exact match: {application_history_urls}")
+                elif is_multimatch:
+                    print("Multimatch scenario - Application History will be handled per property in multimatch_data")
+                
+                # Update database with all data including Application History
+                db_execute('UPDATE lookup_sessions SET pdf_urls = ?, multimatch_data = ?, is_multimatch = ?, error_message = ?, application_history_reports = ? WHERE session_id = ?', 
+                          (json.dumps(pdf_urls), json.dumps(multimatch_data), is_multimatch, error_message, json.dumps(application_history_urls), session_id))
                 
                 # Navigate back to base URL instead of closing browser
                 await close_browser(page, url)
@@ -1521,7 +1995,8 @@ def run_lookup(session_id, address_line_1, city, zip_code, county):
                     'pdf_urls': pdf_urls,
                     'multimatch_data': multimatch_data,
                     'is_multimatch': is_multimatch,
-                    'error_message': error_message
+                    'error_message': error_message,
+                    'application_history_reports': application_history_urls
                 }
             except Exception as e:
                 print(f"Property lookup failed: {e}")
@@ -1610,7 +2085,9 @@ def run_lookup(session_id, address_line_1, city, zip_code, county):
                 except Exception:
                     pass
                 
-                status_text, file_name = await Accella_report_lookup(page, url, session_id, address_line_1)
+                status_text, file_names = await Accella_report_lookup(page, url, session_id, address_line_1)
+                print(status_text)
+                print(file_names)
                 
                 # Check if cancelled after lookup
                 if is_session_cancelled(session_id):
@@ -1619,9 +2096,10 @@ def run_lookup(session_id, address_line_1, city, zip_code, county):
                     return None
                 
                 # Compute saved path if we have a filename
-                saved_path = f"Accella_Reports/{file_name}" if (file_name or '').strip() else ""
+                # saved_path = f"Accella_Reports/{file_name}" if (file_name or '').strip() else ""
+                saved_path = file_names if file_names is not None else []
                 try:
-                    db_execute('UPDATE lookup_sessions SET accella_reports_status = ?, accella_reports_path = ? WHERE session_id = ?', (status_text or '', saved_path, session_id))
+                    db_execute('UPDATE lookup_sessions SET accella_reports_status = ?, accella_reports_path = ? WHERE session_id = ?', (status_text or '', json.dumps(saved_path), session_id))
                 except Exception:
                     pass
                 
@@ -1727,8 +2205,7 @@ def create_customer():
                         customer_page = browsers.get('customer_page')
 
                 # Execute creation flow and capture status text
-                status_text, display_name = await Create_Customer(customer_page, customer_url, customer_data)
-                # Coerce display_name to a plain string for DB/storage compatibility
+                status_text, display_name = await Create_Customer(customer_page, customer_url, customer_data)                # Coerce display_name to a plain string for DB/storage compatibility
                 if isinstance(display_name, (list, tuple)):
                     display_name_str = ", ".join([d for d in display_name if d])
                 else:
@@ -1814,6 +2291,7 @@ def customer_workorder_create():
 
 @app.route('/api/create-customer-workorder', methods=['POST'])
 def create_customer_workorder():
+    combined = True
     try:
         start_browser_loop_thread()
         data = request.get_json(force=True) or {}
@@ -1852,6 +2330,8 @@ def create_customer_workorder():
                 for i, entry in enumerate(tpchd_list, 1):
                     parts = (entry or '').split(',')
                     url = (parts[0] if len(parts) > 0 else '').strip()
+                    # Normalize URL: replace backslashes with forward slashes
+                    url = url.replace('\\', '/')
                     tp_type = (parts[1] if len(parts) > 1 else '').strip().replace(' ', '_') or 'report'
                     if url:
                         name = f"tpchd_{tp_type}_{i}.pdf"
@@ -1868,7 +2348,7 @@ def create_customer_workorder():
                         items.append({'url': url, 'name': name})
         except Exception:
             pass
-
+        print(f"Items: {items}")
         async def run_combined_flow():
             if not browsers_initialized:
                 await start_browsers()
@@ -1904,11 +2384,14 @@ def create_customer_workorder():
                 return {'status': 'error', 'error': 'Customer creation failed', 'step': 'customer'}
 
             # 2. Create Work Order
-            # We need to ensure we are back at the list or appropriate state, Create_Customer seems to leave us there or close enough
-            # But create_work_order starts by searching address, so it should be fine.
-            # However, create_work_order uses `page` which is `customer_page` here.
+            # Navigate back to list page to ensure work order creation starts from correct state
+            # try:
+            #     await customer_page.goto(customer_url)
+            #     await customer_page.wait_for_timeout(2000)
+            # except Exception as e:
+            #     print(f"Warning: Could not navigate to list page: {e}")
             
-            wo_status, wo_number = await create_work_order(customer_page, customer_url, address_line_1, work_order_data)
+            wo_status, wo_number = await create_work_order(customer_page, customer_url, address_line_1, work_order_data, combined)
             
             try:
                 db_execute('UPDATE lookup_sessions SET work_order_status = ?, work_order_id = ? WHERE session_id = ?', (wo_status, wo_number, session_id))
@@ -1918,7 +2401,12 @@ def create_customer_workorder():
             if not wo_number:
                 return {'status': 'error', 'error': 'Work Order creation failed', 'step': 'work_order', 'customer_status': cust_status}
 
-            # 3. Upload Documents
+            # 3. Upload Documents to Work Order
+            # try:
+            #     await customer_page.goto(customer_url)
+            #     await customer_page.wait_for_timeout(2000)
+            # except Exception as e:
+            #     print(f"Warning: Could not navigate to list page: {e}")
             upload_result = {'count': 0, 'failed': 0}
             if items:
                 tmpdir = tempfile.mkdtemp(prefix=f"combined_{session_id}_")
@@ -1946,7 +2434,7 @@ def create_customer_workorder():
                             continue
                     
                     if file_paths:
-                        status_text, uploaded_count = await upload_attachments_to_work_order(customer_page, customer_url, address_line_1, file_paths, wo_number)
+                        status_text, uploaded_count = await upload_attachments_to_work_order(customer_page, customer_url, address_line_1, file_paths, wo_number, combined)
                         
                         if uploaded_count is None:
                              uploaded_count = 0
@@ -1981,6 +2469,112 @@ def create_customer_workorder():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/show-pdf')
+def show_pdf():
+    return render_template('show-pdf.html')
+
+@app.route('/set-container-size', methods=['POST'])
+def set_container_size():
+    size = request.get_json().get('size')
+    if size:
+        db_execute('UPDATE container_preference SET size = ?', (size,))
+    return jsonify({'status': 'ok'})
+
+def _run_scraper_once():
+    """Open a fresh browser, run one pass, close. Used for manual 'Run Now'."""
+    global scraper_last_run, scraper_is_running
+    from new_work_orders_scraper import run_scraper
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    scraper_is_running = True
+    try:
+        print("\n⏲️ --- Starting Manual Scraper Pass ---")
+        loop.run_until_complete(asyncio.wait_for(run_scraper(), timeout=1200))
+        print("✅ --- Manual Scraper Pass Completed ---")
+    except asyncio.TimeoutError:
+        print("⚠️ --- Manual Scraper Pass timed out after 20 minutes ---")
+    except Exception as e:
+        print(f"⚠️ --- Error in Manual Scraper: {e} ---")
+    finally:
+        scraper_last_run = datetime.utcnow()
+        scraper_is_running = False
+    loop.close()
+
+def _is_business_hours():
+    """Return True if current GMT-7 time is 6:00am–6:00pm."""
+    from datetime import timezone, timedelta
+    gmt7 = datetime.now(timezone(timedelta(hours=-7)))
+    return 6 <= gmt7.hour < 18
+
+async def _business_hours_session():
+    """Keep browser open for the full business-hours window, running a pass every 5 min."""
+    global scraper_last_run, scraper_is_running
+    from new_work_orders_scraper import init_scraper_session, run_scraper_pass
+    from playwright.async_api import async_playwright
+
+    async with async_playwright() as p:
+        browser, context, page = await init_scraper_session(p)
+        print("🌅 Browser opened for business hours session.")
+        try:
+            while _is_business_hours():
+                scraper_is_running = True
+                try:
+                    print("\n⏲️ --- Starting Scheduled Scraper Pass ---")
+                    await asyncio.wait_for(run_scraper_pass(browser, context, page), timeout=1200)
+                    print("✅ --- Scheduled Scraper Pass Completed ---")
+                except asyncio.TimeoutError:
+                    print("⚠️ --- Scraper pass timed out after 20 minutes ---")
+                except Exception as e:
+                    print(f"⚠️ --- Error in Scraper Pass: {e} ---")
+                finally:
+                    scraper_last_run = datetime.utcnow()
+                    scraper_is_running = False
+
+                # Sleep 5 min in 30-second chunks so we exit promptly at 6pm
+                for _ in range(10):
+                    await asyncio.sleep(30)
+                    if not _is_business_hours():
+                        break
+        finally:
+            try:
+                await browser.close()
+            except Exception:
+                pass
+            print("🌆 Browser closed — outside business hours.")
+
+def schedule_workorder_scraper():
+    import time
+
+    def scraper_loop():
+        while True:
+            if scraper_is_running:
+                # Silently sleep while manual scraper is running to avoid confusing logs
+                time.sleep(10)
+                continue
+                
+            if _is_business_hours():
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(_business_hours_session())
+                loop.close()
+            else:
+                from datetime import timezone, timedelta
+                gmt7 = datetime.now(timezone(timedelta(hours=-7)))
+                print(f"🌙 Outside business hours ({gmt7.strftime('%H:%M')} GMT-7). Sleeping 60s...\n")
+                time.sleep(60)
+
+    # Prevent multiple threads from spawning if imported multiple times
+    if hasattr(schedule_workorder_scraper, "has_run"):
+        return
+    schedule_workorder_scraper.has_run = True
+
+    thread = threading.Thread(target=scraper_loop, daemon=True)
+    thread.start()
+
+# Start the scheduled background scraper when the module is imported
+# This ensures it runs regardless of whether using `python app.py` or `waitress-serve app:app`
+schedule_workorder_scraper()
+
 if __name__ == '__main__':
     # Disable debug mode to prevent double browser initialization
-    app.run(debug=False, host='0.0.0.0', port=5001)
+    app.run(debug=False, host='0.0.0.0', port=5000)

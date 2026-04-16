@@ -3,7 +3,13 @@
 {% block title %}Create Customer & Work Order - Sterling Septic & Plumbing LLC{% endblock %}
 
 {% block content %}
-<div class="{% if request.args.get('embed') %}container-fluid px-0 py-3 cc-embed{% else %}container py-4{% endif %}">
+<!-- jQuery (required for bootstrap-datepicker) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Flatpickr -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<div class="{% if request.args.get('embed') %}p-4 cc-embed{% else %}p-4{% endif %}">
     {% if not request.args.get('embed') %}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h4 mb-0"><i class="fas fa-user-plus me-2"></i>Create Customer & Work Order</h1>
@@ -22,7 +28,7 @@
     </div>
     {% endif %}
 
-    <div class="card">
+    <div class="card w-100" style="max-width: 100% !important;">
         <div class="card-body">
             <form id="combined-form" class="row g-3" onsubmit="return false;">
                 <input type="hidden" id="cc-session-id" value="{{ request.args.get('session_id', '') }}" />
@@ -161,7 +167,7 @@
                         <label class="form-check-label" for="cc-contact-email">Email</label>
                     </div>
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" id="cc-contact-sms" checked />
+                        <input class="form-check-input" type="checkbox" id="cc-contact-sms" />
                         <label class="form-check-label" for="cc-contact-sms">SMS</label>
                     </div>
                 </div>
@@ -170,8 +176,10 @@
                     <input type="text" class="form-control" id="cc-phone-label" value="Phone" placeholder="Type here" />
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Phone Number</label>
+                    <label class="form-label">Phone Number <span id="phone-required-indicator" class="text-danger"
+                            style="display: none;">*</span></label>
                     <input type="text" class="form-control" id="cc-phone-number" placeholder="Type here" />
+                    <div class="invalid-feedback">Phone Number is required when SMS is enabled.</div>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Email Label</label>
@@ -267,19 +275,29 @@
                     <label class="form-label">Priority</label>
                     <select id="wo-priority" class="form-select">
                         <option value="" selected>Select</option>
-                        <option value="ADVANCED SVC" style="background-color: #ffcccc;">ADVANCED SVC</option>
-                        <option value="ADVANCED SVC - EMERGENCY" style="background-color: #ff0000; color: white;">
+                        <option value="ADVANCED SVC" style="background-color: #FFF9C4; color: black;">ADVANCED SVC
+                        </option>
+                        <option value="ADVANCED SVC - EMERGENCY" style="background-color: #FFCC80; color: black;">
                             ADVANCED SVC - EMERGENCY</option>
-                        <option value="CLERICAL" style="background-color: #e6e6e6;">CLERICAL</option>
-                        <option value="EXCAVATOR" style="background-color: #ffffcc;">EXCAVATOR</option>
-                        <option value="HOMESALE" style="background-color: #ccffcc;">HOMESALE</option>
-                        <option value="PREP / RETURN" style="background-color: #e6e6e6;">PREP / RETURN</option>
-                        <option value="PUMPING" style="background-color: #ccffff;">PUMPING</option>
-                        <option value="PUMPING - ASSIST" style="background-color: #ccffff;">PUMPING - ASSIST</option>
-                        <option value="PUMPING - EMERGENCY" style="background-color: #ff0000; color: white;">PUMPING -
+                        <option value="CLERICAL" style="background-color: #CFD8DC; color: black;">CLERICAL</option>
+                        <option value="EXCAVATOR" style="background-color: #D7CCC8; color: black;">EXCAVATOR</option>
+                        <option value="HOMESALE" style="background-color: #B3E5FC; color: black;">HOMESALE</option>
+                        <option value="PREP / RETURN" style="background-color: #E1BEE7; color: black;">PREP / RETURN
+                        </option>
+                        <option value="PUMPING" style="background-color: #C8E6C9; color: black;">PUMPING</option>
+                        <option value="PUMPING - ASSIST" style="background-color: #DCEDC8; color: black;">PUMPING -
+                            ASSIST
+                        </option>
+                        <option value="PUMPING - EMERGENCY" style="background-color: #66BB6A; color: white;">
+                            PUMPING -
                             EMERGENCY</option>
-                        <option value="SVC TRUCK" style="background-color: #ccccff;">SVC TRUCK</option>
-                        <option value="SVC TRUCK - ASSIST" style="background-color: #ccccff;">SVC TRUCK - ASSIST
+                        <option value="SVC TRUCK" style="background-color: #F48FB1; color: black;">SVC TRUCK</option>
+                        <option value="SVC TRUCK - ASSIST" style="background-color: #F8BBD0; color: black;">SVC TRUCK -
+                            ASSIST
+                        </option>
+                        <option value="SVC TRUCK - EMERGENCY" style="background-color: #E57373; color: white;">
+                            SVC TRUCK -
+                            EMERGENCY
                         </option>
                     </select>
                 </div>
@@ -297,7 +315,30 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Primary Tech</label>
-                    <input type="text" id="wo-primary-tech" class="form-control" placeholder="Type here" />
+                    <select id="wo-primary-tech" class="form-select">
+                        <option value="" selected>Select</option>
+                        <option>01 - Mackie</option>
+                        <option>02 - Huss</option>
+                        <option>03 - Russell</option>
+                        <option>04 - Ahkeem</option>
+                        <option>05 - Danny</option>
+                        <option>06 - Cris</option>
+                        <option>07 - Gene</option>
+                        <option>08 - Cameron</option>
+                        <option>09 - Eric</option>
+                        <option>10 - Damon</option>
+                        <option>11 - Andrea</option>
+                        <option>Ahmed T.</option>
+                        <option>Cameron P.</option>
+                        <option>Damien S.</option>
+                        <option>Ethan M.</option>
+                        <option>LookUp T.</option>
+                        <option>Marquee I.</option>
+                        <option>Mary- TAX/ACT</option>
+                        <option>Office S.</option>
+                        <option>Ray I.</option>
+                        <option>Rene I.</option>
+                    </select>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Start Date</label>
@@ -332,6 +373,23 @@
 </div>
 
 <script>
+    // Initialize Flatpickr for Work Order Start Date
+    const date_optional_config = {
+        dateFormat: "m/d/Y",
+        allowInput: true,
+    }
+
+    $("#wo-start-date").flatpickr(date_optional_config);
+
+    // Initialize flapicker for Work Order Start Time
+    const time_optional_config = {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+    }
+
+    $("#wo-start-time").flatpickr(time_optional_config);
+
     (() => {
         function getSessionId() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -358,7 +416,64 @@
             } catch (_) { }
         }
 
+        function validateForm() {
+            const val = (id) => (document.getElementById(id)?.value || '').trim();
+            let isValid = true;
+
+            const setInvalid = (id, isError) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (isError) {
+                    el.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    el.classList.remove('is-invalid');
+                }
+            };
+
+            // Required Fields
+            setInvalid('cc-display-name', !val('cc-display-name'));
+            setInvalid('cc-terms', !val('cc-terms'));
+            setInvalid('cc-tax-code', !val('cc-tax-code'));
+            setInvalid('wo-task', !val('wo-task'));
+            setInvalid('wo-lead-source', !val('wo-lead-source'));
+
+            // Phone Number is required only if SMS checkbox is checked
+            const smsChecked = document.getElementById('cc-contact-sms')?.checked;
+            const phoneRequiredIndicator = document.getElementById('phone-required-indicator');
+            if (phoneRequiredIndicator) {
+                phoneRequiredIndicator.style.display = smsChecked ? 'inline' : 'none';
+            }
+            if (smsChecked) {
+                setInvalid('cc-phone-number', !val('cc-phone-number'));
+            } else {
+                setInvalid('cc-phone-number', false);
+            }
+
+            // Contact Name (must be at least 2 words if provided)
+            const contactName = val('cc-contact-name');
+            if (contactName) {
+                const words = contactName.split(/\s+/).filter(Boolean);
+                if (words.length < 2) {
+                    setInvalid('cc-contact-name', true);
+                } else {
+                    setInvalid('cc-contact-name', false);
+                }
+            } else {
+                setInvalid('cc-contact-name', false);
+            }
+
+            const btn = document.getElementById('combined-submit-btn');
+            if (btn) btn.disabled = !isValid;
+
+            return isValid;
+        }
+
         async function createCombined() {
+            const validaiton = validateForm()
+            console.log(validaiton)
+            if (!validateForm()) return;
+
             const val = (id) => (document.getElementById(id)?.value || '').trim();
             const bool = (id) => !!document.getElementById(id)?.checked;
 
@@ -417,36 +532,10 @@
                 session_id: getSessionId()
             };
 
-            // Validation
-            const missing = [];
-            const setInvalid = (id, invalid) => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                if (invalid) el.classList.add('is-invalid'); else el.classList.remove('is-invalid');
-            };
+            console.log(customerPayload)
+            console.log(workOrderPayload)
 
-            // Customer Validation
-            if (!customerPayload.terms) { missing.push('Terms'); setInvalid('cc-terms', true); } else setInvalid('cc-terms', false);
-            if (!customerPayload.taxCode) { missing.push('Tax Code'); setInvalid('cc-tax-code', true); } else setInvalid('cc-tax-code', false);
-            if (!customerPayload.displayName) { missing.push('Display Name'); setInvalid('cc-display-name', true); } else setInvalid('cc-display-name', false);
-
-            // Work Order Validation
-            if (!workOrderPayload.task) { missing.push('Task'); setInvalid('wo-task', true); } else setInvalid('wo-task', false);
-            if (!workOrderPayload.lead_source) { missing.push('Lead Source (WO)'); setInvalid('wo-lead-source', true); } else setInvalid('wo-lead-source', false);
-
-            // Contact Name (Full Name) must be exactly two words
-            const fullNameWords = (customerPayload.contactName || '').split(/\s+/).filter(Boolean);
-            if (fullNameWords.length !== 2) {
-                missing.push('Contact Name (two words)');
-                setInvalid('cc-contact-name', true);
-            } else {
-                setInvalid('cc-contact-name', false);
-            }
-
-            if (missing.length) {
-                alert('Please provide: ' + Array.from(new Set(missing)).join(', '));
-                return;
-            }
+            // Validation handled by validateForm()
 
             const btn = document.getElementById('combined-submit-btn');
             const oldHtml = btn.innerHTML;
@@ -507,6 +596,22 @@
                 if (first) first.addEventListener('input', sync);
                 if (last) last.addEventListener('input', sync);
 
+                // Attach validation listeners to all relevant fields
+                const fieldsToValidate = [
+                    'cc-display-name', 'cc-terms', 'cc-tax-code',
+                    'wo-task', 'wo-lead-source', 'cc-contact-name', 'cc-phone-number', 'cc-contact-sms'
+                ];
+                fieldsToValidate.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.addEventListener('input', validateForm);
+                        el.addEventListener('change', validateForm);
+                    }
+                });
+
+                // Initial validation check
+                validateForm();
+
                 // Priority Color Logic
                 const prioritySelect = document.getElementById('wo-priority');
                 if (prioritySelect) {
@@ -545,8 +650,27 @@
                     });
                 }
 
+
+                // Initialize Flatpickr for Work Order Start Date
+                const date_optional_config = {
+                    dateFormat: "m/d/Y",
+                    allowInput: true,
+                }
+
+                $("#cc-customer-since, #wo-start-date").flatpickr(date_optional_config);
+
+                // Initialize flapicker for Work Order Start Time
+                const time_optional_config = {
+                    enableTime: true,
+                    noCalendar: true,
+                    dateFormat: "H:i",
+                }
+
+                $("#wo-start-time").flatpickr(time_optional_config);
+
+
                 const btn = document.getElementById('combined-submit-btn');
-                if (btn && !btn.dataset.wired) {
+                if (btn) {
                     btn.addEventListener('click', createCombined);
                     btn.dataset.wired = '1';
                 }

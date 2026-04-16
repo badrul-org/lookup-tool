@@ -7,182 +7,63 @@
     <div class="row">
         <div class="col-12">
             <h1 class="mb-4">
-
-
+                Sterling Septic & Plumbing LLC
             </h1>
         </div>
-    </div>
-
-    <!-- Stats Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="total-lookups">{{ stats.total if stats else 0 }}</h4>
-                            <p class="card-text">Total Lookups</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-search fa-2x"></i>
-                        </div>
-                    </div>
+        <div class="col-12">
+            <p>
+                Welcome to Sterling Septic & Plumbing LLC. This is a web application that allows you to look up customer
+                information.
+            </p>
+        </div>
+        <div class="col-12">
+            <div class="row g-3">
+                <!-- responsive buttons -->
+                <div class="col-12 col-md-6 col-lg-3">
+                    <a href="{{ url_for('lookup_tool') }}" class="btn btn-success w-100">Start Lookup</a>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <a href="{{ url_for('all_lookups') }}" class="btn btn-primary w-100">View All Lookups</a>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <a href="{{ url_for('leads') }}" class="btn btn-warning w-100">View Leads</a>
+                </div>
+                <div class="col-12 col-md-6 col-lg-3">
+                    <button id="restart-btn" class="btn btn-outline-danger w-100 mb-3" onclick="restartApplication()">
+                        <i class="fas fa-power-off me-2"></i>
+                        Restart Application
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-3 mb-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="completed-lookups">{{ stats.completed if stats else 0 }}</h4>
-                            <p class="card-text">Completed</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-check-circle fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="running-lookups">{{ stats.running if stats else 0 }}</h4>
-                            <p class="card-text">Running</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-spinner fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="card bg-danger text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title" id="failed-lookups">{{ stats.failed if stats else 0 }}</h4>
-                            <p class="card-text">Failed</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-exclamation-triangle fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Lookups -->
-    <div class="row">
+        <!-- there will be a selection button for container type in gallons -->
+        <!-- user will select the container type -->
+        <!-- then based on the container type, an image will be displayed -->
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-history me-2"></i>
-                        Recent Lookups
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover" id="recent-lookups-table">
-                            <thead>
-                                <tr>
-                                    <th>Address</th>
-                                    <th>City</th>
-                                    <th>ZIP</th>
-                                    <th>County</th>
-                                    <th>Status</th>
-                                    <th>Started</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for session in recent_lookups or [] %}
-                                <tr>
-                                    <td>{{ session.address }}</td>
-                                    <td>{{ session.city or 'N/A' }}</td>
-                                    <td>{{ session.zip_code or 'N/A' }}</td>
-                                    <td>{{ session.county or 'N/A' }}</td>
-                                    <td>
-                                        {% set st = session.status %}
-                                        {% if st == 'waiting' %}
-                                        <span class="badge bg-info"><i
-                                                class="fas fa-hourglass-half me-1"></i>Waiting</span>
-                                        {% elif st == 'running' %}
-                                        <span class="badge bg-warning"><i
-                                                class="fas fa-spinner fa-spin me-1"></i>Running</span>
-                                        {% elif st == 'completed' %}
-                                        <span class="badge bg-success"><i class="fas fa-check me-1"></i>Completed</span>
-                                        {% elif st == 'error' %}
-                                        <span class="badge bg-danger"><i
-                                                class="fas fa-exclamation-triangle me-1"></i>Error</span>
-                                        {% elif st == 'cancelled' %}
-                                        <span class="badge bg-secondary"><i
-                                                class="fas fa-times me-1"></i>Cancelled</span>
-                                        {% else %}
-                                        <span class="badge bg-secondary">Unknown</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ session.start_time }}</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-outline-primary"
-                                            onclick="viewSession('{{ session.session_id }}')">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                                {% else %}
-                                <tr>
-                                    <td colspan="7" class="text-center text-muted">No lookups yet.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-bolt me-2"></i>
-                        Quick Actions
-                    </h5>
-                </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-4">
-                            <a id="start-lookup-btn" href="{{ url_for('lookup_tool') }}"
-                                class="btn btn-primary btn-lg w-100 mb-3">
-                                <i class="fas fa-search me-2"></i>
-                                Start New Lookup
-                            </a>
+                        <div class="col-12">
+                            <h2>Container Type</h2>
                         </div>
-                        <div class="col-md-4">
-                            <a href="{{ url_for('all_lookups') }}" class="btn btn-outline-primary btn-lg w-100 mb-3">
-                                <i class="fas fa-list me-2"></i>
-                                View All Lookups
-                            </a>
+                        <div class="col-12">
+                            <div class="btn-group" role="group" aria-label="Basic outlined example">
+                                <button type="button" onclick="selectContainerType('empty')" data-container-size="empty"
+                                    class="btn btn-outline-secondary">EMPTY</button>
+                                <button type="button" onclick="selectContainerType('10000')" data-container-size="10000"
+                                    class="btn btn-outline-info">10000 Gallons</button>
+                                <button type="button" onclick="selectContainerType('20000')" data-container-size="20000"
+                                    class="btn btn-outline-success">20000 Gallons</button>
+                                <button type="button" onclick="selectContainerType('30000')" data-container-size="30000"
+                                    class="btn btn-outline-warning">30000 Gallons</button>
+                                <button type="button" onclick="selectContainerType('40000')" data-container-size="40000"
+                                    class="btn btn-outline-danger">40000 Gallons</button>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <button id="restart-btn" class="btn btn-outline-danger btn-lg w-100 mb-3"
-                                onclick="restartApplication()">
-                                <i class="fas fa-power-off me-2"></i>
-                                Restart Application
-                            </button>
+                        <div id="container-image" class="col-12">
+                            <!-- image will be displayed here based on the selected container type -->
+
                         </div>
                     </div>
                 </div>
@@ -194,10 +75,6 @@
 
 {% block scripts %}
 <script>
-    function viewSession(sessionId) {
-        window.location.href = `/results?session_id=${sessionId}`;
-    }
-
     async function restartApplication() {
         const btn = document.getElementById('restart-btn');
         const original = btn.innerHTML;
@@ -226,5 +103,45 @@
             }, 2000);
         }
     }
+
+    const containerImages = {
+        'empty': 'static/images/container/container_empty.jpg',
+        '10000': 'static/images/container/container_10000.jpg',
+        '20000': 'static/images/container/container_20000.jpg',
+        '30000': 'static/images/container/container_30000.jpg',
+        '40000': 'static/images/container/container_40000.jpg'
+    };
+    // onclick function to the buttons in the button group to select the container type
+    // also the selected button will be active
+    // in container-image div, the image will be displayed based on the selected container type
+    function selectContainerType(containerSize) {
+        const btns = document.querySelectorAll('.btn-group button');
+
+        btns.forEach(btn => {
+            btn.classList.remove('active');
+        })
+
+        // get the container value
+        const btn = document.querySelector(`.btn-group button[data-container-size="${containerSize}"]`);
+        btn.classList.add('active');
+
+        // display the image
+        const containerImage = document.getElementById('container-image');
+        containerImage.innerHTML = `<img src="${containerImages[containerSize]}" alt="Container Image" class="img-fluid">`;
+
+        // send the container size to the server
+        fetch('/set-container-size', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ size: containerSize })
+        });
+    }
+
+    // by default the empty container will be selected, when the page is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+        selectContainerType("{{ container_size }}");
+    });
 </script>
 {% endblock %}

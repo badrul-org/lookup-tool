@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Lookup Results - Sterling Septic & Plumbing LLC{% endblock %}
+
+{% block content %}
+<div>
+    <h1>'Hello, world!' example</h1>
+
+    <canvas id="the-canvas" style="border: 1px solid black; direction: ltr"></canvas>
+
+    <script src="../static/js/pdfjs-dist/build/pdf.mjs" type="module"></script>
+
+    <script type="module">
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "../static/js/pdfjs-dist/build/pdf.worker.mjs";
+
+        const url = "../Accella_Reports/4c9e2473-46e3-46cb-8b64-197565433d8f_12317 Approved Record Drawing 20251104.pdf";
+
+        pdfjsLib.getDocument(url).promise.then(function (pdf) {
+            console.log('PDF loaded');
+        });
+
+    </script>
+</div>
+
+{% endblock %}
