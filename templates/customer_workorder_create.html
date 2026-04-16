@@ -256,14 +256,12 @@
                     <label class="form-label">Task <span class="text-danger">*</span></label>
                     <select id="wo-task" class="form-select" required>
                         <option value="" selected>Select</option>
-                        <option>HOME SALE</option>
-                        <option>HOME SALE REPAIR</option>
-                        <option>PUMPING</option>
-                        <option>ROUTINE INSPECTION</option>
-                        <option>SERVICE CALL / TROUBLESHOOT</option>
-                        <option>SERVICE TRUCK - 1/2 DAY</option>
-                        <option>SERVICE TRUCK - 1/4 DAY</option>
-                        <option>SERVICE TRUCK - FULL DAY</option>
+                        <option>Quote Only</option>
+                        <option>Invoice Only</option>
+                        <option>1 - VARIABLE</option>
+                        <option>2 - FIRM</option>
+                        <option>3 - NON-BILLABLE</option>
+                        <option>4 - DRAIN FIELD</option>
                     </select>
                     <div class="invalid-feedback">Task is required.</div>
                 </div>
@@ -275,30 +273,17 @@
                     <label class="form-label">Priority</label>
                     <select id="wo-priority" class="form-select">
                         <option value="" selected>Select</option>
-                        <option value="ADVANCED SVC" style="background-color: #FFF9C4; color: black;">ADVANCED SVC
-                        </option>
-                        <option value="ADVANCED SVC - EMERGENCY" style="background-color: #FFCC80; color: black;">
-                            ADVANCED SVC - EMERGENCY</option>
-                        <option value="CLERICAL" style="background-color: #CFD8DC; color: black;">CLERICAL</option>
-                        <option value="EXCAVATOR" style="background-color: #D7CCC8; color: black;">EXCAVATOR</option>
-                        <option value="HOMESALE" style="background-color: #B3E5FC; color: black;">HOMESALE</option>
-                        <option value="PREP / RETURN" style="background-color: #E1BEE7; color: black;">PREP / RETURN
-                        </option>
-                        <option value="PUMPING" style="background-color: #C8E6C9; color: black;">PUMPING</option>
-                        <option value="PUMPING - ASSIST" style="background-color: #DCEDC8; color: black;">PUMPING -
-                            ASSIST
-                        </option>
-                        <option value="PUMPING - EMERGENCY" style="background-color: #66BB6A; color: white;">
-                            PUMPING -
-                            EMERGENCY</option>
-                        <option value="SVC TRUCK" style="background-color: #F48FB1; color: black;">SVC TRUCK</option>
-                        <option value="SVC TRUCK - ASSIST" style="background-color: #F8BBD0; color: black;">SVC TRUCK -
-                            ASSIST
-                        </option>
-                        <option value="SVC TRUCK - EMERGENCY" style="background-color: #E57373; color: white;">
-                            SVC TRUCK -
-                            EMERGENCY
-                        </option>
+                        <option value="[1] 2-MAN" style="background-color: #3949AB; color: white;">[1] 2-MAN</option>
+                        <option value="[1] ASSIST" style="background-color: #DCE775; color: black;">[1] ASSIST</option>
+                        <option value="[1] P4R" style="background-color: #2E7D32; color: white;">[1] P4R</option>
+                        <option value="[1] PFHS" style="background-color: #29B6F6; color: black;">[1] PFHS</option>
+                        <option value="[1] ROUTINE" style="background-color: #B2FF59; color: black;">[1] ROUTINE</option>
+                        <option value="[2] 2-MAN" style="background-color: #EF6C00; color: white;">[2] 2-MAN</option>
+                        <option value="[2] ASSIST" style="background-color: #BA68C8; color: white;">[2] ASSIST</option>
+                        <option value="[2] ROUTINE" style="background-color: #F48FB1; color: black;">[2] ROUTINE</option>
+                        <option value="[2] TROUBLESHOOT" style="background-color: #C62828; color: white;">[2] TROUBLESHOOT</option>
+                        <option value="[2] UPGRADE & REPAIRS" style="background-color: #FFF59D; color: black;">[2] UPGRADE & REPAIRS</option>
+                        <option value="[3] EXCAVATOR" style="background-color: #8D6E63; color: white;">[3] EXCAVATOR</option>
                     </select>
                 </div>
                 <div class="col-md-6">

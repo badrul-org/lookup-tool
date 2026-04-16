@@ -378,8 +378,17 @@ async def run_scraper_pass(browser, context, page):
                         rme_date = parts[2].strip().replace('/', '-') if len(parts) > 2 else datetime.now().strftime('%Y-%m-%d')
                         r = session_http.get(pdf_url, stream=True, timeout=15)
                         if r.status_code == 200:
-                            filename = f"Prior_RME_{rme_type}_{rme_date}.pdf"
-                            filepath = os.path.join(tmpdir, filename)
+                            if "TIME OF SALE" in rme_type.upper() or rme_type.upper() == "TOS":
+                                base_name = "TOS"
+                            else:
+                                base_name = f"RME ({rme_type}) - {rme_date}"
+                                
+                            filepath = os.path.join(tmpdir, f"{base_name}.pdf")
+                            counter = 1
+                            while os.path.exists(filepath):
+                                filepath = os.path.join(tmpdir, f"{base_name}_{counter}.pdf")
+                                counter += 1
+                                
                             with open(filepath, 'wb') as f:
                                 for chunk in r.iter_content(chunk_size=8192):
                                     f.write(chunk)
@@ -401,8 +410,13 @@ async def run_scraper_pass(browser, context, page):
                         if record_type.lower() == 'asbuilt':
                             r = session_http.get(pdf_url, stream=True, timeout=15)
                             if r.status_code == 200:
-                                filename = f"Prior_asbuild_{datetime.now().strftime('%Y-%m-%d')}_{uuid.uuid4().hex[:6]}.pdf"
-                                filepath = os.path.join(tmpdir, filename)
+                                base_name = "AS-BUILT"
+                                filepath = os.path.join(tmpdir, f"{base_name}.pdf")
+                                counter = 1
+                                while os.path.exists(filepath):
+                                    filepath = os.path.join(tmpdir, f"{base_name}_{counter}.pdf")
+                                    counter += 1
+
                                 with open(filepath, 'wb') as f:
                                     for chunk in r.iter_content(chunk_size=8192):
                                         f.write(chunk)
@@ -420,8 +434,13 @@ async def run_scraper_pass(browser, context, page):
                     try:
                         r = session_http.get(item, stream=True, timeout=15)
                         if r.status_code == 200:
-                            filename = f"Prior_King_{datetime.now().strftime('%Y-%m-%d')}_{uuid.uuid4().hex[:6]}.pdf"
-                            filepath = os.path.join(tmpdir, filename)
+                            base_name = "AS-BUILT"
+                            filepath = os.path.join(tmpdir, f"{base_name}.pdf")
+                            counter = 1
+                            while os.path.exists(filepath):
+                                filepath = os.path.join(tmpdir, f"{base_name}_{counter}.pdf")
+                                counter += 1
+
                             with open(filepath, 'wb') as f:
                                 for chunk in r.iter_content(chunk_size=8192):
                                     f.write(chunk)
@@ -508,8 +527,13 @@ async def run_scraper_pass(browser, context, page):
                                 r = session_http.get(invoice_pdf_url, stream=True, timeout=15)
                                 if r.status_code == 200:
                                     invoice_date = date_of_invoice.strip().replace('/', '-') if date_of_invoice else datetime.now().strftime('%Y-%m-%d')
-                                    filename = f"Prior_invoice_{invoice_date}.pdf"
-                                    filepath = os.path.join(tmpdir, filename)
+                                    base_name = f"INVOICE {invoice_date}"
+                                    filepath = os.path.join(tmpdir, f"{base_name}.pdf")
+                                    counter = 1
+                                    while os.path.exists(filepath):
+                                        filepath = os.path.join(tmpdir, f"{base_name}_{counter}.pdf")
+                                        counter += 1
+
                                     with open(filepath, 'wb') as f:
                                         for chunk in r.iter_content(chunk_size=8192):
                                             f.write(chunk)
