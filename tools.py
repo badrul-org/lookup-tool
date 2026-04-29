@@ -1043,6 +1043,7 @@ async def Create_Customer(page, url, customer_data: dict):
         await page.fill("//input[@name='First Name']", (customer_data.get('firstName') or ''))
         await page.fill("//input[@name='Last Name']", (customer_data.get('lastName') or ''))
         await page.fill("//input[@name='Company Name']", (customer_data.get('companyName') or ''))
+        await page.locator("//div[@class='customer-contact-call-recording']//label").click()
         # await page.locator('(//span[@title="Select"])[1]').click()
         # await page.locator('(//span[@title="Select"])[1]').fill(customer_data.get('customerType') or '')
         # await page.locator('(//span[@title="Select"])[1]').press("Enter")
