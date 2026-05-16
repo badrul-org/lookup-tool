@@ -994,6 +994,21 @@ async def King_report_lookup(page, url, address_line_1: str):
     
     return king_reports, error_message
 
+async def dismiss_fieldedge_popup(page):
+    """Silently dismiss the FieldEdge popup/modal if it appears after a page load or reload.
+    Looks for a button with role='button' and accessible name 'Close' and clicks it.
+    Safe to call at any time — does nothing if the popup is not present.
+    """
+    try:
+        close_btn = page.get_by_role("button", name="Close")
+        await close_btn.wait_for(state="visible", timeout=3000)
+        if await close_btn.is_visible():
+            await close_btn.click()
+            print("[dismiss_fieldedge_popup] Popup dismissed.")
+    except Exception:
+        # Popup not present — this is the normal case
+        pass
+
 async def Create_Customer(page, url, customer_data: dict):
     try:
         # Quick check if it is logout or not
@@ -1011,10 +1026,13 @@ async def Create_Customer(page, url, customer_data: dict):
             await page.wait_for_timeout(5000)
             page.goto("https://login.fieldedge.com/#/List/1")
             await page.wait_for_timeout(5000)
+            await dismiss_fieldedge_popup(page)
         except Exception as e:
             pass
     except Exception as e:
         pass
+    # Dismiss any popup that may have appeared on page load/reload
+    await dismiss_fieldedge_popup(page)
     """Minimal create customer flow placeholder.
     Expects an authenticated FieldEdge session already present on 'page'.
     Currently, this function navigates to the dashboard and returns successfully.
@@ -1043,7 +1061,26 @@ async def Create_Customer(page, url, customer_data: dict):
         await page.fill("//input[@name='First Name']", (customer_data.get('firstName') or ''))
         await page.fill("//input[@name='Last Name']", (customer_data.get('lastName') or ''))
         await page.fill("//input[@name='Company Name']", (customer_data.get('companyName') or ''))
-        await page.locator("//div[@class='customer-contact-call-recording']//label").click()
+        
+        # Check the current state of the checkbox
+        no_call_recording_label = page.locator("//div[@class='customer-contact-call-recording']//label")
+        await no_call_recording_label.wait_for(state="visible", timeout=5000)
+        class_name = await no_call_recording_label.get_attribute("class") or ""
+        
+        is_currently_checked = "checked" in class_name
+        wants_checked = bool(customer_data.get('noCallRecording'))
+        
+        print(f"Class name: {class_name}")
+        print(f"Currently checked: {is_currently_checked}")
+        print(f"Wants checked: {wants_checked}")
+
+        # Only click if the current state doesn't match the desired state
+        if is_currently_checked != wants_checked:
+            try:
+                await no_call_recording_label.click()
+            except Exception as e:
+                print(f"Could not click No Call Recording: {e}")
+                
         # await page.locator('(//span[@title="Select"])[1]').click()
         # await page.locator('(//span[@title="Select"])[1]').fill(customer_data.get('customerType') or '')
         # await page.locator('(//span[@title="Select"])[1]').press("Enter")
@@ -1161,10 +1198,13 @@ async def Check_Existing_Customer(page, url, address_line_1: str):
             await page.wait_for_timeout(5000)
             page.goto("https://login.fieldedge.com/#/List/1")
             await page.wait_for_timeout(5000)
+            await dismiss_fieldedge_popup(page)
         except Exception as e:
             pass
     except Exception as e:
         pass
+    # Dismiss any popup that may have appeared on page load/reload
+    await dismiss_fieldedge_popup(page)
     try:
         Display_name_list = []
         search_input = page.locator("//input[@id='search']")
@@ -1208,10 +1248,13 @@ async def Upload_Attachments(page, address_line_1: str, file_paths):
             await page.wait_for_timeout(5000)
             page.goto("https://login.fieldedge.com/#/List/1")
             await page.wait_for_timeout(5000)
+            await dismiss_fieldedge_popup(page)
         except Exception as e:
             pass
     except Exception as e:
         pass
+    # Dismiss any popup that may have appeared on page load/reload
+    await dismiss_fieldedge_popup(page)
     """Upload one or more files to the first matching customer by address.
     Assumes page is an authenticated FieldEdge customers list page.
     Returns tuple (num_uploaded, num_failed).
@@ -1272,6 +1315,7 @@ async def Upload_Attachments(page, address_line_1: str, file_paths):
                         # If go_back fails, try to navigate back to list URL
                         try:
                             await page.goto('https://login.fieldedge.com/#/List/1')
+                            await dismiss_fieldedge_popup(page)
                             await list_first_row.wait_for(state="visible", timeout=15000)
                         except Exception:
                             pass
@@ -1351,10 +1395,13 @@ async def create_work_order(page, url, address_line_1: str, order_form_data: dic
             await page.wait_for_timeout(5000)
             page.goto("https://login.fieldedge.com/#/List/1")
             await page.wait_for_timeout(5000)
+            await dismiss_fieldedge_popup(page)
         except Exception as e:
             pass
     except Exception as e:
         pass
+    # Dismiss any popup that may have appeared on page load/reload
+    await dismiss_fieldedge_popup(page)
     try:
     # search by address and get the result rows
         if not combined:
@@ -1426,10 +1473,13 @@ async def upload_attachments_to_work_order(page, url, address_line_1: str, file_
             await page.wait_for_timeout(5000)
             page.goto("https://login.fieldedge.com/#/List/1")
             await page.wait_for_timeout(5000)
+            await dismiss_fieldedge_popup(page)
         except Exception as e:
             pass
     except Exception as e:
         pass
+    # Dismiss any popup that may have appeared on page load/reload
+    await dismiss_fieldedge_popup(page)
     try:
         if not work_order_number:
             # search by address and get the result rows
@@ -1527,6 +1577,9 @@ async def upload_attachments_to_work_order(page, url, address_line_1: str, file_
 async def Accella_report_lookup(page, url, session_id, address_line_1: str):
     try:
         root_page = page
+        # Ensure the download directory exists before attempting any downloads
+        import os as _os
+        _os.makedirs("Accella_Reports", exist_ok=True)
         street_number = address_line_1.split(" ")[0]
         street_name = address_line_1.split(" ")[1]
         search_input_from = page.locator("//input[@title='Street No. From	']")
@@ -1552,7 +1605,15 @@ async def Accella_report_lookup(page, url, session_id, address_line_1: str):
                 row_text = await row.text_content()
                 row_text = row_text.strip()
                 
-                if "Asbuilt Approved" in row_text or "Installation Permit Released" in row_text or "Closed - Asbuilt Approved" in row_text:
+                if (
+                    "Asbuilt Approved" in row_text
+                    or "Installation Permit Released" in row_text
+                    or "Closed - Asbuilt Approved" in row_text
+                    or "Final" in row_text
+                    or "Permit Finaled" in row_text
+                    or "Issued" in row_text
+                    or "Closed" in row_text
+                ):
                     await page.locator(f"(//div[@class='ACA_Grid_OverFlow']//tr[contains(@class, 'TabRow')])[{i}]//a").click()
                     try:
                         await page.wait_for_timeout(5000)
@@ -1655,23 +1716,51 @@ async def Accella_report_lookup(page, url, session_id, address_line_1: str):
                                     print(f"Downloaded {file_name}")
 
                                 # this is "Approved Design" pdf file to download
-                                if "Approved Design" in row_text:
-                                    # find the date of the record, it is in TabRow class and 1st column, it has span element with id contians "lblUploadDate"
-                                    upload_date = tbl_frame.locator(f"((//table[contains(@id,'attachmentList')]//tr[contains(@class, 'TabRow')])[{i+1}]//span[contains(@id, 'lblUploadDate')])")
-                                    await upload_date.wait_for(state="visible", timeout=2000)
-                                    upload_date = await upload_date.text_content()
-                                    upload_date = upload_date.strip()
+                                    if "Approved Design" in row_text:
+                                        # find the date of the record
+                                        upload_date = tbl_frame.locator(f"((//table[contains(@id,'attachmentList')]//tr[contains(@class, 'TabRow')])[{i+1}]//span[contains(@id, 'lblUploadDate')])")
+                                        await upload_date.wait_for(state="visible", timeout=2000)
+                                        upload_date = await upload_date.text_content()
+                                        upload_date = upload_date.strip()
 
-                                    # download the pdf from the link in the same row
-                                    async with root_page.expect_download() as download_info:
-                                        download_path = tbl_frame.locator(f"((//table[contains(@id,'attachmentList')]//tr[contains(@class, 'TabRow')])[{i+1}]//a)[1]")
-                                        await download_path.click()
-                                    download = await download_info.value
-                                    file_name = download.suggested_filename
-                                    files.append(f"Accella_Reports/{session_id}_{file_name},Approved Design,{upload_date}")
-                                    await download.save_as(f"Accella_Reports/{session_id}_{file_name}")
-                                    print(f"Downloaded {file_name}")
-                                    
+                                        # download the pdf from the link in the same row
+                                        async with root_page.expect_download() as download_info:
+                                            download_path = tbl_frame.locator(f"((//table[contains(@id,'attachmentList')]//tr[contains(@class, 'TabRow')])[{i+1}]//a)[1]")
+                                            await download_path.click()
+                                        download = await download_info.value
+                                        file_name = download.suggested_filename
+                                        files.append(f"Accella_Reports/{session_id}_{file_name},Approved Design,{upload_date}")
+                                        await download.save_as(f"Accella_Reports/{session_id}_{file_name}")
+                                        print(f"Downloaded {file_name}")
+
+                            # --- Fallback: if no keyword matched, log all attachment names and download any PDF ---
+                            if not files:
+                                print(f"[Accella] No keyword-matched attachments found. Listing all attachment rows for debugging:")
+                                all_rows = await tbl_frame.locator("(//table[contains(@id,'attachmentList')]//tr[contains(@class, 'TabRow')])").all()
+                                for j, r in enumerate(all_rows[1:], 2):  # skip header
+                                    try:
+                                        txt = (await r.text_content(timeout=3000) or "").strip()
+                                        print(f"  Attachment row {j}: {txt[:120]}")
+                                        # Try to download if there is an <a> link (any attachment PDF)
+                                        link = r.locator("a").first
+                                        if await link.count() > 0:
+                                            try:
+                                                upload_date_el = r.locator(f"//span[contains(@id, 'lblUploadDate')]")
+                                                upload_date_txt = ""
+                                                if await upload_date_el.count() > 0:
+                                                    upload_date_txt = (await upload_date_el.text_content() or "").strip()
+                                                async with root_page.expect_download() as dl_info:
+                                                    await link.click()
+                                                dl = await dl_info.value
+                                                dl_name = dl.suggested_filename
+                                                files.append(f"Accella_Reports/{session_id}_{dl_name},Accella Attachment,{upload_date_txt}")
+                                                await dl.save_as(f"Accella_Reports/{session_id}_{dl_name}")
+                                                print(f"[Accella fallback] Downloaded: {dl_name}")
+                                            except Exception as dl_err:
+                                                print(f"[Accella fallback] Could not download row {j}: {dl_err}")
+                                    except Exception:
+                                        continue
+
                             # when the loops end return the files list
                             return "Record found, Downloaded successfully" , files
                                     

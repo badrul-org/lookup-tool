@@ -88,6 +88,13 @@
                 </div>
 
 
+                <div class="col-12 mb-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="cc-no-call-recording" />
+                        <label class="form-check-label" for="cc-no-call-recording">No Call Recording</label>
+                    </div>
+                </div>
+
                 <div class="col-12">
                     <label class="form-label">Pinned Note</label>
                     <textarea class="form-control" id="cc-note" rows="2" placeholder="Type here"></textarea>
@@ -472,6 +479,7 @@
                 customerType: val('cc-customer-type'),
                 customerSince: val('cc-customer-since'),
                 leadSource: val('cc-lead-source'),
+                noCallRecording: bool('cc-no-call-recording'),
                 note: val('cc-note'),
                 address1: val('cc-addr1'),
                 address2: val('cc-addr2'),

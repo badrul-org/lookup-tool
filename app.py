@@ -819,11 +819,12 @@ def wo_status():
             SUM(CASE WHEN rme_status = 'done' THEN 1 ELSE 0 END) as rme_done,
             SUM(CASE WHEN tpchd_status = 'done' THEN 1 ELSE 0 END) as tpchd_done,
             SUM(CASE WHEN invoice_status = 'done' THEN 1 ELSE 0 END) as invoice_done,
-            SUM(CASE WHEN king_status = 'done' THEN 1 ELSE 0 END) as king_done
+            SUM(CASE WHEN king_status = 'done' THEN 1 ELSE 0 END) as king_done,
+            SUM(CASE WHEN accella_status = 'done' THEN 1 ELSE 0 END) as accella_done
         FROM work_orders
         """
         stats_row = conn.execute(stats_query).fetchone()
-        stats = dict(stats_row) if stats_row else {'total': 0, 'rme_done': 0, 'tpchd_done': 0, 'invoice_done': 0, 'king_done': 0}
+        stats = dict(stats_row) if stats_row else {'total': 0, 'rme_done': 0, 'tpchd_done': 0, 'invoice_done': 0, 'king_done': 0, 'accella_done': 0}
         total = stats['total'] or 0
         total_pages = max((total + per_page - 1) // per_page, 1)
         
@@ -833,7 +834,7 @@ def wo_status():
         work_orders = []
         total = 0
         total_pages = 1
-        stats = {'total': 0, 'rme_done': 0, 'tpchd_done': 0, 'invoice_done': 0, 'king_done': 0}
+        stats = {'total': 0, 'rme_done': 0, 'tpchd_done': 0, 'invoice_done': 0, 'king_done': 0, 'accella_done': 0}
     finally:
         conn.close()
         
@@ -2546,6 +2547,10 @@ def schedule_workorder_scraper():
     import time
 
     def scraper_loop():
+        edit_customer_last_run_date = None
+        # Set to True if you want to run edit_customer outside business hours
+        ENABLE_EDIT_CUSTOMER = False 
+        
         while True:
             if scraper_is_running:
                 # Silently sleep while manual scraper is running to avoid confusing logs
@@ -2560,8 +2565,23 @@ def schedule_workorder_scraper():
             else:
                 from datetime import timezone, timedelta
                 gmt7 = datetime.now(timezone(timedelta(hours=-7)))
-                print(f"🌙 Outside business hours ({gmt7.strftime('%H:%M')} GMT-7). Sleeping 60s...\n")
-                time.sleep(60)
+                current_date = gmt7.date()
+                
+                # Run once per day during idle hours if enabled
+                if ENABLE_EDIT_CUSTOMER and edit_customer_last_run_date != current_date:
+                    print(f"🌙 Outside business hours ({gmt7.strftime('%H:%M')} GMT-7). Running edit customer...\n")
+                    try:
+                        from edit_cutomer import run_edit_customer
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        loop.run_until_complete(run_edit_customer())
+                        loop.close()
+                    except Exception as e:
+                        print(f"Error running edit customer: {e}")
+                    edit_customer_last_run_date = current_date
+                else:
+                    print(f"🌙 Outside business hours ({gmt7.strftime('%H:%M')} GMT-7). Sleeping 60s...\n")
+                    time.sleep(60)
 
     # Prevent multiple threads from spawning if imported multiple times
     if hasattr(schedule_workorder_scraper, "has_run"):

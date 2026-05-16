@@ -7,7 +7,8 @@ import uuid
 import csv
 from datetime import datetime
 from playwright.async_api import async_playwright
-from tools import get_pdf_all_reports, address_search, Tacoma_report_lookup, King_report_lookup, upload_attachments_to_work_order, tax_rate_lookup
+from tools import get_pdf_all_reports, address_search, Tacoma_report_lookup, King_report_lookup, upload_attachments_to_work_order, tax_rate_lookup, Accella_report_lookup, dismiss_fieldedge_popup
+import shutil
 
 king_pierce_cities = set()
 try:
@@ -44,6 +45,7 @@ def init_work_orders_db():
     for col, default in [
         ("rme_status", "not found"),
         ("tpchd_status", "not found"),
+        ("accella_status", "not found"),
         ("invoice_status", "not found"),
         ("king_status", "not found"),
         ("run_time", "NULL"),
@@ -60,12 +62,27 @@ def init_work_orders_db():
 
 
 async def return_customer_invoice(page):
+    # Dismiss any popup before interacting with the invoice tab
+    await dismiss_fieldedge_popup(page)
     await asyncio.sleep(5)
-    await page.locator("(//div[@data-automation-id='CustomerTabsEnum-Invoice-container']/div)[1]").click()
+
+    # Click the Invoice tab
+    invoice_tab = page.locator("(//div[@data-automation-id='CustomerTabsEnum-Invoice-container']/div)[1]")
+    await invoice_tab.wait_for(state="visible", timeout=15000)
+    await invoice_tab.click()
 
     # check minimum 1 invoice is available
+    # Use a scoped locator tied to the invoice table, not just any tbody
     try:
-        await page.locator("(//tbody/tr)[1]").wait_for(state="visible", timeout=15000)
+        # Wait for the invoice list container to appear
+        invoice_row = page.locator("//div[contains(@data-automation-id,'Invoice')]//tbody/tr[1]")
+        try:
+            await invoice_row.wait_for(state="visible", timeout=20000)
+        except Exception:
+            # Fallback to generic tbody if scoped locator fails
+            invoice_row = page.locator("(//tbody/tr)[1]")
+            await invoice_row.wait_for(state="visible", timeout=10000)
+
         date_of_invoice = await page.locator("((//tbody/tr)[1]/td)[7]").inner_text()
         # click on this share button and intercept the resulting API response
         async with page.expect_response(lambda response: "LayoutTemplates/CreateDispatchPdf" in response.url and response.request.method == "POST", timeout=30000) as response_info:
@@ -82,7 +99,7 @@ async def return_customer_invoice(page):
 async def init_scraper_session(playwright):
     """Launch browser and log in. Returns (browser, context, page)."""
     browser = await playwright.chromium.launch(headless=False)
-    context = await browser.new_context()
+    context = await browser.new_context(accept_downloads=True)
     context.set_default_timeout(60000)
     page = await context.new_page()
     page.set_default_timeout(60000)
@@ -102,6 +119,8 @@ async def init_scraper_session(playwright):
         await page.wait_for_url("**/Dashboard/**", timeout=15000)
     except Exception:
         print("URL didn't strictly match Dashboard, continuing anyway...")
+    # Dismiss any popup that appears after initial login/load
+    await dismiss_fieldedge_popup(page)
     return browser, context, page
 
 
@@ -127,6 +146,8 @@ async def _ensure_logged_in(page):
             print("✅ Re-login successful.")
         else:
             print("✅ Session still active.")
+        # Dismiss any popup that appears after navigation/re-login
+        await dismiss_fieldedge_popup(page)
     except Exception as e:
         print(f"⚠️ Login check failed: {e}")
 
@@ -141,6 +162,8 @@ async def run_scraper_pass(browser, context, page):
     # reload page
     await page.reload()
     await asyncio.sleep(5)
+    # Dismiss any popup that may appear after reload
+    await dismiss_fieldedge_popup(page)
 
     # Step 1: Click on workorder tab
     print("Step 1: Navigating to Work Orders...")
@@ -340,10 +363,34 @@ async def run_scraper_pass(browser, context, page):
                 finally:
                     await king_page.close()
 
+            # --- ACCELLA REPORTS CHECK ---
+            accella_status = "not found"
+            accella_result = []
+            if city.lower() not in king_pierce_cities:
+                print(f"City '{city}' not in King list. Pulling Accella reports for address: {address}")
+                accella_page = await context.new_page()
+                try:
+                    accella_url = "https://aca-prod.accela.com/TPCHD/Cap/CapHome.aspx?module=EnvHealth&TabName=EnvHealth"
+                    try:
+                        await accella_page.goto(accella_url, wait_until="networkidle")
+                    except:
+                        pass
+                    a_status_text, a_files = await Accella_report_lookup(page=accella_page, url=accella_url, session_id=f"wo_{wo_number}", address_line_1=parsed_address)
+                    if a_files:
+                        accella_result = a_files
+                        print(f"✅ Finished getting {len(a_files)} PDFs from Accella for WO {wo_number}")
+                    else:
+                        print(f"⚠️ Accella returned no reports or error: {a_status_text}")
+                except Exception as e:
+                    print(f"⚠️ Error fetching Accella for {wo_number}: {e}")
+                finally:
+                    await accella_page.close()
+
             final_rme_urls = rme_result.get("pdf_urls", []) if rme_result and isinstance(rme_result, dict) else []
             report_dict = {
                 "tpchd_reports": tpchd_result,
                 "king_reports": king_result,
+                "accella_reports": accella_result,
                 "rme_reports": final_rme_urls
             }
             print(f"\n--- REPORT DICTIONARY FOR WO {wo_number} ---")
@@ -399,15 +446,15 @@ async def run_scraper_pass(browser, context, page):
                         print(f"Failed to download RME PDF {item}: {e}")
                         rme_status = "error"
 
-                # 2. Download TPCHD Reports (ONLY AsBuilt)
-                if any(len(i.split(',')) > 1 and i.split(',')[1].strip().lower() == 'asbuilt' for i in tpchd_result):
+                # 2. Download TPCHD Reports (ONLY AsBuilt and Onsite and microfilm)
+                if any(len(i.split(',')) > 1 and (i.split(',')[1].strip().lower() == 'asbuilt' or i.split(',')[1].strip().lower() == 'onsite' or i.split(',')[1].strip().lower() == 'microfilm') for i in tpchd_result):
                     tpchd_status = "pending upload"
                 for item in tpchd_result:
                     try:
                         parts = item.split(',')
                         pdf_url = parts[0]
                         record_type = parts[1].strip() if len(parts) > 1 else ""
-                        if record_type.lower() == 'asbuilt':
+                        if record_type.lower() == 'asbuilt' or record_type.lower() == 'onsite' or record_type.lower() == 'microfilm':
                             r = session_http.get(pdf_url, stream=True, timeout=15)
                             if r.status_code == 200:
                                 base_name = "AS-BUILT"
@@ -451,7 +498,44 @@ async def run_scraper_pass(browser, context, page):
                         print(f"Failed to download King County PDF {item}: {e}")
                         king_status = "error"
 
-                # 4. Fetch Customer Invoice and 5. Attach ALL Collected PDFs
+                # 4. Copy Accella Reports
+                if accella_result:
+                    accella_status = "pending upload"
+                for item in accella_result:
+                    # item format: "Accella_Reports/session_id_file_name.pdf,Record_Type,Date"
+                    parts = item.split(',')
+                    src_path = parts[0].strip()
+                    record_type = parts[1].strip() if len(parts) > 1 else "Unknown"
+                    upload_date = parts[2].strip().replace('/', '-') if len(parts) > 2 else ""
+                    
+                    if os.path.exists(src_path):
+                        formatted_type = record_type.replace(' ', '_')
+                        base_name = f"Accella_{formatted_type}_{upload_date}".strip('_')
+                        
+                        filepath = os.path.join(tmpdir, f"{base_name}.pdf")
+                        counter = 1
+                        while os.path.exists(filepath):
+                            filepath = os.path.join(tmpdir, f"{base_name}_{counter}.pdf")
+                            counter += 1
+                        
+                        try:
+                            shutil.copy2(src_path, filepath)
+                            file_paths.append(filepath)
+                            
+                            # Clean up the original file from Accella_Reports after copying
+                            try:
+                                os.remove(src_path)
+                            except Exception as e:
+                                print(f"Could not remove original Accella PDF {src_path}: {e}")
+                                
+                        except Exception as e:
+                            print(f"Failed to copy Accella PDF {src_path}: {e}")
+                            accella_status = "error"
+                    else:
+                        print(f"Accella PDF missing at path {src_path}")
+                        accella_status = "error"
+
+                # 5. Fetch Customer Invoice and Attach ALL Collected PDFs
                 print(f"Checking for Customer Invoice for WO {wo_number}...")
                 fe_page = await context.new_page()
                 try:
@@ -466,6 +550,8 @@ async def run_scraper_pass(browser, context, page):
                     except:
                         pass
                     await fe_page.wait_for_timeout(4000)
+                    # Dismiss any popup that appears after navigating to the work order page
+                    await dismiss_fieldedge_popup(fe_page)
 
                     try:
 
@@ -517,6 +603,8 @@ async def run_scraper_pass(browser, context, page):
                             except:
                                 pass
                             await fe_page.wait_for_timeout(3000)
+                            # Dismiss any popup that appears after navigating to the customer page
+                            await dismiss_fieldedge_popup(fe_page)
 
                             invoice_pdf_url, date_of_invoice = await return_customer_invoice(fe_page)
                             if invoice_pdf_url:
@@ -561,6 +649,8 @@ async def run_scraper_pass(browser, context, page):
                         except:
                             pass
                         await fe_page.wait_for_timeout(4000)
+                        # Dismiss any popup that appears before uploading attachments
+                        await dismiss_fieldedge_popup(fe_page)
                         await upload_attachments_to_work_order(
                             page=fe_page,
                             url="",
@@ -572,10 +662,11 @@ async def run_scraper_pass(browser, context, page):
                         if rme_status == "pending upload": rme_status = "done"
                         if tpchd_status == "pending upload": tpchd_status = "done"
                         if king_status == "pending upload": king_status = "done"
+                        if accella_status == "pending upload": accella_status = "done"
                         if invoice_status == "pending upload": invoice_status = "done"
                         print(f"✅ Successfully attached PDFs to WO {wo_number}")
                     else:
-                        print(f"No relevant PDFs (RME/TPCHD/King/Invoice) found for WO {wo_number} to attach.")
+                        print(f"No relevant PDFs (RME/TPCHD/King/Accella/Invoice) found for WO {wo_number} to attach.")
 
                 except Exception as e:
                     print(f"⚠️ Failed to handle Invoice/Attachments for WO {wo_number}: {e}")
@@ -592,11 +683,11 @@ async def run_scraper_pass(browser, context, page):
                     if rme_status == "pending upload": rme_status = "error"
                     if tpchd_status == "pending upload": tpchd_status = "error"
                     if king_status == "pending upload": king_status = "error"
+                    if accella_status == "pending upload": accella_status = "error"
                     if invoice_status == "pending upload": invoice_status = "error"
                 finally:
                     await fe_page.close()
             finally:
-                import shutil
                 shutil.rmtree(tmpdir, ignore_errors=True)
 
             if restart_needed:
@@ -604,8 +695,8 @@ async def run_scraper_pass(browser, context, page):
 
             print(f"WO {wo_number} successfully finished! Saving to DB.")
             db_cursor.execute(
-                'INSERT INTO work_orders (wo_number, address, error_message, rme_status, tpchd_status, king_status, invoice_status, run_time, location_code, tax_code_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                (wo_number, address, error_details, rme_status, tpchd_status, king_status, invoice_status, run_time, location_code_val, tax_code_status)
+                'INSERT INTO work_orders (wo_number, address, error_message, rme_status, tpchd_status, king_status, accella_status, invoice_status, run_time, location_code, tax_code_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                (wo_number, address, error_details, rme_status, tpchd_status, king_status, accella_status, invoice_status, run_time, location_code_val, tax_code_status)
             )
             db_conn.commit()
 
