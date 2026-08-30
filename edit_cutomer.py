@@ -24,7 +24,7 @@ async def init_session(playwright):
         pass
     return browser, context, page
 
-async def run_edit_customer_pass(browser, context, page):
+async def run_edit_customer_pass(browser, context, page, url):
     # Go to customer list
     print("Navigating to Customer List...")
     try:

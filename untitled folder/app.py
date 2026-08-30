@@ -1,9 +1,7 @@
-from flask import Flask, render_template, request, jsonify, session, send_file, send_from_directory
+from flask import Flask, render_template, request, jsonify, session, send_file, send_from_directory, redirect, url_for
 import asyncio
 import json
-import re
 from datetime import datetime
-
 
 import asyncio
 from playwright.async_api import async_playwright
@@ -807,12 +805,36 @@ def customer_create():
             session_data = None
     return render_template('customer_create.html', session_data=session_data)
 
+def get_pagination_range(page, total_pages):
+    if total_pages <= 7:
+        return list(range(1, total_pages + 1))
+    
+    pages = set()
+    pages.add(1)
+    pages.add(2)
+    pages.add(total_pages - 1)
+    pages.add(total_pages)
+    
+    for p in range(page - 2, page + 3):
+        if 1 <= p <= total_pages:
+            pages.add(p)
+            
+    sorted_pages = sorted(list(pages))
+    result = []
+    prev = None
+    for p in sorted_pages:
+        if prev is not None and p - prev > 1:
+            result.append('...')
+        result.append(p)
+        prev = p
+    return result
+
 @app.route('/wo-status')
 def wo_status():
     page = max(int(request.args.get('page', 1)), 1)
-    search_query = request.args.get('q', '').strip()
     per_page = 50
     offset = (page - 1) * per_page
+    search_query = request.args.get('q', '').strip()
     
     conn = get_db_connection()
     try:
@@ -830,33 +852,39 @@ def wo_status():
         stats = dict(stats_row) if stats_row else {'total': 0, 'rme_done': 0, 'tpchd_done': 0, 'invoice_done': 0, 'king_done': 0, 'accella_done': 0}
         
         if search_query:
-            like_term = f"%{search_query}%"
-            where_clause = """
-                WHERE wo_number LIKE ? 
-                   OR address LIKE ? 
-                   OR rme_status LIKE ? 
-                   OR tpchd_status LIKE ? 
-                   OR king_status LIKE ? 
-                   OR accella_status LIKE ? 
-                   OR invoice_status LIKE ? 
-                   OR location_code LIKE ? 
-                   OR tax_code_status LIKE ? 
-                   OR customer_tax_code_status LIKE ? 
-                   OR error_message LIKE ?
+            wildcard = f"%{search_query}%"
+            count_sql = """
+            SELECT COUNT(*) FROM work_orders 
+            WHERE CAST(wo_number AS TEXT) LIKE ? 
+               OR address LIKE ? 
+               OR rme_status LIKE ? 
+               OR tpchd_status LIKE ? 
+               OR king_status LIKE ? 
+               OR accella_status LIKE ? 
+               OR invoice_status LIKE ? 
+               OR location_code LIKE ?
             """
-            params = [like_term] * 11
-            
-            count_sql = f"SELECT COUNT(*) as count FROM work_orders {where_clause}"
-            count_row = conn.execute(count_sql, params).fetchone()
-            total = count_row['count'] if count_row else 0
-            
-            select_sql = f"SELECT * FROM work_orders {where_clause} ORDER BY created_at DESC LIMIT ? OFFSET ?"
-            work_orders = conn.execute(select_sql, params + [per_page, offset]).fetchall()
+            total_matching = conn.execute(count_sql, (wildcard, wildcard, wildcard, wildcard, wildcard, wildcard, wildcard, wildcard)).fetchone()[0]
+            total = total_matching or 0
+            total_pages = max((total + per_page - 1) // per_page, 1)
+
+            data_sql = """
+            SELECT * FROM work_orders 
+            WHERE CAST(wo_number AS TEXT) LIKE ? 
+               OR address LIKE ? 
+               OR rme_status LIKE ? 
+               OR tpchd_status LIKE ? 
+               OR king_status LIKE ? 
+               OR accella_status LIKE ? 
+               OR invoice_status LIKE ? 
+               OR location_code LIKE ?
+            ORDER BY created_at DESC LIMIT ? OFFSET ?
+            """
+            work_orders = conn.execute(data_sql, (wildcard, wildcard, wildcard, wildcard, wildcard, wildcard, wildcard, wildcard, per_page, offset)).fetchall()
         else:
             total = stats['total'] or 0
+            total_pages = max((total + per_page - 1) // per_page, 1)
             work_orders = conn.execute('SELECT * FROM work_orders ORDER BY created_at DESC LIMIT ? OFFSET ?', (per_page, offset)).fetchall()
-
-        total_pages = max((total + per_page - 1) // per_page, 1)
     except sqlite3.OperationalError:
         work_orders = []
         total = 0
@@ -864,6 +892,8 @@ def wo_status():
         stats = {'total': 0, 'rme_done': 0, 'tpchd_done': 0, 'invoice_done': 0, 'king_done': 0, 'accella_done': 0}
     finally:
         conn.close()
+
+    pagination_range = get_pagination_range(page, total_pages)
         
     return render_template('wo_status.html',
                            work_orders=work_orders,
@@ -871,9 +901,98 @@ def wo_status():
                            per_page=per_page,
                            total=total,
                            total_pages=total_pages,
+                           pagination_range=pagination_range,
                            stats=stats,
                            search_query=search_query)
 
+@app.route('/wo-result/<wo_number>')
+@app.route('/wo-result')
+def wo_result(wo_number=None):
+    if not wo_number:
+        wo_number = request.args.get('wo_number')
+    if not wo_number:
+        return redirect(url_for('wo_status'))
+
+    conn = sqlite3.connect('lookup_sessions.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    report_data = None
+    try:
+        row = cursor.execute('SELECT * FROM work_order_reports WHERE wo_number = ?', (str(wo_number),)).fetchone()
+        if row:
+            report_data = dict(row)
+    except Exception:
+        pass
+
+    try:
+        wo_row = cursor.execute('SELECT * FROM work_orders WHERE wo_number = ?', (str(wo_number),)).fetchone()
+        if wo_row:
+            wo_dict = dict(wo_row)
+            if not report_data:
+                report_data = {
+                    'wo_number': wo_dict.get('wo_number'),
+                    'address': wo_dict.get('address'),
+                    'location_code': wo_dict.get('location_code'),
+                    'tax_code_status': wo_dict.get('tax_code_status'),
+                    'customer_tax_code_status': wo_dict.get('customer_tax_code_status'),
+                    'rme_urls': '[]',
+                    'tpchd_urls': '[]',
+                    'king_urls': '[]',
+                    'accella_urls': '[]',
+                    'invoice_url': '',
+                    'result_link': f"https://dashboard.sterlingsepticandplumbing.com/wo-result/{wo_number}",
+                    'created_at': wo_dict.get('created_at')
+                }
+            else:
+                for k in ('address', 'location_code', 'tax_code_status', 'customer_tax_code_status', 'created_at'):
+                    if not report_data.get(k):
+                        report_data[k] = wo_dict.get(k)
+    except Exception:
+        pass
+
+    conn.close()
+
+    if not report_data:
+        report_data = {
+            'wo_number': wo_number,
+            'address': 'Work Order Not Found',
+            'location_code': 'not found',
+            'tax_code_status': 'not found',
+            'customer_tax_code_status': 'not found',
+            'rme_urls': '[]',
+            'tpchd_urls': '[]',
+            'king_urls': '[]',
+            'accella_urls': '[]',
+            'invoice_url': '',
+            'result_link': f"https://dashboard.sterlingsepticandplumbing.com/wo-result/{wo_number}",
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+
+    def parse_json_list(val):
+        if not val:
+            return []
+        if isinstance(val, list):
+            return val
+        try:
+            res = json.loads(val)
+            return res if isinstance(res, list) else []
+        except Exception:
+            return [val]
+
+    rme_urls = parse_json_list(report_data.get('rme_urls'))
+    tpchd_urls = parse_json_list(report_data.get('tpchd_urls'))
+    king_urls = parse_json_list(report_data.get('king_urls'))
+    accella_urls = parse_json_list(report_data.get('accella_urls'))
+    invoice_url = report_data.get('invoice_url') or ''
+
+    return render_template('wo_result.html',
+                           report=report_data,
+                           rme_urls=rme_urls,
+                           tpchd_urls=tpchd_urls,
+                           king_urls=king_urls,
+                           accella_urls=accella_urls,
+                           invoice_url=invoice_url)
 
 @app.route('/api/scraper-status')
 def api_scraper_status():
@@ -891,33 +1010,6 @@ def api_run_scraper():
     thread = threading.Thread(target=_run_scraper_once, daemon=True)
     thread.start()
     return jsonify({'status': 'started'})
-
-@app.route('/api/run-search-scraper', methods=['POST'])
-def api_run_search_scraper():
-    global scraper_is_running
-    if scraper_is_running:
-        return jsonify({'status': 'already_running', 'message': 'Scraper is currently running. Please wait.'}), 409
-    
-    data = request.get_json(silent=True) or {}
-    raw_wo_input = data.get('wo_numbers', '')
-    
-    wo_numbers = []
-    if isinstance(raw_wo_input, list):
-        wo_numbers = [str(x).strip() for x in raw_wo_input if str(x).strip()]
-    elif isinstance(raw_wo_input, str):
-        split_items = re.split(r'[\r\n,]+', raw_wo_input)
-        for item in split_items:
-            clean_item = item.strip()
-            if clean_item:
-                wo_numbers.append(clean_item)
-                
-    if not wo_numbers:
-        return jsonify({'status': 'error', 'message': 'Please enter at least one valid Work Order number.'}), 400
-
-    thread = threading.Thread(target=_run_search_scraper_in_thread, args=(wo_numbers,), daemon=True)
-    thread.start()
-    return jsonify({'status': 'started', 'message': f'Search automation started for {len(wo_numbers)} Work Order(s).', 'count': len(wo_numbers)})
-
 
 @app.route('/api/delete-work-order/<wo_number>', methods=['DELETE'])
 def api_delete_work_order(wo_number):
@@ -2557,32 +2649,9 @@ def _run_scraper_once():
         scraper_is_running = False
     loop.close()
 
-def _run_search_scraper_in_thread(wo_numbers):
-    """Open a fresh browser, run search pass for specified WOs, close."""
-    global scraper_last_run, scraper_is_running
-    from new_work_orders_scraper import run_search_scraper
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    scraper_is_running = True
-    try:
-        print(f"\n🔍 --- Starting Search Scraper Pass for {len(wo_numbers)} Work Orders ---")
-        loop.run_until_complete(asyncio.wait_for(run_search_scraper(wo_numbers), timeout=1800))
-        print("✅ --- Search Scraper Pass Completed ---")
-    except asyncio.TimeoutError:
-        print("⚠️ --- Search Scraper Pass timed out after 30 minutes ---")
-    except Exception as e:
-        print(f"⚠️ --- Error in Search Scraper: {e} ---")
-    finally:
-        scraper_last_run = datetime.utcnow()
-        scraper_is_running = False
-    loop.close()
-
-
 def _is_business_hours():
-    """Return True if current GMT-7 time is 6:00am–6:00pm."""
-    from datetime import timezone, timedelta
-    gmt7 = datetime.now(timezone(timedelta(hours=-7)))
-    return 6 <= gmt7.hour < 18
+    """Bypassed business hours check — returns True so scraper runs anytime."""
+    return True
 
 async def _business_hours_session():
     """Keep browser open for the full business-hours window, running a pass every 5 min."""

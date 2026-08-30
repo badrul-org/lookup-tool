@@ -1,7 +1,5 @@
 # from playwright.async_api import async_playwright
 # import asyncio
-import re
-import unicodedata
 import json
 
 
@@ -38,16 +36,25 @@ async def tax_rate_lookup(page, url, address_line_1: str, city: str, zip: str):
         await input_zip.fill(zip)
         await page.locator("//input[@id='imgAdrSrc']").click()
         # await page.wait_for_timeout(5000)
-        table_rows = page.locator("(//div[@id='tblSales']//tr)[3]")
-        await table_rows.wait_for(state="visible", timeout=10000)
-        rows = await table_rows.all()
-        for row in rows:
-            if "Location code" in await row.text_content():
-                location_code = await row.text_content()
-                location_code = location_code.replace("  ", "")
-                location_code = location_code.split(")")[1]
-                print(f"Location Code: {location_code}")
-        return location_code
+        location_code = page.locator("//div[@id='tblSales']//label[@id='outLocationCode']")
+        location_code_value = await location_code.text_content()
+        location_code_value = location_code_value.replace("  ", "").strip()  
+        print(f"Location Code: {location_code_value}")
+
+        # await table_rows.wait_for(state="visible", timeout=10000)
+        # rows = await table_rows.all()
+        # for row in rows:
+        #     if "Location code" in await row.text_content():
+        #         location_code = await row.text_content()
+        #         location_code = location_code.replace("  ", "")
+        #         location_code = location_code.split(")")[1]
+        #         print(f"Location Code: {location_code}")
+        # # Find the cell and then move to the next td in the same row
+        # target_cell = page.get_by_role("cell", name="Total tax rate").locator("xpath=following-sibling::td")
+        # tax_rate = await target_cell.text_content()
+        # print(f"Tax Rate: {tax_rate.strip()}")
+
+        return location_code_value
 
     except Exception as e:
         print(e)
@@ -1581,7 +1588,9 @@ async def Accella_report_lookup(page, url, session_id, address_line_1: str):
         import os as _os
         _os.makedirs("Accella_Reports", exist_ok=True)
         street_number = address_line_1.split(" ")[0]
-        street_name = address_line_1.split(" ")[1]
+        # Use everything after the street number as the street name so that
+        # highway addresses like "8120 State Route 162" are searched correctly.
+        street_name = address_line_1.split(" ", 1)[1] if " " in address_line_1 else ""
         search_input_from = page.locator("//input[@title='Street No. From	']")
         await search_input_from.wait_for(state="visible", timeout=15000)
         await search_input_from.fill(street_number)
